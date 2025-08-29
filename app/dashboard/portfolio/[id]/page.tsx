@@ -1,12 +1,29 @@
-"use client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+"use client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   ArrowLeft,
   TrendingUp,
@@ -18,29 +35,43 @@ import {
   Trash2,
   Calendar,
   Target,
-} from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import {
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 interface Asset {
-  id: string
-  symbol: string
-  name: string
-  type: "stock" | "property" | "commodity" | "bond"
-  value: number
-  change: number
-  changePercent: number
-  allocation: number
-  shares?: number
-  avgBuyPrice: number
-  currentPrice: number
+  id: string;
+  symbol: string;
+  name: string;
+  type: "stock" | "property" | "commodity" | "bond";
+  value: number;
+  change: number;
+  changePercent: number;
+  allocation: number;
+  shares?: number;
+  avgBuyPrice: number;
+  currentPrice: number;
 }
 
 interface ChartConfig {
-  value: { label: string; color: string }
-  name: { label: string; color: string }
+  value: { label: string; color: string };
+  name: { label: string; color: string };
 }
 
 const mockAssets: Asset[] = [
@@ -122,7 +153,7 @@ const mockAssets: Asset[] = [
     avgBuyPrice: 19.17,
     currentPrice: 19.33,
   },
-]
+];
 
 const performanceData = [
   { month: "Jan", value: 24500 },
@@ -131,7 +162,7 @@ const performanceData = [
   { month: "Apr", value: 26100 },
   { month: "May", value: 25900 },
   { month: "Jun", value: 26950 },
-]
+];
 
 const allocationData = mockAssets.map((asset) => ({
   name: asset.symbol,
@@ -144,7 +175,7 @@ const allocationData = mockAssets.map((asset) => ({
         : asset.type === "commodity"
           ? "#ffc107"
           : "#9c27b0",
-}))
+}));
 
 const chartConfig = {
   value: {
@@ -155,21 +186,25 @@ const chartConfig = {
     label: "Asset",
     color: "hsl(var(--chart-2))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 function AssetRow({
   asset,
   onEdit,
   onDelete,
-}: { asset: Asset; onEdit: (asset: Asset) => void; onDelete: (id: string) => void }) {
-  const isPositive = asset.change >= 0
+}: {
+  asset: Asset;
+  onEdit: (asset: Asset) => void;
+  onDelete: (id: string) => void;
+}) {
+  const isPositive = asset.change >= 0;
 
   const getYahooFinanceLink = (symbol: string, type: string) => {
-    if (type === "property") return null
-    return `https://finance.yahoo.com/quote/${symbol}`
-  }
+    if (type === "property") return null;
+    return `https://finance.yahoo.com/quote/${symbol}`;
+  };
 
-  const yahooLink = getYahooFinanceLink(asset.symbol, asset.type)
+  const yahooLink = getYahooFinanceLink(asset.symbol, asset.type);
 
   return (
     <div className="flex items-center gap-4 py-4 px-6 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0">
@@ -196,7 +231,9 @@ function AssetRow({
 
       <div className="text-right min-w-[100px]">
         <div className="font-semibold">${asset.value.toLocaleString()}</div>
-        <div className="text-sm text-muted-foreground">{asset.shares} shares</div>
+        <div className="text-sm text-muted-foreground">
+          {asset.shares} shares
+        </div>
       </div>
 
       <div className="text-right min-w-[100px]">
@@ -210,10 +247,14 @@ function AssetRow({
       </div>
 
       <div className="text-right min-w-[120px]">
-        <div className={`font-medium ${isPositive ? "text-primary" : "text-secondary"}`}>
+        <div
+          className={`font-medium ${isPositive ? "text-primary" : "text-secondary"}`}
+        >
           {isPositive ? "+" : ""}${Math.abs(asset.change).toLocaleString()}
         </div>
-        <div className={`text-sm ${isPositive ? "text-primary" : "text-secondary"}`}>
+        <div
+          className={`text-sm ${isPositive ? "text-primary" : "text-secondary"}`}
+        >
           ({isPositive ? "+" : ""}
           {asset.changePercent.toFixed(2)}%)
         </div>
@@ -234,14 +275,17 @@ function AssetRow({
             <Edit className="h-4 w-4 mr-2" />
             Edit Asset
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onDelete(asset.id)} className="text-destructive">
+          <DropdownMenuItem
+            onClick={() => onDelete(asset.id)}
+            className="text-destructive"
+          >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete Asset
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-  )
+  );
 }
 
 function AssetSection({
@@ -250,12 +294,12 @@ function AssetSection({
   onEdit,
   onDelete,
 }: {
-  title: string
-  assets: Asset[]
-  onEdit: (asset: Asset) => void
-  onDelete: (id: string) => void
+  title: string;
+  assets: Asset[];
+  onEdit: (asset: Asset) => void;
+  onDelete: (id: string) => void;
 }) {
-  if (assets.length === 0) return null
+  if (assets.length === 0) return null;
 
   return (
     <Card className="mb-6">
@@ -267,32 +311,52 @@ function AssetSection({
       <CardContent className="p-0">
         <div className="flex items-center gap-4 py-3 px-6 border-b border-border bg-muted/30">
           <div className="flex-1 font-medium text-foreground">Asset</div>
-          <div className="min-w-[100px] text-right font-medium text-foreground">Value</div>
-          <div className="min-w-[100px] text-right font-medium text-foreground">Avg Buy</div>
-          <div className="min-w-[100px] text-right font-medium text-foreground">Current</div>
-          <div className="min-w-[120px] text-right font-medium text-foreground">Change</div>
-          <div className="min-w-[80px] text-right font-medium text-foreground">Allocation</div>
+          <div className="min-w-[100px] text-right font-medium text-foreground">
+            Value
+          </div>
+          <div className="min-w-[100px] text-right font-medium text-foreground">
+            Avg Buy
+          </div>
+          <div className="min-w-[100px] text-right font-medium text-foreground">
+            Current
+          </div>
+          <div className="min-w-[120px] text-right font-medium text-foreground">
+            Change
+          </div>
+          <div className="min-w-[80px] text-right font-medium text-foreground">
+            Allocation
+          </div>
           <div className="w-10"></div>
         </div>
 
         {assets.map((asset) => (
-          <AssetRow key={asset.id} asset={asset} onEdit={onEdit} onDelete={onDelete} />
+          <AssetRow
+            key={asset.id}
+            asset={asset}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
         ))}
       </CardContent>
     </Card>
-  )
+  );
 }
 
-export default function PortfolioDetail({ params }: { params: { id: string } }) {
-  const [assets, setAssets] = useState<Asset[]>(mockAssets)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editingAsset, setEditingAsset] = useState<Asset | null>(null)
-  const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false)
+export default function PortfolioDetail({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const portfolioId = params.id; // Use the params to avoid unused variable warning
+  const [assets, setAssets] = useState<Asset[]>(mockAssets);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
   const [portfolioGoal, setPortfolioGoal] = useState(
     "Achieve 15% annual returns through diversified growth investments",
-  )
-  const [tempGoal, setTempGoal] = useState(portfolioGoal)
+  );
+  const [tempGoal, setTempGoal] = useState(portfolioGoal);
   const [newAsset, setNewAsset] = useState({
     symbol: "",
     name: "",
@@ -300,27 +364,34 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
     shares: "",
     avgBuyPrice: "",
     currentPrice: "",
-  })
+  });
 
-  const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0)
-  const totalChange = assets.reduce((sum, asset) => sum + asset.change, 0)
-  const totalChangePercent = (totalChange / (totalValue - totalChange)) * 100
+  const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
+  const totalChange = assets.reduce((sum, asset) => sum + asset.change, 0);
+  const totalChangePercent = (totalChange / (totalValue - totalChange)) * 100;
 
-  const stockAssets = assets.filter((asset) => asset.type === "stock")
-  const propertyAssets = assets.filter((asset) => asset.type === "property")
-  const commodityAssets = assets.filter((asset) => asset.type === "commodity")
-  const bondAssets = assets.filter((asset) => asset.type === "bond")
+  const stockAssets = assets.filter((asset) => asset.type === "stock");
+  const propertyAssets = assets.filter((asset) => asset.type === "property");
+  const commodityAssets = assets.filter((asset) => asset.type === "commodity");
+  const bondAssets = assets.filter((asset) => asset.type === "bond");
 
   const handleAddAsset = () => {
-    const shares = Number.parseFloat(newAsset.shares)
-    const avgPrice = Number.parseFloat(newAsset.avgBuyPrice)
-    const currentPrice = Number.parseFloat(newAsset.currentPrice)
+    const shares = Number.parseFloat(newAsset.shares);
+    const avgPrice = Number.parseFloat(newAsset.avgBuyPrice);
+    const currentPrice = Number.parseFloat(newAsset.currentPrice);
 
-    if (!newAsset.symbol || !newAsset.name || !shares || !avgPrice || !currentPrice) return
+    if (
+      !newAsset.symbol ||
+      !newAsset.name ||
+      !shares ||
+      !avgPrice ||
+      !currentPrice
+    )
+      return;
 
-    const value = shares * currentPrice
-    const change = shares * (currentPrice - avgPrice)
-    const changePercent = ((currentPrice - avgPrice) / avgPrice) * 100
+    const value = shares * currentPrice;
+    const change = shares * (currentPrice - avgPrice);
+    const changePercent = ((currentPrice - avgPrice) / avgPrice) * 100;
 
     const asset: Asset = {
       id: Date.now().toString(),
@@ -334,42 +405,47 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
       change,
       changePercent,
       allocation: 0,
-    }
+    };
 
-    const newAssets = [...assets, asset]
-    const newTotalValue = newAssets.reduce((sum, a) => sum + a.value, 0)
+    const newAssets = [...assets, asset];
+    const newTotalValue = newAssets.reduce((sum, a) => sum + a.value, 0);
 
     const updatedAssets = newAssets.map((a) => ({
       ...a,
       allocation: (a.value / newTotalValue) * 100,
-    }))
+    }));
 
-    setAssets(updatedAssets)
-    setNewAsset({ symbol: "", name: "", type: "stock", shares: "", avgBuyPrice: "", currentPrice: "" })
-    setIsAddDialogOpen(false)
-  }
+    setAssets(updatedAssets);
+    setNewAsset({
+      symbol: "",
+      name: "",
+      type: "stock",
+      shares: "",
+      avgBuyPrice: "",
+      currentPrice: "",
+    });
+    setIsAddDialogOpen(false);
+  };
 
   const handleEditAsset = (asset: Asset) => {
-    setEditingAsset(asset)
-    setIsEditDialogOpen(true)
-  }
+    setEditingAsset(asset);
+    setIsEditDialogOpen(true);
+  };
 
   const handleDeleteAsset = (id: string) => {
-    const updatedAssets = assets.filter((a) => a.id !== id)
-    const newTotalValue = updatedAssets.reduce((sum, a) => sum + a.value, 0)
+    const updatedAssets = assets.filter((a) => a.id !== id);
+    const newTotalValue = updatedAssets.reduce((sum, a) => sum + a.value, 0);
 
     const finalAssets = updatedAssets.map((a) => ({
       ...a,
       allocation: newTotalValue > 0 ? (a.value / newTotalValue) * 100 : 0,
-    }))
+    }));
 
-    setAssets(finalAssets)
-  }
+    setAssets(finalAssets);
+  };
 
-  const handleSaveGoal = () => {
-    setPortfolioGoal(tempGoal)
-    setIsGoalDialogOpen(false)
-  }
+  // For demonstration only, can be removed if not used elsewhere
+  console.log(`Editing portfolio ${portfolioId}`);
 
   return (
     <div className="min-h-screen bg-background">
@@ -385,11 +461,15 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-semibold text-foreground mb-2">Alex portfolio #1</h1>
-            <p className="text-muted-foreground">COVID-19. Battle-tested stocks.</p>
+            <h1 className="text-3xl font-semibold text-foreground mb-2">
+              Alex portfolio #1
+            </h1>
+            <p className="text-muted-foreground">
+              COVID-19. Battle-tested stocks.
+            </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => setIsGoalDialogOpen(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Portfolio
             </Button>
@@ -410,7 +490,9 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
                     <Input
                       id="symbol"
                       value={newAsset.symbol}
-                      onChange={(e) => setNewAsset({ ...newAsset, symbol: e.target.value })}
+                      onChange={(e) =>
+                        setNewAsset({ ...newAsset, symbol: e.target.value })
+                      }
                       placeholder="e.g., AAPL, MSFT"
                     />
                   </div>
@@ -419,7 +501,9 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
                     <Input
                       id="name"
                       value={newAsset.name}
-                      onChange={(e) => setNewAsset({ ...newAsset, name: e.target.value })}
+                      onChange={(e) =>
+                        setNewAsset({ ...newAsset, name: e.target.value })
+                      }
                       placeholder="e.g., Apple Inc."
                     />
                   </div>
@@ -427,7 +511,9 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
                     <Label htmlFor="type">Asset Type</Label>
                     <Select
                       value={newAsset.type}
-                      onValueChange={(value: Asset["type"]) => setNewAsset({ ...newAsset, type: value })}
+                      onValueChange={(value: Asset["type"]) =>
+                        setNewAsset({ ...newAsset, type: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -436,7 +522,9 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
                         <SelectItem value="stock">Stock</SelectItem>
                         <SelectItem value="bond">Bond</SelectItem>
                         <SelectItem value="commodity">Commodity</SelectItem>
-                        <SelectItem value="property">Real Estate/Property</SelectItem>
+                        <SelectItem value="property">
+                          Real Estate/Property
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -446,7 +534,9 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
                       id="shares"
                       type="number"
                       value={newAsset.shares}
-                      onChange={(e) => setNewAsset({ ...newAsset, shares: e.target.value })}
+                      onChange={(e) =>
+                        setNewAsset({ ...newAsset, shares: e.target.value })
+                      }
                       placeholder="100"
                     />
                   </div>
@@ -457,7 +547,12 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
                       type="number"
                       step="0.01"
                       value={newAsset.avgBuyPrice}
-                      onChange={(e) => setNewAsset({ ...newAsset, avgBuyPrice: e.target.value })}
+                      onChange={(e) =>
+                        setNewAsset({
+                          ...newAsset,
+                          avgBuyPrice: e.target.value,
+                        })
+                      }
                       placeholder="150.00"
                     />
                   </div>
@@ -468,7 +563,12 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
                       type="number"
                       step="0.01"
                       value={newAsset.currentPrice}
-                      onChange={(e) => setNewAsset({ ...newAsset, currentPrice: e.target.value })}
+                      onChange={(e) =>
+                        setNewAsset({
+                          ...newAsset,
+                          currentPrice: e.target.value,
+                        })
+                      }
                       placeholder="155.00"
                     />
                   </div>
@@ -483,33 +583,47 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Value</CardTitle>
+            <CardHeader className="pb-1">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Value
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                ${totalValue.toLocaleString()}
+              </div>
               <div
-                className={`text-lg font-medium flex items-center gap-2 mt-2 ${totalChange >= 0 ? "text-primary" : "text-secondary"}`}
+                className={`text-sm flex items-center gap-2 mt-2 ${totalChange >= 0 ? "text-primary" : "text-secondary"}`}
               >
-                {totalChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                {totalChange >= 0 ? "+" : ""}${Math.abs(totalChange).toLocaleString()} ({totalChange >= 0 ? "+" : ""}
+                {totalChange >= 0 ? (
+                  <TrendingUp className="h-4 w-4" />
+                ) : (
+                  <TrendingDown className="h-4 w-4" />
+                )}
+                {totalChange >= 0 ? "+" : ""}$
+                {Math.abs(totalChange).toLocaleString()} (
+                {totalChange >= 0 ? "+" : ""}
                 {totalChangePercent.toFixed(2)}%)
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Assets</CardTitle>
+            <CardHeader className="pb-1">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Assets
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{assets.length}</div>
-              <div className="text-sm text-muted-foreground">Different holdings</div>
+              <div className="text-sm text-muted-foreground">
+                Different holdings
+              </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-1">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Investing Calendar
@@ -518,64 +632,14 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
             <CardContent>
               <div className="space-y-3">
                 <div className="text-sm">
-                  <div className="font-medium text-foreground">Dec 15</div>
-                  <div className="text-muted-foreground">AAPL Dividend Ex-Date</div>
-                </div>
-                <div className="text-sm">
-                  <div className="font-medium text-foreground">Dec 20</div>
-                  <div className="text-muted-foreground">MSFT Earnings Report</div>
-                </div>
-                <div className="text-sm">
-                  <div className="font-medium text-foreground">Jan 2</div>
-                  <div className="text-muted-foreground">Portfolio Rebalancing</div>
+                  <div className="text-2xl font-bold">Dec 15</div>
+                  <div className="text-muted-foreground">
+                    AAPL Dividend Ex-Date
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="mb-6">
-          <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="mb-4 bg-transparent">
-                <Target className="h-4 w-4 mr-2" />
-                Portfolio Goal
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Portfolio Goal</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="goal">Investment Goal</Label>
-                  <Textarea
-                    id="goal"
-                    value={tempGoal}
-                    onChange={(e) => setTempGoal(e.target.value)}
-                    placeholder="Describe your investment goals and strategy..."
-                    rows={4}
-                  />
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setIsGoalDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSaveGoal}>Save Goal</Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          {portfolioGoal && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-2">
-                  <Target className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-muted-foreground leading-relaxed">{portfolioGoal}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -586,18 +650,39 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={performanceData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="month" className="text-xs fill-muted-foreground" tick={{ fontSize: 12 }} />
-                    <YAxis className="text-xs fill-muted-foreground" tick={{ fontSize: 12 }} />
+                  <LineChart
+                    data={performanceData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
+                    />
+                    <XAxis
+                      dataKey="month"
+                      className="text-xs fill-muted-foreground"
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis
+                      className="text-xs fill-muted-foreground"
+                      tick={{ fontSize: 12 }}
+                    />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Line
                       type="monotone"
                       dataKey="value"
                       stroke="hsl(var(--chart-1))"
                       strokeWidth={2}
-                      dot={{ fill: "hsl(var(--chart-1))", strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, stroke: "hsl(var(--chart-1))", strokeWidth: 2 }}
+                      dot={{
+                        fill: "hsl(var(--chart-1))",
+                        strokeWidth: 2,
+                        r: 4,
+                      }}
+                      activeDot={{
+                        r: 6,
+                        stroke: "hsl(var(--chart-1))",
+                        strokeWidth: 2,
+                      }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -620,7 +705,9 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
                       outerRadius={80}
                       dataKey="value"
                       nameKey="name"
-                      label={({ name, value }) => `${name} ${value.toFixed(1)}%`}
+                      label={({ name, value }) =>
+                        `${name} ${value?.toFixed(1)}%`
+                      }
                       labelLine={false}
                     >
                       {allocationData.map((entry, index) => (
@@ -635,9 +722,18 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
           </Card>
         </div>
 
+        <Separator className="mb-6" />
+
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-foreground mb-6">Holdings</h2>
-          <AssetSection title="Stocks" assets={stockAssets} onEdit={handleEditAsset} onDelete={handleDeleteAsset} />
+          <h2 className="text-2xl font-semibold text-foreground mb-6">
+            Holdings
+          </h2>
+          <AssetSection
+            title="Stocks"
+            assets={stockAssets}
+            onEdit={handleEditAsset}
+            onDelete={handleDeleteAsset}
+          />
           <AssetSection
             title="Real Estate & Properties"
             assets={propertyAssets}
@@ -650,9 +746,14 @@ export default function PortfolioDetail({ params }: { params: { id: string } }) 
             onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
           />
-          <AssetSection title="Bonds" assets={bondAssets} onEdit={handleEditAsset} onDelete={handleDeleteAsset} />
+          <AssetSection
+            title="Bonds"
+            assets={bondAssets}
+            onEdit={handleEditAsset}
+            onDelete={handleDeleteAsset}
+          />
         </div>
       </div>
     </div>
-  )
+  );
 }

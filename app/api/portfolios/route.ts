@@ -1,8 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
 
 export async function GET() {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
   const portfolios = {
     personal: [
       {
@@ -172,7 +170,7 @@ export async function GET() {
         ],
       },
     ],
-  }
+  };
 
-  return NextResponse.json(portfolios)
+  return NextResponse.json(portfolios);
 }
