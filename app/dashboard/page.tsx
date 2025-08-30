@@ -41,6 +41,7 @@ import {
   Calendar,
 } from "lucide-react";
 import Link from "next/link";
+import { ChartRadialStacked } from "@/components/allocationRadial";
 
 interface Asset {
   id: string;
@@ -70,6 +71,12 @@ interface Benchmark {
   value: number;
   change: number;
   changePercent: number;
+}
+
+interface PorftolioWeighting {
+  name: string;
+  value: number;
+  color: string;
 }
 
 function BenchmarkCard({ benchmark }: { benchmark: Benchmark }) {
@@ -140,7 +147,7 @@ function AllocationCard({}) {
           <Sparkles className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-medium text-foreground">Allocation</h3>
         </div>
-
+        <AllocationRadial />
       </div>
     </Card>
   );
@@ -676,10 +683,7 @@ export default function PortfoliosDashboard() {
             </Card>
           </div>
           <div>
-            <MarketNewsCard
-              title="Market Summary"
-              content="Stocks rallied today as investors reacted positively to economic data indicating a steady recovery. The S&P 500 closed up 1.2%, led by gains in the technology and consumer discretionary sectors. Analysts remain cautiously optimistic about the market outlook amid ongoing geopolitical tensions and inflation concerns."
-            />
+            <ChartRadialStacked Weightings={portfolios.personal} />
           </div>
         </div>
 
@@ -719,14 +723,22 @@ export default function PortfoliosDashboard() {
               <div className="w-20"></div>
             </div>
 
-            {portfolios.personal.map((portfolio) => (
-              <PortfolioRow
-                key={portfolio.id}
-                portfolio={portfolio}
-                onEdit={handleEditPortfolio}
-                onDelete={handleDeletePortfolio}
-              />
-            ))}
+            {portfolios.personal.length > 0 ? (
+              portfolios.personal.map((portfolio) => (
+                <PortfolioRow
+                  key={portfolio.id}
+                  portfolio={portfolio}
+                  onEdit={handleEditPortfolio}
+                  onDelete={handleDeletePortfolio}
+                />
+              ))
+            ) : (
+              <div className="flex justify-center items-center py-8">
+                <p className="text-muted-foreground">
+                  No portfolios found. Create one to get started.
+                </p>
+              </div>
+            )}
           </Card>
         </div>
       </div>
