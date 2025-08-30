@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { use } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect } from "react";
 import {
   ArrowLeft,
   TrendingUp,
@@ -35,6 +37,7 @@ import {
   Trash2,
   Calendar,
   Target,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -72,6 +75,18 @@ interface Asset {
 interface ChartConfig {
   value: { label: string; color: string };
   name: { label: string; color: string };
+}
+
+interface Portfolio {
+  id: string;
+  name: string;
+  description: string;
+  value: number;
+  change: number;
+  changePercent: number;
+  stocks: number;
+  modified: string;
+  assets: any[]; // Using any[] to accommodate API response format
 }
 
 const mockAssets: Asset[] = [
@@ -188,7 +203,6 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-
 function AISummaryCard({ title, content }: { title: string; content: string }) {
   return (
     <Card className="p-6 bg-card border-border h-full">
@@ -197,10 +211,12 @@ function AISummaryCard({ title, content }: { title: string; content: string }) {
           <Sparkles className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-medium text-foreground">{title}</h3>
         </div>
-        <p className="text-sm text-muted-foreground leading-relaxed flex-1">{content}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+          {content}
+        </p>
       </div>
     </Card>
-  )
+  );
 }
 
 function AssetRow({
@@ -362,8 +378,11 @@ export default function PortfolioDetail({
 }: {
   params: { id: string };
 }) {
-  const portfolioId = params.id; // Use the params to avoid unused variable warning
-  const [assets, setAssets] = useState<Asset[]>(mockAssets);
+  // Properly unwrap params using React.use()
+  const unwrappedParams = use(params);
+  const portfolioId = unwrappedParams.id;
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
@@ -380,10 +399,71 @@ export default function PortfolioDetail({
     avgBuyPrice: "",
     currentPrice: "",
   });
+  const [loading, setLoading] = useState(true);
 
-  const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
-  const totalChange = assets.reduce((sum, asset) => sum + asset.change, 0);
-  const totalChangePercent = (totalChange / (totalValue - totalChange)) * 100;
+  // Fetch portfolio data
+  useEffect(() => {
+    async function fetchPortfolio() {
+      try {
+        const response = await fetch("/api/portfolios");
+        const data = await response.json();
+
+        // Find the portfolio with matching ID
+        const foundPortfolio = data.personal.find(
+          (p: Portfolio) => p.id === portfolioId,
+        );
+
+        if (foundPortfolio) {
+          setPortfolio(foundPortfolio);
+
+          // Transform API assets to match our component's Asset interface
+          const transformedAssets = foundPortfolio.assets.map((asset: any) => ({
+            ...asset,
+            shares: asset.quantity,
+            type: mapAssetType(asset.type),
+            // Calculate derived values if not present
+            change:
+              asset.change ||
+              (asset.currentPrice - asset.avgBuyPrice) * asset.quantity,
+            changePercent:
+              asset.changePercent ||
+              ((asset.currentPrice - asset.avgBuyPrice) / asset.avgBuyPrice) *
+                100,
+            allocation:
+              asset.allocation || (asset.value / foundPortfolio.value) * 100,
+          }));
+
+          setAssets(transformedAssets);
+        }
+      } catch (error) {
+        console.error("Failed to fetch portfolio data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPortfolio();
+  }, [portfolioId]);
+
+  // Map API asset types to our component types
+  const mapAssetType = (type: string): Asset["type"] => {
+    const typeMap: Record<string, Asset["type"]> = {
+      stocks: "stock",
+      bonds: "bond",
+      commodities: "commodity",
+      "real estate": "property",
+    };
+    return typeMap[type] || (type as Asset["type"]);
+  };
+
+  const totalValue =
+    portfolio?.value || assets.reduce((sum, asset) => sum + asset.value, 0);
+  const totalChange =
+    portfolio?.change ||
+    assets.reduce((sum, asset) => sum + (asset.change || 0), 0);
+  const totalChangePercent =
+    portfolio?.changePercent ||
+    (totalChange / (totalValue - totalChange)) * 100;
 
   const stockAssets = assets.filter((asset) => asset.type === "stock");
   const propertyAssets = assets.filter((asset) => asset.type === "property");
@@ -477,10 +557,10 @@ export default function PortfolioDetail({
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-semibold text-foreground mb-2">
-              Alex portfolio #1
+              {portfolio?.name || "Loading portfolio..."}
             </h1>
             <p className="text-muted-foreground">
-              COVID-19. Battle-tested stocks.
+              {portfolio?.description || ""}
             </p>
           </div>
           <div className="flex gap-3">
@@ -605,7 +685,7 @@ export default function PortfolioDetail({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${totalValue.toLocaleString()}
+                ${loading ? "..." : totalValue.toLocaleString()}
               </div>
               <div
                 className={`text-sm flex items-center gap-2 mt-2 ${totalChange >= 0 ? "text-primary" : "text-secondary"}`}
@@ -616,9 +696,9 @@ export default function PortfolioDetail({
                   <TrendingDown className="h-4 w-4" />
                 )}
                 {totalChange >= 0 ? "+" : ""}$
-                {Math.abs(totalChange).toLocaleString()} (
+                {loading ? "..." : Math.abs(totalChange).toLocaleString()} (
                 {totalChange >= 0 ? "+" : ""}
-                {totalChangePercent.toFixed(2)}%)
+                {loading ? "..." : totalChangePercent.toFixed(2)}%)
               </div>
             </CardContent>
           </Card>
@@ -630,7 +710,9 @@ export default function PortfolioDetail({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{assets.length}</div>
+              <div className="text-2xl font-bold">
+                {loading ? "..." : assets.length}
+              </div>
               <div className="text-sm text-muted-foreground">
                 Different holdings
               </div>
@@ -682,7 +764,7 @@ export default function PortfolioDetail({
                       className="text-xs fill-muted-foreground"
                       tick={{ fontSize: 12 }}
                     />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+
                     <Line
                       type="monotone"
                       dataKey="value"
@@ -714,7 +796,19 @@ export default function PortfolioDetail({
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <Pie
-                      data={allocationData}
+                      data={assets.map((asset) => ({
+                        name: asset.symbol,
+                        value:
+                          asset.allocation || (asset.value / totalValue) * 100,
+                        fill:
+                          asset.type === "stock"
+                            ? "#4caf50"
+                            : asset.type === "property"
+                              ? "#2196f3"
+                              : asset.type === "commodity"
+                                ? "#ffc107"
+                                : "#9c27b0",
+                      }))}
                       cx="50%"
                       cy="50%"
                       outerRadius={80}
@@ -729,7 +823,6 @@ export default function PortfolioDetail({
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <ChartTooltip content={<ChartTooltipContent />} />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
