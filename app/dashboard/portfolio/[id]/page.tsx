@@ -188,6 +188,21 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+
+function AISummaryCard({ title, content }: { title: string; content: string }) {
+  return (
+    <Card className="p-6 bg-card border-border h-full">
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-medium text-foreground">{title}</h3>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed flex-1">{content}</p>
+      </div>
+    </Card>
+  )
+}
+
 function AssetRow({
   asset,
   onEdit,

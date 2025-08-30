@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
 
 export async function GET() {
   const benchmarks = [
@@ -20,7 +20,13 @@ export async function GET() {
       change: 10.9,
       changePercent: 0.85,
     },
-  ]
+    {
+      name: "S&P 500",
+      value: 4095.03,
+      change: 6.98,
+      changePercent: 0.17,
+    },
+  ];
 
-  return NextResponse.json(benchmarks)
+  return NextResponse.json(benchmarks);
 }
