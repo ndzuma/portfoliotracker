@@ -57,6 +57,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { AssetAllocationPie } from "@/components/assetAllocationPie";
 
 interface Asset {
   id: string;
@@ -387,10 +388,6 @@ export default function PortfolioDetail({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
-  const [portfolioGoal, setPortfolioGoal] = useState(
-    "Achieve 15% annual returns through diversified growth investments",
-  );
-  const [tempGoal, setTempGoal] = useState(portfolioGoal);
   const [newAsset, setNewAsset] = useState({
     symbol: "",
     name: "",
@@ -792,40 +789,7 @@ export default function PortfolioDetail({
               <CardTitle>Asset Allocation</CardTitle>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                    <Pie
-                      data={assets.map((asset) => ({
-                        name: asset.symbol,
-                        value:
-                          asset.allocation || (asset.value / totalValue) * 100,
-                        fill:
-                          asset.type === "stock"
-                            ? "#4caf50"
-                            : asset.type === "property"
-                              ? "#2196f3"
-                              : asset.type === "commodity"
-                                ? "#ffc107"
-                                : "#9c27b0",
-                      }))}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="value"
-                      nameKey="name"
-                      label={({ name, value }) =>
-                        `${name} ${value?.toFixed(1)}%`
-                      }
-                      labelLine={false}
-                    >
-                      {allocationData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
+              <AssetAllocationPie value={totalValue} assets={assets} />
             </CardContent>
           </Card>
         </div>

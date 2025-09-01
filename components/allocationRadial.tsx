@@ -20,7 +20,7 @@ import {
 
 interface PortfolioWeighting {
   name: string;
-  value: number;
+  currentValue: number;
 }
 
 // Dynamic chart config that will be populated based on portfolio data
@@ -44,7 +44,7 @@ export function ChartRadialStacked({
 
     Weightings.forEach((portfolio, index) => {
       // Use portfolio name as key and value as value
-      result[portfolio.name] = portfolio.value;
+      result[portfolio.name] = portfolio.currentValue || 1;
 
       // Also update the chart config with colors that cycle through available chart variables
       chartConfig[portfolio.name] = {

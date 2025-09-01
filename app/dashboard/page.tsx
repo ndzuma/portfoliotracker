@@ -42,28 +42,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ChartRadialStacked } from "@/components/allocationRadial";
-
-interface Asset {
-  id: string;
-  symbol: string;
-  name: string;
-  type: string;
-  quantity: number;
-  avgBuyPrice: number;
-  currentPrice: number;
-  value: number;
-}
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 interface Portfolio {
-  id: string;
+  _id: string;
   name: string;
   description: string;
-  value: number;
+  currentValue: number;
   change: number;
   changePercent: number;
-  stocks: number;
-  modified: string;
-  assets?: Asset[];
+  assetsCount: number;
 }
 
 interface Benchmark {
@@ -71,12 +60,6 @@ interface Benchmark {
   value: number;
   change: number;
   changePercent: number;
-}
-
-interface PorftolioWeighting {
-  name: string;
-  value: number;
-  color: string;
 }
 
 function BenchmarkCard({ benchmark }: { benchmark: Benchmark }) {
@@ -139,20 +122,6 @@ function MarketNewsCard({
   );
 }
 
-function AllocationCard({}) {
-  return (
-    <Card className="p-6 bg-card border-border h-full">
-      <div className="flex flex-col h-full">
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-medium text-foreground">Allocation</h3>
-        </div>
-        <AllocationRadial />
-      </div>
-    </Card>
-  );
-}
-
 function PortfolioRow({
   portfolio,
   onEdit,
@@ -167,7 +136,7 @@ function PortfolioRow({
   return (
     <div className="flex items-center gap-4 py-3 px-4 hover:bg-muted/50 transition-colors">
       <div className="flex-1 min-w-0">
-        <Link href={`/dashboard/portfolio/${portfolio.id}`} className="block">
+        <Link href={`/dashboard/portfolio/${portfolio._id}`} className="block">
           <h3 className="font-medium text-foreground hover:text-primary transition-colors">
             {portfolio.name}
           </h3>
@@ -195,11 +164,11 @@ function PortfolioRow({
       </div>
 
       <div className="text-right min-w-[100px]">
-        <div className="font-semibold">${portfolio.value.toLocaleString()}</div>
+        <div className="font-semibold">${portfolio.currentValue.toLocaleString()}</div>
       </div>
 
       <div className="text-center min-w-[80px]">
-        <div className="text-muted-foreground">{portfolio.modified}</div>
+        <div className="text-muted-foreground">{portfolio.assetsCount}</div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -233,7 +202,6 @@ function PortfolioRow({
 }
 
 export default function PortfoliosDashboard() {
-  const [selectedPortfolios, setSelectedPortfolios] = useState<string[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -257,19 +225,22 @@ export default function PortfoliosDashboard() {
     avgBuyPrice: "",
     portfolioId: "",
   });
+  
+  // convex operations
+  const userId = "j576kyne380kcc0d7k94na1atn7pre7j"
+  const usersName = useQuery(api.users.getUsersName, {userId: userId})
+  const userPortfolios = useQuery(api.portfolios.getUserPorfolios, {userId: userId}) || [];
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [portfoliosResponse, benchmarksResponse] = await Promise.all([
-          fetch("/api/portfolios"),
+        const [ benchmarksResponse] = await Promise.all([
           fetch("/api/benchmarks"),
         ]);
 
-        const portfoliosData = await portfoliosResponse.json();
         const benchmarksData = await benchmarksResponse.json();
 
-        setPortfolios(portfoliosData);
         setBenchmarks(benchmarksData);
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -281,11 +252,11 @@ export default function PortfoliosDashboard() {
     fetchData();
   }, []);
 
-  const totalValue = portfolios.personal.reduce(
-    (sum, portfolio) => sum + portfolio.value,
+  const totalValue = userPortfolios.reduce(
+    (sum, portfolio) => sum + portfolio.currentValue,
     0,
   );
-  const totalChange = portfolios.personal.reduce(
+  const totalChange = userPortfolios.reduce(
     (sum, portfolio) => sum + portfolio.change,
     0,
   );
@@ -320,7 +291,7 @@ export default function PortfoliosDashboard() {
       name: portfolio.name,
       description: portfolio.description,
       type: "personal",
-      initialInvestment: portfolio.value.toString(),
+      initialInvestment: portfolio.currentValue.toString(),
     });
     setIsEditModalOpen(true);
   };
@@ -360,10 +331,6 @@ export default function PortfoliosDashboard() {
     });
   };
 
-  const getYahooFinanceUrl = (symbol: string, type: string) => {
-    if (type === "real estate") return "#";
-    return `https://finance.yahoo.com/quote/${symbol}`;
-  };
 
   if (loading) {
     return (
@@ -378,7 +345,9 @@ export default function PortfoliosDashboard() {
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-semibold text-foreground">Portfolios</h1>
+          <h1 className="text-3xl font-semibold text-foreground">
+            Hello, {usersName}
+          </h1>
           <div className="flex gap-3">
             <Dialog
               open={isAddAssetModalOpen}
@@ -683,7 +652,7 @@ export default function PortfoliosDashboard() {
             </Card>
           </div>
           <div>
-            <ChartRadialStacked Weightings={portfolios.personal} />
+            <ChartRadialStacked Weightings={userPortfolios} />
           </div>
         </div>
 
@@ -704,29 +673,29 @@ export default function PortfoliosDashboard() {
           <div className="flex items-center gap-2 mb-4">
             <Briefcase className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-lg font-medium text-foreground">
-              My Portfolios ({portfolios.personal.length})
+              My Portfolios ({userPortfolios.length})
             </h2>
           </div>
 
-          <Card className="bg-card border-border">
+          <Card className="bg-card border-border gap-0 py-0">
             <div className="flex items-center gap-4 py-3 px-4 border-b border-border bg-muted/30">
               <div className="flex-1 font-medium text-foreground">Name</div>
               <div className="min-w-[120px] text-center font-medium text-foreground">
-                Valuation
+                Change
               </div>
-              <div className="min-w-[100px] text-center font-medium text-foreground">
+              <div className="min-w-[80px] text-center font-medium text-foreground">
                 Value
               </div>
               <div className="min-w-[80px] text-center font-medium text-foreground">
-                Modified
+                Assets
               </div>
-              <div className="w-20"></div>
+              <div className="w-10"></div>
             </div>
 
-            {portfolios.personal.length > 0 ? (
-              portfolios.personal.map((portfolio) => (
+            {userPortfolios.length > 0 ? (
+              userPortfolios.map((portfolio) => (
                 <PortfolioRow
-                  key={portfolio.id}
+                  key={portfolio._id}
                   portfolio={portfolio}
                   onEdit={handleEditPortfolio}
                   onDelete={handleDeletePortfolio}
