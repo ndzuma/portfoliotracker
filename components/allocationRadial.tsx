@@ -1,21 +1,17 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
 import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
 
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
+
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
 
 interface PortfolioWeighting {
@@ -58,7 +54,7 @@ export function ChartRadialStacked({
   };
 
   const chartData = transformData();
-  const totalValue = Weightings.reduce((sum, item) => sum + item.value, 0);
+
   const totalPortfolios = Weightings.length;
 
   if (totalPortfolios === 0) {
