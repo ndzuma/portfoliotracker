@@ -1,6 +1,9 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 
+const aiPlaceholderSummary = "Strong tech performance (+18.2% MTD)** driving growth, but **underweight on dividends (2.3%)**. Consider adding **renewable energy stocks** and **international equities** (5-10%) to enhance diversification. Current **cash position (12%)** appropriate amid market volatility.";
+const aiPlaceholderHeadline = "Portfolio Diversification Analysis";
+
 // Get all portfolios for a user with computed fields
 export const getUserPorfolios = query({
   args: { userId: v.id("users") || v.string() },
@@ -109,6 +112,28 @@ export const getPortfolioById = query({
       asset.allocation = portfolioCurrentValue ? (asset.currentValue / portfolioCurrentValue) * 100 : 0;
     }
     
+    // get AI summary from the latest snapshot
+    // if no assets return placeholder values
+    // if assets exist but no snapshot, make a call to AI to generate summary and headline
+    // and save to the latest snapshot
+    if (assets.length === 0) {
+      portfolio.aiHeadline = "No assets in portfolio";
+      portfolio.aiSummary = "Add assets to your portfolio to get insights.";
+    } else {
+      const latestSnapshot = await ctx.db
+        .query("portfolioSnapshots")
+        .withIndex("byPortfolio", (q) => q.eq("portfolioId", portfolio._id))
+        .first();
+      if (latestSnapshot && latestSnapshot.aiHeadline && latestSnapshot.aiSummary) {
+        portfolio.aiHeadline = latestSnapshot.aiHeadline;
+        portfolio.aiSummary = latestSnapshot.aiSummary;
+      } else {
+        // temporary placeholder until AI integration is done
+        portfolio.aiHeadline = aiPlaceholderHeadline;
+        portfolio.aiSummary = aiPlaceholderSummary;
+      }
+    }
+    
     const result = {
       ...portfolio,
       costBasis: portfolioCostBasis,
@@ -117,7 +142,6 @@ export const getPortfolioById = query({
       changePercent: portfolioCostBasis ? ((portfolioCurrentValue - portfolioCostBasis) / portfolioCostBasis) * 100 : 0 || 0,
       assets: assets
     };
-    console.log("Portfolio Details:", result);
     return result;
   },
 });

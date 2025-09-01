@@ -49,6 +49,8 @@ export default defineSchema({
     portfolioId: v.id("portfolios"),
     date: v.number(),
     totalValue: v.number(),
+    aiHeadline: v.optional(v.string()),
+    aiSummary: v.optional(v.string()),
   }).index("byPortfolio", ["portfolioId", "date"]),
   assetSnapshots: defineTable({
     assetId: v.id("assets"),

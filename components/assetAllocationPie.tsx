@@ -66,81 +66,91 @@ export function AssetAllocationPie({ value, assets }: AssetAllocation) {
   }, []);
 
   return (
-    <ChartContainer
-      config={chartConfig}
-      className="mx-auto aspect-square max-h-[250px]"
-    >
-      <PieChart>
-        <Pie
-          data={assets.map((asset, index) => ({
-            name: asset.name,
-            value: asset.allocation || (asset.currentValue / value) * 100,
-            // Use a diverse palette of 16+ colors, avoiding black
-            fill: [
-              "#4caf50",
-              "#2196f3",
-              "#ff9800",
-              "#e91e63",
-              "#9c27b0",
-              "#00bcd4",
-              "#ffeb3b",
-              "#8bc34a",
-              "#3f51b5",
-              "#f44336",
-              "#009688",
-              "#ff5722",
-              "#cddc39",
-              "#03a9f4",
-              "#ffc107",
-              "#673ab7",
-              "#795548",
-              "#607d8b",
-              "#4caf50",
-              "#2196f3",
-            ][index % 20], // 20 distinct colors, cycling through them
-            stroke: "var(--background)",
-            strokeWidth: 2,
-          }))}
-          dataKey="value"
-          nameKey="name"
-          innerRadius={60}
-          strokeWidth={5}
+    <Card className="col-span-1 ">
+      <CardHeader>
+        <CardTitle>Asset Allocation</CardTitle>
+        <CardDescription>
+          The distribution of your portfolio across different asset classes
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[250px]"
         >
-          <Label
-            content={({ viewBox }) => {
-              if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                return (
-                  <text
-                    x={viewBox.cx}
-                    y={viewBox.cy}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                  >
-                    <tspan
-                      x={viewBox.cx}
-                      y={viewBox.cy}
-                      className="fill-foreground text-3xl font-bold"
-                    >
-                      {assets.length.toLocaleString()}
-                    </tspan>
-                    <tspan
-                      x={viewBox.cx}
-                      y={(viewBox.cy || 0) + 24}
-                      className="fill-muted-foreground"
-                    >
-                      Holdings
-                    </tspan>
-                  </text>
-                );
-              }
-            }}
-          />
-        </Pie>
-        <ChartLegend
-          content={<ChartLegendContent nameKey="name" />}
-          className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"
-        />
-      </PieChart>
-    </ChartContainer>
+          <PieChart>
+            <Pie
+              data={assets.map((asset, index) => ({
+                name: asset.name,
+                value: asset.allocation || (asset.currentValue / value) * 100,
+                // Use a diverse palette of 16+ colors, avoiding black
+                fill: [
+                  "#4caf50",
+                  "#2196f3",
+                  "#ff9800",
+                  "#e91e63",
+                  "#9c27b0",
+                  "#00bcd4",
+                  "#ffeb3b",
+                  "#8bc34a",
+                  "#3f51b5",
+                  "#f44336",
+                  "#009688",
+                  "#ff5722",
+                  "#cddc39",
+                  "#03a9f4",
+                  "#ffc107",
+                  "#673ab7",
+                  "#795548",
+                  "#607d8b",
+                  "#4caf50",
+                  "#2196f3",
+                ][index % 20], // 20 distinct colors, cycling through them
+                stroke: "var(--background)",
+                strokeWidth: 2,
+              }))}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={60}
+              strokeWidth={5}
+            >
+              <Label
+                content={({ viewBox }) => {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    return (
+                      <text
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        <tspan
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          className="fill-foreground text-3xl font-bold"
+                        >
+                          {assets.length.toLocaleString()}
+                        </tspan>
+                        <tspan
+                          x={viewBox.cx}
+                          y={(viewBox.cy || 0) + 24}
+                          className="fill-muted-foreground"
+                        >
+                          Holdings
+                        </tspan>
+                      </text>
+                    );
+                  }
+                }}
+              />
+            </Pie>
+            <ChartLegend
+              content={<ChartLegendContent nameKey="name" />}
+              className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"
+            />
+          </PieChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
   );
 }
