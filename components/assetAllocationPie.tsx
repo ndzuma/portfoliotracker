@@ -73,8 +73,8 @@ export function AssetAllocationPie({ value, assets }: AssetAllocation) {
       <PieChart>
         <Pie
           data={assets.map((asset, index) => ({
-            name: asset.symbol,
-            value: asset.allocation || (asset.value / value) * 100,
+            name: asset.name,
+            value: asset.allocation || (asset.currentValue / value) * 100,
             // Use a diverse palette of 16+ colors, avoiding black
             fill: [
               "#4caf50",

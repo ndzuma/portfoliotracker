@@ -36,7 +36,6 @@ import {
   Edit,
   Trash2,
   Calendar,
-  Target,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
@@ -48,27 +47,24 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
 import { AssetAllocationPie } from "@/components/assetAllocationPie";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface Asset {
-  id: string;
-  symbol: string;
+  _id: string;
+  symbol?: string;
   name: string;
-  type: "stock" | "property" | "commodity" | "bond";
-  value: number;
+  type: "stock" | "real estate" | "commodity" | "bond" | "cash" | "crypto" | "other";
+  currentValue: number;
   change: number;
   changePercent: number;
   allocation: number;
-  shares?: number;
+  quantity?: number;
   avgBuyPrice: number;
   currentPrice: number;
 }
@@ -79,97 +75,16 @@ interface ChartConfig {
 }
 
 interface Portfolio {
-  id: string;
+  _id: string;
   name: string;
   description: string;
-  value: number;
+  currentValue: number;
   change: number;
   changePercent: number;
   stocks: number;
-  modified: string;
   assets: any[]; // Using any[] to accommodate API response format
 }
 
-const mockAssets: Asset[] = [
-  {
-    id: "1",
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    type: "stock",
-    value: 8500.0,
-    change: 250.0,
-    changePercent: 3.03,
-    allocation: 31.5,
-    shares: 50,
-    avgBuyPrice: 165.0,
-    currentPrice: 170.0,
-  },
-  {
-    id: "2",
-    symbol: "MSFT",
-    name: "Microsoft Corporation",
-    type: "stock",
-    value: 6200.0,
-    change: -120.0,
-    changePercent: -1.9,
-    allocation: 23.0,
-    shares: 25,
-    avgBuyPrice: 252.0,
-    currentPrice: 248.0,
-  },
-  {
-    id: "3",
-    symbol: "GOOGL",
-    name: "Alphabet Inc.",
-    type: "stock",
-    value: 4800.0,
-    change: 180.0,
-    changePercent: 3.9,
-    allocation: 17.8,
-    shares: 20,
-    avgBuyPrice: 235.0,
-    currentPrice: 240.0,
-  },
-  {
-    id: "4",
-    symbol: "REIT-1",
-    name: "Real Estate Investment Trust",
-    type: "property",
-    value: 3200.0,
-    change: 45.0,
-    changePercent: 1.43,
-    allocation: 11.9,
-    shares: 100,
-    avgBuyPrice: 31.55,
-    currentPrice: 32.0,
-  },
-  {
-    id: "5",
-    symbol: "GOLD",
-    name: "Gold Commodity Fund",
-    type: "commodity",
-    value: 2800.0,
-    change: -85.0,
-    changePercent: -2.95,
-    allocation: 10.4,
-    shares: 150,
-    avgBuyPrice: 19.23,
-    currentPrice: 18.67,
-  },
-  {
-    id: "6",
-    symbol: "BOND-1",
-    name: "Government Bond Fund",
-    type: "bond",
-    value: 1450.0,
-    change: 12.0,
-    changePercent: 0.83,
-    allocation: 5.4,
-    shares: 75,
-    avgBuyPrice: 19.17,
-    currentPrice: 19.33,
-  },
-];
 
 const performanceData = [
   { month: "Jan", value: 24500 },
@@ -180,18 +95,6 @@ const performanceData = [
   { month: "Jun", value: 26950 },
 ];
 
-const allocationData = mockAssets.map((asset) => ({
-  name: asset.symbol,
-  value: asset.allocation,
-  fill:
-    asset.type === "stock"
-      ? "#4caf50"
-      : asset.type === "property"
-        ? "#2196f3"
-        : asset.type === "commodity"
-          ? "#ffc107"
-          : "#9c27b0",
-}));
 
 const chartConfig = {
   value: {
@@ -231,12 +134,17 @@ function AssetRow({
 }) {
   const isPositive = asset.change >= 0;
 
-  const getYahooFinanceLink = (symbol: string, type: string) => {
-    if (type === "property") return null;
-    return `https://finance.yahoo.com/quote/${symbol}`;
+  const getAssetLink = (asset: Asset) => {
+    if (asset.type === "crypto") {
+      return `https://www.coingecko.com/en/coins/${asset.name}`;
+    }
+    if (asset.type === "stock" || asset.type === "bond") {
+      return `https://finance.yahoo.com/quote/${asset.symbol}`;
+    }
+    return null;
   };
 
-  const yahooLink = getYahooFinanceLink(asset.symbol, asset.type);
+  const assetLink = getAssetLink(asset);
 
   return (
     <div className="flex items-center gap-4 py-4 px-6 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0">
@@ -245,9 +153,9 @@ function AssetRow({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-foreground">{asset.symbol}</h3>
-              {yahooLink && (
+              {assetLink && (
                 <a
-                  href={yahooLink}
+                  href={assetLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-foreground transition-colors"
@@ -262,9 +170,9 @@ function AssetRow({
       </div>
 
       <div className="text-right min-w-[100px]">
-        <div className="font-semibold">${asset.value.toLocaleString()}</div>
+        <div className="font-semibold">${asset.currentValue.toLocaleString()}</div>
         <div className="text-sm text-muted-foreground">
-          {asset.shares} shares
+          {asset.quantity} shares
         </div>
       </div>
 
@@ -331,10 +239,13 @@ function AssetSection({
   onEdit: (asset: Asset) => void;
   onDelete: (id: string) => void;
 }) {
-  if (assets.length === 0) return null;
+  if (assets.length === 0) {
+    return null;
+  }
+  
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 pt-6 pb-0">
       <CardHeader>
         <CardTitle>
           {title} ({assets.length})
@@ -363,7 +274,7 @@ function AssetSection({
 
         {assets.map((asset) => (
           <AssetRow
-            key={asset.id}
+            key={asset._id}
             asset={asset}
             onEdit={onEdit}
             onDelete={onDelete}
@@ -382,7 +293,7 @@ export default function PortfolioDetail({
   // Properly unwrap params using React.use()
   const unwrappedParams = use(params);
   const portfolioId = unwrappedParams.id;
-  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
+
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -396,76 +307,18 @@ export default function PortfolioDetail({
     avgBuyPrice: "",
     currentPrice: "",
   });
-  const [loading, setLoading] = useState(true);
+  
+  // convex operations
+  const portfolio = useQuery(api.portfolios.getPortfolioById, {portfolioId: portfolioId});
 
-  // Fetch portfolio data
-  useEffect(() => {
-    async function fetchPortfolio() {
-      try {
-        const response = await fetch("/api/portfolios");
-        const data = await response.json();
 
-        // Find the portfolio with matching ID
-        const foundPortfolio = data.personal.find(
-          (p: Portfolio) => p.id === portfolioId,
-        );
-
-        if (foundPortfolio) {
-          setPortfolio(foundPortfolio);
-
-          // Transform API assets to match our component's Asset interface
-          const transformedAssets = foundPortfolio.assets.map((asset: any) => ({
-            ...asset,
-            shares: asset.quantity,
-            type: mapAssetType(asset.type),
-            // Calculate derived values if not present
-            change:
-              asset.change ||
-              (asset.currentPrice - asset.avgBuyPrice) * asset.quantity,
-            changePercent:
-              asset.changePercent ||
-              ((asset.currentPrice - asset.avgBuyPrice) / asset.avgBuyPrice) *
-                100,
-            allocation:
-              asset.allocation || (asset.value / foundPortfolio.value) * 100,
-          }));
-
-          setAssets(transformedAssets);
-        }
-      } catch (error) {
-        console.error("Failed to fetch portfolio data:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchPortfolio();
-  }, [portfolioId]);
-
-  // Map API asset types to our component types
-  const mapAssetType = (type: string): Asset["type"] => {
-    const typeMap: Record<string, Asset["type"]> = {
-      stocks: "stock",
-      bonds: "bond",
-      commodities: "commodity",
-      "real estate": "property",
-    };
-    return typeMap[type] || (type as Asset["type"]);
-  };
-
-  const totalValue =
-    portfolio?.value || assets.reduce((sum, asset) => sum + asset.value, 0);
-  const totalChange =
-    portfolio?.change ||
-    assets.reduce((sum, asset) => sum + (asset.change || 0), 0);
-  const totalChangePercent =
-    portfolio?.changePercent ||
-    (totalChange / (totalValue - totalChange)) * 100;
-
-  const stockAssets = assets.filter((asset) => asset.type === "stock");
-  const propertyAssets = assets.filter((asset) => asset.type === "property");
-  const commodityAssets = assets.filter((asset) => asset.type === "commodity");
-  const bondAssets = assets.filter((asset) => asset.type === "bond");
+  const stockAssets = portfolio?.assets.filter((asset) => asset.type === "stock") || [];
+  const propertyAssets = portfolio?.assets.filter((asset) => asset.type === "real estate") || [];
+  const commodityAssets = portfolio?.assets.filter((asset) => asset.type === "commodity") || [];
+  const bondAssets = portfolio?.assets.filter((asset) => asset.type === "bond")|| [];
+  const cashAssets = portfolio?.assets.filter((asset) => asset.type === "cash")|| [];
+  const cryptoAssets = portfolio?.assets.filter((asset) => asset.type === "crypto")|| [];
+  const otherAssets = portfolio?.assets.filter((asset) => asset.type === "other")|| [];
 
   const handleAddAsset = () => {
     const shares = Number.parseFloat(newAsset.shares);
@@ -486,7 +339,7 @@ export default function PortfolioDetail({
     const changePercent = ((currentPrice - avgPrice) / avgPrice) * 100;
 
     const asset: Asset = {
-      id: Date.now().toString(),
+      _id: Date.now().toString(),
       symbol: newAsset.symbol.toUpperCase(),
       name: newAsset.name,
       type: newAsset.type,
@@ -614,7 +467,7 @@ export default function PortfolioDetail({
                         <SelectItem value="stock">Stock</SelectItem>
                         <SelectItem value="bond">Bond</SelectItem>
                         <SelectItem value="commodity">Commodity</SelectItem>
-                        <SelectItem value="property">
+                        <SelectItem value="real estate">
                           Real Estate/Property
                         </SelectItem>
                       </SelectContent>
@@ -682,20 +535,20 @@ export default function PortfolioDetail({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${loading ? "..." : totalValue.toLocaleString()}
+                ${ portfolio?.currentValue.toLocaleString()}
               </div>
               <div
-                className={`text-sm flex items-center gap-2 mt-2 ${totalChange >= 0 ? "text-primary" : "text-secondary"}`}
+                className={`text-sm flex items-center gap-2 mt-2 ${portfolio?.change || 0 >= 0 ? "text-primary" : "text-secondary"}`}
               >
-                {totalChange >= 0 ? (
+                {portfolio?.change || 0 >= 0 ? (
                   <TrendingUp className="h-4 w-4" />
                 ) : (
                   <TrendingDown className="h-4 w-4" />
                 )}
-                {totalChange >= 0 ? "+" : ""}$
-                {loading ? "..." : Math.abs(totalChange).toLocaleString()} (
-                {totalChange >= 0 ? "+" : ""}
-                {loading ? "..." : totalChangePercent.toFixed(2)}%)
+                {portfolio?.change || 0 >= 0 ? "+" : ""}$
+                {Math.abs(portfolio?.change || 0).toLocaleString()} (
+                {portfolio?.change || 0 >= 0 ? "+" : ""}
+                {portfolio?.changePercent.toFixed(2)}%)
               </div>
             </CardContent>
           </Card>
@@ -708,7 +561,7 @@ export default function PortfolioDetail({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {loading ? "..." : assets.length}
+                {portfolio?.assets.length}
               </div>
               <div className="text-sm text-muted-foreground">
                 Different holdings
@@ -789,7 +642,7 @@ export default function PortfolioDetail({
               <CardTitle>Asset Allocation</CardTitle>
             </CardHeader>
             <CardContent>
-              <AssetAllocationPie value={totalValue} assets={assets} />
+              <AssetAllocationPie value={portfolio?.currentValue || 0} assets={portfolio?.assets || []} />
             </CardContent>
           </Card>
         </div>
@@ -803,6 +656,12 @@ export default function PortfolioDetail({
           <AssetSection
             title="Stocks"
             assets={stockAssets}
+            onEdit={handleEditAsset}
+            onDelete={handleDeleteAsset}
+          />
+          <AssetSection
+            title="Cryptocurrencies"
+            assets={cryptoAssets}
             onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
           />
@@ -821,6 +680,18 @@ export default function PortfolioDetail({
           <AssetSection
             title="Bonds"
             assets={bondAssets}
+            onEdit={handleEditAsset}
+            onDelete={handleDeleteAsset}
+          />
+          <AssetSection
+            title="Cash"
+            assets={cashAssets}
+            onEdit={handleEditAsset}
+            onDelete={handleDeleteAsset}
+          />
+          <AssetSection
+            title="Other Assets"
+            assets={otherAssets}
             onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
           />
