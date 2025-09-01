@@ -54,7 +54,6 @@ export const getUserPorfolios = query({
       })
     )
     
-    console.log("Portfolios fetched:", results);
     return results;
   },
 });
