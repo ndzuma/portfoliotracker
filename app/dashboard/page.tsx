@@ -22,13 +22,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Plus,
   TrendingUp,
   TrendingDown,
@@ -37,12 +30,11 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Sparkles,
-  Calendar,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { ChartRadialStacked } from "@/components/allocationRadial";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 interface Portfolio {
@@ -107,18 +99,59 @@ function MarketNewsCard({
   title: string;
   content: string;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <Card className="p-6 bg-card border-border h-full">
-      <div className="flex flex-col h-full">
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-medium text-foreground">{title}</h3>
+    <>
+      <Card className="p-6 bg-[radial-gradient(circle_at_top_left,_#8d745d_0%,_transparent_30%)] border-[#8d745d] h-full relative">
+        <div className="flex flex-col h-full">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-medium text-foreground">{title}</h3>
+          </div>
+          <p className="text-sm font-medium mb-2 text-primary">
+            Daily Market Insight
+          </p>
+          <div
+            className="text-sm text-muted-foreground leading-relaxed flex-1 overflow-hidden"
+            style={{
+              maxHeight: "60px",
+              position: "relative",
+              WebkitMaskImage:
+                "linear-gradient(to bottom, black 60%, transparent 100%)",
+            }}
+          >
+            <p>{content}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setExpanded(true)}
+            className="mt-2 opacity-70 hover:opacity-100 transition-opacity self-start flex items-center"
+          >
+            Expand
+          </Button>
         </div>
-        <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-          {content}
-        </p>
-      </div>
-    </Card>
+      </Card>
+
+      <Dialog open={expanded} onOpenChange={setExpanded}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <p className="text-primary mt-2">Daily Market Insight</p>
+          </DialogHeader>
+          <div className="mt-4 text-muted-foreground">{content}</div>
+          <div className="mt-6 pt-4 border-t border-border">
+            <p className="text-xs text-muted-foreground italic">
+              <span className="font-semibold">AI Risk Warning:</span> This
+              AI-generated market summary is for informational purposes only and
+              should not be considered financial advice. Always consult with a
+              qualified financial advisor before making investment decisions.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -164,7 +197,9 @@ function PortfolioRow({
       </div>
 
       <div className="text-right min-w-[100px]">
-        <div className="font-semibold">${portfolio.currentValue.toLocaleString()}</div>
+        <div className="font-semibold">
+          ${portfolio.currentValue.toLocaleString()}
+        </div>
       </div>
 
       <div className="text-center min-w-[80px]">
@@ -188,7 +223,7 @@ function PortfolioRow({
               Edit Portfolio
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => onDelete(portfolio.id)}
+              onClick={() => onDelete(portfolio._id)}
               className="text-secondary focus:text-secondary"
             >
               <Trash2 className="h-4 w-4 mr-2" />
@@ -203,39 +238,27 @@ function PortfolioRow({
 
 export default function PortfoliosDashboard() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isAddAssetModalOpen, setIsAddAssetModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(
-    null,
-  );
-  const [portfolios, setPortfolios] = useState<{ personal: Portfolio[] }>({
-    personal: [],
-  });
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPortfolio, setNewPortfolio] = useState({
     name: "",
     description: "",
-    type: "personal",
-    initialInvestment: "",
   });
-  const [newAsset, setNewAsset] = useState({
-    symbol: "",
-    quantity: "",
-    avgBuyPrice: "",
-    portfolioId: "",
-  });
-  
-  // convex operations
-  const userId = "j576kyne380kcc0d7k94na1atn7pre7j"
-  const usersName = useQuery(api.users.getUsersName, {userId: userId})
-  const userPortfolios = useQuery(api.portfolios.getUserPorfolios, {userId: userId}) || [];
 
+
+  // convex operations
+  const userId = "j576kyne380kcc0d7k94na1atn7pre7j";
+  const usersName = useQuery(api.users.getUsersName, { userId: userId });
+  const userPortfolios = useQuery(api.portfolios.getUserPorfolios, { userId: userId }) || [];
+  const createPortfolio = useMutation(api.portfolios.createPortfolio);
+  const editPortfolio = useMutation(api.portfolios.updatePortfolio);
+  const deletePortfolio = useMutation(api.portfolios.deletePortfolio);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ benchmarksResponse] = await Promise.all([
+        const [benchmarksResponse] = await Promise.all([
           fetch("/api/benchmarks"),
         ]);
 
@@ -264,77 +287,48 @@ export default function PortfoliosDashboard() {
     totalValue > 0 ? (totalChange / (totalValue - totalChange)) * 100 : 0;
 
   const handleCreatePortfolio = () => {
-    console.log("Creating portfolio:", newPortfolio);
+    createPortfolio({
+      userId: userId,
+      name: newPortfolio.name,
+      description: newPortfolio.description,
+    });
     setNewPortfolio({
       name: "",
       description: "",
-      type: "personal",
-      initialInvestment: "",
     });
     setIsCreateModalOpen(false);
   };
 
-  const handleAddAsset = () => {
-    console.log("Adding asset:", newAsset);
-    setNewAsset({
-      symbol: "",
-      quantity: "",
-      avgBuyPrice: "",
-      portfolioId: "",
-    });
-    setIsAddAssetModalOpen(false);
-  };
-
   const handleEditPortfolio = (portfolio: Portfolio) => {
-    setEditingPortfolio(portfolio);
     setNewPortfolio({
+      id: portfolio._id,
       name: portfolio.name,
       description: portfolio.description,
-      type: "personal",
-      initialInvestment: portfolio.currentValue.toString(),
     });
     setIsEditModalOpen(true);
   };
 
   const handleDeletePortfolio = (portfolioId: string) => {
-    if (confirm("Are you sure you want to delete this portfolio?")) {
-      setPortfolios((prev) => ({
-        ...prev,
-        personal: prev.personal.filter((p) => p.id !== portfolioId),
-      }));
-    }
+    deletePortfolio({ portfolioId: portfolioId, userId: userId });
   };
 
   const handleUpdatePortfolio = () => {
-    if (!editingPortfolio) return;
-
-    setPortfolios((prev) => ({
-      ...prev,
-      personal: prev.personal.map((p) =>
-        p.id === editingPortfolio.id
-          ? {
-              ...p,
-              name: newPortfolio.name,
-              description: newPortfolio.description,
-            }
-          : p,
-      ),
-    }));
-
+    editPortfolio({
+      portfolioId: newPortfolio.id,
+      userId: userId,
+      name: newPortfolio.name,
+      description: newPortfolio.description,
+    });
     setIsEditModalOpen(false);
-    setEditingPortfolio(null);
     setNewPortfolio({
       name: "",
       description: "",
-      type: "personal",
-      initialInvestment: "",
     });
   };
 
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex bg-background items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -349,109 +343,6 @@ export default function PortfoliosDashboard() {
             Hello, {usersName}
           </h1>
           <div className="flex gap-3">
-            <Dialog
-              open={isAddAssetModalOpen}
-              onOpenChange={setIsAddAssetModalOpen}
-            >
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Assets
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Add Asset</DialogTitle>
-                  <DialogDescription>
-                    Add a new asset to one of your portfolios.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="portfolio">Portfolio</Label>
-                    <Select
-                      value={newAsset.portfolioId}
-                      onValueChange={(value) =>
-                        setNewAsset({ ...newAsset, portfolioId: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select portfolio" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {portfolios.personal.map((portfolio) => (
-                          <SelectItem key={portfolio.id} value={portfolio.id}>
-                            {portfolio.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="symbol">Symbol</Label>
-                    <Input
-                      id="symbol"
-                      placeholder="e.g., AAPL"
-                      value={newAsset.symbol}
-                      onChange={(e) =>
-                        setNewAsset({
-                          ...newAsset,
-                          symbol: e.target.value.toUpperCase(),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="quantity">Quantity</Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      placeholder="Number of shares"
-                      value={newAsset.quantity}
-                      onChange={(e) =>
-                        setNewAsset({ ...newAsset, quantity: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="avgPrice">Average Buy Price</Label>
-                    <Input
-                      id="avgPrice"
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={newAsset.avgBuyPrice}
-                      onChange={(e) =>
-                        setNewAsset({
-                          ...newAsset,
-                          avgBuyPrice: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsAddAssetModalOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleAddAsset}
-                    disabled={
-                      !newAsset.symbol ||
-                      !newAsset.quantity ||
-                      !newAsset.avgBuyPrice ||
-                      !newAsset.portfolioId
-                    }
-                  >
-                    Add Asset
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
             <Dialog
               open={isCreateModalOpen}
               onOpenChange={setIsCreateModalOpen}
@@ -498,53 +389,6 @@ export default function PortfoliosDashboard() {
                         })
                       }
                       rows={3}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="type">Portfolio Type</Label>
-                    <Select
-                      value={newPortfolio.type}
-                      onValueChange={(value) =>
-                        setNewPortfolio({ ...newPortfolio, type: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select portfolio type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="personal">
-                          Personal Investment
-                        </SelectItem>
-                        <SelectItem value="retirement">
-                          Retirement Fund
-                        </SelectItem>
-                        <SelectItem value="education">
-                          Education Savings
-                        </SelectItem>
-                        <SelectItem value="emergency">
-                          Emergency Fund
-                        </SelectItem>
-                        <SelectItem value="speculative">
-                          Speculative Trading
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="initial">
-                      Initial Investment (Optional)
-                    </Label>
-                    <Input
-                      id="initial"
-                      type="number"
-                      placeholder="0.00"
-                      value={newPortfolio.initialInvestment}
-                      onChange={(e) =>
-                        setNewPortfolio({
-                          ...newPortfolio,
-                          initialInvestment: e.target.value,
-                        })
-                      }
                     />
                   </div>
                 </div>
@@ -663,8 +507,8 @@ export default function PortfoliosDashboard() {
             ))}
           </div>
           <MarketNewsCard
-            title="Market Summary"
-            content="Stocks rallied today as investors reacted positively to economic data indicating a steady recovery. The S&P 500 closed up 1.2%, led by gains in the technology and consumer discretionary sectors."
+            title="AI Market Summary"
+            content="Stocks rallied today as investors reacted positively to economic data indicating a steady recovery. The S&P 500 closed up 1.2%, led by gains in the technology and consumer discretionary sectors. Trading volumes were higher than average, suggesting strong conviction in this upward movement. Key resistance levels were broken, potentially indicating further upside in the coming sessions."
           />
         </div>
 

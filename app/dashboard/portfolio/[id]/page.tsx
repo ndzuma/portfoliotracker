@@ -44,6 +44,8 @@ import {
   FileDown,
   LinkIcon,
   PlusCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
 import { AssetSection } from "./components/AssetSection";
@@ -66,6 +68,7 @@ export default function PortfolioDetail({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
+  const [isBunkerCollapsed, setIsBunkerCollapsed] = useState(true);
   const [newAsset, setNewAsset] = useState({
     symbol: "",
     name: "",
@@ -388,33 +391,53 @@ export default function PortfolioDetail({
         <Separator className="mb-6" />
 
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-foreground mb-6">
-            Bunker
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Goal Tracker Card - spans 2 rows */}
-            <GoalTrackerCard
-              portfolioValue={25000}
-              targetValue={100000}
-              annualReturn={5.8}
-              targetReturn={8}
-              monthlyContribution={500}
-              targetContribution={500}
-            />
-
-            {/* Document Storage Card */}
-            <DocumentStorageCard />
-
-            {/* Article Saver Card */}
-            <ArticleSaverCard />
-
-            {/* Performance Metrics Card */}
-            <PerformanceMetricsCard />
-
-            {/* Templates Card */}
-            <TemplatesCard />
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold text-foreground">Bunker</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsBunkerCollapsed(!isBunkerCollapsed)}
+              className="flex items-center gap-2"
+            >
+              {isBunkerCollapsed ? (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  <span>Expand</span>
+                </>
+              ) : (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  <span>Collapse</span>
+                </>
+              )}
+            </Button>
           </div>
+
+          {!isBunkerCollapsed && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Goal Tracker Card - spans 2 rows */}
+              <GoalTrackerCard
+                portfolioValue={25000}
+                targetValue={100000}
+                annualReturn={5.8}
+                targetReturn={8}
+                monthlyContribution={500}
+                targetContribution={500}
+              />
+
+              {/* Document Storage Card */}
+              <DocumentStorageCard />
+
+              {/* Article Saver Card */}
+              <ArticleSaverCard />
+
+              {/* Performance Metrics Card */}
+              <PerformanceMetricsCard />
+
+              {/* Templates Card */}
+              <TemplatesCard />
+            </div>
+          )}
         </div>
 
         <Separator className="mb-6" />
