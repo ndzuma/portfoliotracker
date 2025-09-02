@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pnpm install --no-frozen-lockfile && npx convex deploy --cmd 'npm run build'"
+
+[deploy]
+startCommand = "pnpm run start"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "never"
+
+[phases.setup]
+nixPkgs = ["nodejs_18", "pnpm-9_x"]

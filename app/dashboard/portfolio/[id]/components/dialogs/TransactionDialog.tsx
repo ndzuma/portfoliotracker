@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-
 import {
   Dialog,
   DialogContent,
@@ -32,8 +31,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  DollarSign,
-  Calendar,
   Edit,
   Trash2,
   Plus,
