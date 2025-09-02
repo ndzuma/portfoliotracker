@@ -1,5 +1,47 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+
+export const getUserByClerkId = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), args.clerkId))
+      .first();
+  },
+});
+
+export const createUser = mutation({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    clerkId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await ctx.db.insert("users", {
+      name: args.name,
+      email: args.email,
+      clerkId: args.clerkId,
+    });
+
+    // Create default user preferences
+    await ctx.db.insert("userPreferences", {
+      userId,
+      currency: "USD",
+      theme: "dark",
+      language: "en",
+    });
+
+    // Create a default portfolio
+    await ctx.db.insert("portfolios", {
+      userId,
+      name: "My First Portfolio",
+      description: "Track your investments here",
+    });
+
+    return userId;
+  },
+});
 
 export const getUsersName = query({
   args: { userId: v.union(v.id("users"), v.string()) },

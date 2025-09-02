@@ -36,6 +36,7 @@ import Link from "next/link";
 import { ChartRadialStacked } from "@/components/allocationRadial";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 
 interface Portfolio {
   _id: string;
@@ -246,11 +247,12 @@ export default function PortfoliosDashboard() {
     description: "",
   });
 
-
-  // convex operations
-  const userId = "j576kyne380kcc0d7k94na1atn7pre7j";
-  const usersName = useQuery(api.users.getUsersName, { userId: userId });
-  const userPortfolios = useQuery(api.portfolios.getUserPorfolios, { userId: userId }) || [];
+  // convex operations  
+  const { user } = useUser();
+  const convexUser = useQuery(api.users.getUserByClerkId, {clerkId: user?.id})
+  const userId = convexUser?._id
+  const usersName = user?.fullName
+  const userPortfolios = useQuery(api.portfolios.getUserPorfolios, { userId: convexUser?._id }) || [];
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
   const editPortfolio = useMutation(api.portfolios.updatePortfolio);
   const deletePortfolio = useMutation(api.portfolios.deletePortfolio);

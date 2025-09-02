@@ -44,6 +44,9 @@ export default function PortfolioDetail({
   const [isBunkerCollapsed, setIsBunkerCollapsed] = useState(true);
 
   // convex operations
+  const canUserAccess = useQuery(api.portfolios.canUserAccessPortfolio, {
+    portfolioId: portfolioId,
+  });
   const portfolio = useQuery(api.portfolios.getPortfolioById, {
     portfolioId: portfolioId,
   });
@@ -81,6 +84,27 @@ export default function PortfolioDetail({
       });
     }
   };
+  
+  if (!canUserAccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-foreground mb-4">
+            Access Denied
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            You do not have permission to view this portfolio.
+          </p>
+          <Link href="/dashboard">
+            <Button variant="ghost">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Portfolios
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+import Image from "next/image";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Briefcase },
@@ -20,21 +23,26 @@ const navigation = [
 ];
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const { user } = useUser();
 
   return (
     <div
-      className={`bg-[radial-gradient(circle_at_bottom_right,_#8d745d10_0%,_transparent_40%)] border-r border-[#8d745d]/30 transition-all duration-300 ${collapsed ? "w-16" : "w-64"}`}
+      className={`bg-[radial-gradient(circle_at_bottom_right,_#8d745d10_0%,_transparent_40%)] border-r border-[#8d745d]/30 ${collapsed ? "w-16" : "w-64"}`}
     >
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="p-4 border-b border-[#8d745d]/30">
           <div className="flex items-center justify-between">
             {!collapsed && (
-              <h1 className="text-xl font-semibold text-foreground">
-                Portfolio
-              </h1>
+              <Image
+                src="/pp-big.png"
+                alt="Logo"
+                width={150}
+                height={150}
+                className="object-contain"
+              />
             )}
             <Button
               variant="ghost"
@@ -78,21 +86,18 @@ export function Sidebar() {
         </nav>
 
         {/* Profile Section */}
-        <div className="p-4 border-t border-[#8d745d]/30">
+        <div className="p-4 border-t border-[#8d745d]/30 min-h-18 ">
           <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8 border border-[#8d745d]/50">
-              <AvatarImage src="/diverse-user-avatars.png" />
-              <AvatarFallback className="bg-[#8d745d]/20 text-primary">
-                JD
-              </AvatarFallback>
-            </Avatar>
+            <UserButton
+              appearance={{ elements: { userButtonAvatarBox: "w-10 h-10" } }}
+            />
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
-                  John Doe
+                  {user?.fullName}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
-                  john@example.com
+                  {user?.emailAddresses[0]?.emailAddress}
                 </p>
               </div>
             )}

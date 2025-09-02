@@ -7,7 +7,7 @@ const aiPlaceholderHeadline = "Portfolio Diversification Analysis";
 
 // Get all portfolios for a user with computed fields
 export const getUserPorfolios = query({
-  args: { 
+  args: {
     userId: v.union(v.id("users"), v.string()),
   },
   handler: async (ctx, args) => {
@@ -74,19 +74,41 @@ export const getUserPorfolios = query({
   },
 });
 
-// Get a single portfolio by ID with computed fields and AI summary
-export const getPortfolioById = query({
-  args: { 
+export const canUserAccessPortfolio = query({
+  args: {
     portfolioId: v.union(v.id("portfolios"), v.string()),
   },
   handler: async (ctx, args) => {
+    const isUsers = await ctx.auth.getUserIdentity();
+    if (!isUsers) {
+      return false;
+    }
+    const { subject } = isUsers;
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), subject))
+      .first();
+
     const portfolio = await ctx.db.get(args.portfolioId);
     if (!portfolio) {
-      throw new Error("Portfolio not found");
+      return false;
     }
+    if (portfolio.userId !== user?._id) {
+      return false;
+    }
+    return true;
+  },
+});
+
+// Get a single portfolio by ID with computed fields and AI summary
+export const getPortfolioById = query({
+  args: {
+    portfolioId: v.union(v.id("portfolios"), v.string()),
+  },
+  handler: async (ctx, args) => {
     const assets = await ctx.db
       .query("assets")
-      .withIndex("byPortfolio", (q) => q.eq("portfolioId", portfolio._id))
+      .withIndex("byPortfolio", (q) => q.eq("portfolioId", args.portfolioId))
       .collect();
     const assetIds = assets.map((a) => a._id);
     const transactionsByAsset: Record<string, any[]> = {};
@@ -137,30 +159,41 @@ export const getPortfolioById = query({
         : 0;
     }
 
+    // Get the portfolio information
+    const portfolio = await ctx.db.get(args.portfolioId);
+    if (!portfolio) {
+      throw new Error("Portfolio not found");
+    }
+
+    let aiHeadline = "";
+    let aiSummary = "";
+
     if (assets.length === 0) {
-      portfolio.aiHeadline = "No assets in portfolio";
-      portfolio.aiSummary = "Add assets to your portfolio to get insights.";
+      aiHeadline = "No assets in portfolio";
+      aiSummary = "Add assets to your portfolio to get insights.";
     } else {
       const latestSnapshot = await ctx.db
         .query("portfolioSnapshots")
-        .withIndex("byPortfolio", (q) => q.eq("portfolioId", portfolio._id))
+        .withIndex("byPortfolio", (q) => q.eq("portfolioId", args.portfolioId))
         .first();
       if (
         latestSnapshot &&
         latestSnapshot.aiHeadline &&
         latestSnapshot.aiSummary
       ) {
-        portfolio.aiHeadline = latestSnapshot.aiHeadline;
-        portfolio.aiSummary = latestSnapshot.aiSummary;
+        aiHeadline = latestSnapshot.aiHeadline;
+        aiSummary = latestSnapshot.aiSummary;
       } else {
         // temporary placeholder until AI integration is done
-        portfolio.aiHeadline = aiPlaceholderHeadline;
-        portfolio.aiSummary = aiPlaceholderSummary;
+        aiHeadline = aiPlaceholderHeadline;
+        aiSummary = aiPlaceholderSummary;
       }
     }
 
     const result = {
       ...portfolio,
+      aiHeadline,
+      aiSummary,
       costBasis: portfolioCostBasis,
       currentValue: portfolioCurrentValue,
       change: portfolioCurrentValue - portfolioCostBasis || 0,

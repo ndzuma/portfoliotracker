@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { useQuery, useMutation } from "convex/react";
+import { useUser } from "@clerk/nextjs";
+
 
 const SettingsPage = () => {
   const [language, setLanguage] = useState("en");
@@ -40,7 +42,9 @@ const SettingsPage = () => {
   const { theme, setTheme } = useTheme();
 
   // Convex operations
-  const userId = "j576kyne380kcc0d7k94na1atn7pre7j";
+  const { user } = useUser();
+  const convexUser = useQuery(api.users.getUserByClerkId, {clerkId: user?.id})
+  const userId = convexUser?._id
   const userPreferences = useQuery(api.users.getUserPreferences, { userId });
   const updatePreferences = useMutation(api.users.updateUserPreferences);
   const accountData = useQuery(api.users.extractAccountData, { userId });
