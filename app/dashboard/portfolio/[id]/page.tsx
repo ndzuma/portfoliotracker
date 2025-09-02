@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { Id } from "../../../../convex/_generated/dataModel";
 import { useParams } from "next/navigation";
 import { AISummaryCard } from "@/components/AISummaryCard";
 import {
@@ -26,11 +25,12 @@ import Link from "next/link";
 import { AssetSection } from "./components/AssetSection";
 import { Asset } from "./components/types";
 import { AssetAllocationPie } from "@/components/assetAllocationPie";
-import { api } from "../../../../convex/_generated/api";
 import { PorfolioPerformanceChart } from "@/components/PortfolioPerformance";
 import { AddAssetDialog } from "./components/dialogs/AddAssetDialog";
 import { EditPortfolioDialog } from "./components/dialogs/EditPortfolioDialog";
 import { EditAssetDialog } from "./components/dialogs/EditAssetDialog";
+import { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../convex/_generated/api";
 
 export default function PortfolioDetail({
   params,
@@ -39,16 +39,15 @@ export default function PortfolioDetail({
 }) {
   const routeParams = useParams();
   const portfolioId = routeParams.id as string;
-
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isBunkerCollapsed, setIsBunkerCollapsed] = useState(true);
-  const deleteAsset = useMutation(api.assets.deleteAsset);
 
   // convex operations
   const portfolio = useQuery(api.portfolios.getPortfolioById, {
     portfolioId: portfolioId,
   });
+  const deleteAsset = useMutation(api.assets.deleteAsset);
 
   // Filter assets by type
   const stockAssets =

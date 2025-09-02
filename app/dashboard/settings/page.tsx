@@ -1,6 +1,5 @@
 "use client";
 
-import type React from "react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +18,9 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 import {
   Download,
   Globe,
@@ -29,84 +29,66 @@ import {
   FileText,
   Save,
 } from "lucide-react";
+import { api } from "../../../convex/_generated/api";
+import { useQuery, useMutation } from "convex/react";
 
-const SettingsPage: React.FC = () => {
+const SettingsPage = () => {
   const [language, setLanguage] = useState("en");
   const [currency, setCurrency] = useState("USD");
   const [darkMode, setDarkMode] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const { theme, setTheme } = useTheme();
-  const { toast } = useToast();
+
+  // Convex operations
+  const userId = "j576kyne380kcc0d7k94na1atn7pre7j";
+  const userPreferences = useQuery(api.users.getUserPreferences, { userId });
+  const updatePreferences = useMutation(api.users.updateUserPreferences);
+  const accountData = useQuery(api.users.extractAccountData, { userId });
 
   useEffect(() => {
-    // Only access localStorage on the client side
-    if (typeof window !== "undefined") {
-      const savedLanguage = localStorage.getItem("portfolio-language") || "en";
-      const savedCurrency = localStorage.getItem("portfolio-currency") || "USD";
-      const savedDarkMode =
-        localStorage.getItem("portfolio-dark-mode") === "true";
-
-      setLanguage(savedLanguage);
-      setCurrency(savedCurrency);
-      setDarkMode(savedDarkMode);
+    if (userPreferences) {
+      setLanguage(userPreferences.language || "en");
+      setCurrency(userPreferences.currency || "USD");
+      setDarkMode(userPreferences.theme === "dark");
     }
-  }, []);
+  }, [userPreferences]);
 
-  const handleSaveSettings = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("portfolio-language", language);
-      localStorage.setItem("portfolio-currency", currency);
-      localStorage.setItem("portfolio-dark-mode", darkMode.toString());
-    }
-
-    // Apply theme change
+  const handleSaveSettings = async () => {
+    // Update theme in NextJS
     setTheme(darkMode ? "dark" : "light");
 
-    toast({
-      title: "Settings saved",
-      description: "Your preferences have been updated successfully.",
-    });
+    try {
+      // Update preferences in Convex
+      await updatePreferences({
+        userId,
+        language,
+        currency,
+        theme: darkMode ? "dark" : "light",
+      });
+
+      toast.success("Settings saved", {
+        description: "Your preferences have been updated successfully.",
+      });
+    } catch (error) {
+      toast.error("Error saving settings", {
+        description:
+          error instanceof Error ? error.message : "Please try again later",
+      });
+    }
   };
 
-  const handleExportPortfolio = (format: string) => {
-    const portfolioData = {
-      portfolios: [
-        {
-          name: "Alex portfolio #1",
-          value: 26950,
-          assets: [
-            { symbol: "AAPL", name: "Apple Inc.", value: 8500, shares: 50 },
-            {
-              symbol: "MSFT",
-              name: "Microsoft Corporation",
-              value: 6200,
-              shares: 25,
-            },
-            { symbol: "GOOGL", name: "Alphabet Inc.", value: 4800, shares: 20 },
-          ],
-        },
-      ],
-      exportDate: new Date().toISOString(),
-      currency: currency,
-    };
+  const handleExportPortfolio = async () => {
+    try {
+      setIsExporting(true);
 
-    if (format === "CSV") {
-      const csvContent = [
-        "Symbol,Name,Value,Shares",
-        ...portfolioData.portfolios[0].assets.map(
-          (asset) =>
-            `${asset.symbol},${asset.name},${asset.value},${asset.shares}`,
-        ),
-      ].join("\n");
+      // Create a simple export with user preferences
+      const exportData = {
+        accountData,
+        exportDate: new Date().toISOString(),
+        exportVersion: "1.0",
+      };
 
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `portfolio-export-${new Date().toISOString().split("T")[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } else if (format === "JSON") {
-      const jsonContent = JSON.stringify(portfolioData, null, 2);
+      const jsonContent = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonContent], { type: "application/json" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -114,50 +96,103 @@ const SettingsPage: React.FC = () => {
       a.download = `portfolio-export-${new Date().toISOString().split("T")[0]}.json`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } else {
-      // For PDF and Excel, show a toast indicating the feature
-      toast({
-        title: `${format} Export`,
-        description: `${format} export functionality would be implemented here with a proper library.`,
-      });
-    }
 
-    toast({
-      title: "Export started",
-      description: `Your portfolio data is being exported as ${format}.`,
-    });
+      toast.success("Export complete", {
+        description: "Your portfolio data has been exported as JSON.",
+      });
+    } catch (error) {
+      toast.error("Export failed", {
+        description:
+          error instanceof Error ? error.message : "Please try again later",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-semibold text-foreground mb-6">Settings</h1>
+    <div className="p-6 max-w-5xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your account preferences and application settings
+          </p>
+        </div>
+        <Button
+          onClick={handleSaveSettings}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          Save Changes
+        </Button>
+      </div>
 
-      <div className="grid gap-6 max-w-4xl">
-        {/* Language Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
+      <div className="grid gap-6">
+        {/* Appearance Settings */}
+        <Card className="border border-[#8d745d]/30 bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg font-semibold">
+              <Palette className="h-5 w-5 mr-2 text-primary" />
+              Appearance
+            </CardTitle>
+            <CardDescription>
+              Customize the look and feel of your portfolio dashboard
+            </CardDescription>
+          </CardHeader>
+          <Separator className="bg-[#8d745d]/20" />
+          <CardContent className="pt-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="dark-mode" className="font-medium">
+                  Dark Mode
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Switch between light and dark themes
+                </p>
+              </div>
+              <Switch
+                id="dark-mode"
+                checked={darkMode}
+                onCheckedChange={(checked) => {
+                  setDarkMode(checked);
+                  setTheme(checked ? "dark" : "light");
+                }}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Current theme: {theme === "dark" ? "Dark" : "Light"}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Language & Region Settings */}
+        <Card className="border border-[#8d745d]/30 bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg font-semibold">
+              <Globe className="h-5 w-5 mr-2 text-primary" />
               Language & Region
             </CardTitle>
             <CardDescription>
               Configure your preferred language and regional settings
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <Separator className="bg-[#8d745d]/20" />
+          <CardContent className="pt-4 space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="language">Display Language</Label>
+              <Label htmlFor="language" className="font-medium">
+                Display Language
+              </Label>
               <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  id="language"
+                  className="w-full border-[#8d745d]/30"
+                >
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="es">Español</SelectItem>
-                  <SelectItem value="fr">Français</SelectItem>
-                  <SelectItem value="de">Deutsch</SelectItem>
-                  <SelectItem value="zh">中文</SelectItem>
-                  <SelectItem value="ja">日本語</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -165,21 +200,27 @@ const SettingsPage: React.FC = () => {
         </Card>
 
         {/* Currency Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
+        <Card className="border border-[#8d745d]/30 bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg font-semibold">
+              <DollarSign className="h-5 w-5 mr-2 text-primary" />
               Currency Settings
             </CardTitle>
             <CardDescription>
               Set your preferred currency for displaying portfolio values
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <Separator className="bg-[#8d745d]/20" />
+          <CardContent className="pt-4 space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="currency">Base Currency</Label>
+              <Label htmlFor="currency" className="font-medium">
+                Base Currency
+              </Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  id="currency"
+                  className="w-full border-[#8d745d]/30"
+                >
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -196,103 +237,35 @@ const SettingsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Theme Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5" />
-              Appearance
-            </CardTitle>
-            <CardDescription>
-              Customize the look and feel of your portfolio dashboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="dark-mode">Dark Mode</Label>
-                <p className="text-sm text-muted-foreground">
-                  Switch between light and dark themes
-                </p>
-              </div>
-              <Switch
-                id="dark-mode"
-                checked={darkMode}
-                onCheckedChange={(checked) => {
-                  setDarkMode(checked);
-                  setTheme(checked ? "dark" : "light");
-                }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Current theme: {theme === "dark" ? "Dark" : "Light"}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Export Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+        {/* Export Portfolio */}
+        <Card className="border border-[#8d745d]/30 bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg font-semibold">
+              <FileText className="h-5 w-5 mr-2 text-primary" />
               Export Portfolio
             </CardTitle>
             <CardDescription>
               Download your portfolio data in various formats
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <Separator className="bg-[#8d745d]/20" />
+          <CardContent className="pt-4 space-y-4">
+            <div className="grid sm:grid-cols-2 gap-3">
               <Button
                 variant="outline"
-                onClick={() => handleExportPortfolio("PDF")}
-                className="flex items-center gap-2"
+                onClick={handleExportPortfolio}
+                disabled={isExporting}
+                className="flex items-center gap-2 border-[#8d745d]/30 hover:bg-[#8d745d]/10"
               >
                 <Download className="h-4 w-4" />
-                Export as PDF
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleExportPortfolio("CSV")}
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Export as CSV
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleExportPortfolio("Excel")}
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Export as Excel
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleExportPortfolio("JSON")}
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Export as JSON
+                {isExporting ? "Exporting..." : "Export as JSON"}
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              Exported files will include all portfolio holdings, performance
-              data, and transaction history.
+              Export your settings as a JSON file.
             </p>
           </CardContent>
         </Card>
-
-        {/* Save Settings */}
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSaveSettings}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Save Settings
-          </Button>
-        </div>
       </div>
     </div>
   );

@@ -6,11 +6,12 @@ export default defineSchema({
     name: v.string(),
     email: v.string(),
   }),
-  user_preferences: defineTable({
+  userPreferences: defineTable({
     userId: v.id("users"),
-    theme: v.union(v.literal("light"), v.literal("dark"), v.literal("system")),
-    currency: v.string(), // e.g., "USD", "EUR"
-  }),
+    theme: v.union(v.literal("light"), v.literal("dark")),
+    currency: v.string(),
+    language: v.string(),
+  }).index("byUser", ["userId"]),
   portfolios: defineTable({
     userId: v.id("users"),
     name: v.string(),
