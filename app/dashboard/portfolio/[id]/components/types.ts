@@ -22,6 +22,7 @@ export interface Asset {
   quantity?: number;
   avgBuyPrice: number;
   currentPrice: number;
+  currency?: string;
   // Additional fields that may come from API
   _creationTime?: number;
   notes?: string;

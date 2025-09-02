@@ -27,18 +27,15 @@ export default defineSchema({
       v.literal("real estate"),
       v.literal("cash"),
       v.literal("crypto"),
-      v.literal("other")
+      v.literal("other"),
     ),
     currentPrice: v.optional(v.number()),
+    currency: v.optional(v.string()),
     notes: v.optional(v.string()),
   }).index("byPortfolio", ["portfolioId"]),
   transactions: defineTable({
     assetId: v.id("assets"),
-    type: v.union(
-      v.literal("buy"), 
-      v.literal("sell"), 
-      v.literal("dividend"), 
-    ),
+    type: v.union(v.literal("buy"), v.literal("sell"), v.literal("dividend")),
     date: v.number(),
     quantity: v.optional(v.number()), // Optional for dividends
     price: v.optional(v.number()), // Optional for dividends

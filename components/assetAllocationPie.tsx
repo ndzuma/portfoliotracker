@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
 
 import {
@@ -17,6 +16,8 @@ import {
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
 } from "@/components/ui/chart";
 
 export const description = "A donut chart with text";
@@ -79,6 +80,10 @@ export function AssetAllocationPie({ value, assets }: AssetAllocation) {
           className="mx-auto aspect-square max-h-[250px]"
         >
           <PieChart>
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel />}
+            />
             <Pie
               data={assets.map((asset, index) => ({
                 name: asset.name,
@@ -144,10 +149,6 @@ export function AssetAllocationPie({ value, assets }: AssetAllocation) {
                 }}
               />
             </Pie>
-            <ChartLegend
-              content={<ChartLegendContent nameKey="name" />}
-              className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"
-            />
           </PieChart>
         </ChartContainer>
       </CardContent>

@@ -1,18 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
 import { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { Id } from "../../../../convex/_generated/dataModel";
 import { useParams } from "next/navigation";
 import { AISummaryCard } from "@/components/AISummaryCard";
-import { Input } from "@/components/ui/input";
 import {
   GoalTrackerCard,
   DocumentStorageCard,
@@ -20,30 +13,12 @@ import {
   PerformanceMetricsCard,
   TemplatesCard,
 } from "./components/bunker";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   ArrowLeft,
   TrendingUp,
   TrendingDown,
-  Plus,
-  Edit,
   Calendar,
-  Target,
-  FileIcon,
-  BookIcon,
-  BarChart3,
-  PieChart,
-  FileDown,
-  LinkIcon,
-  PlusCircle,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -51,9 +26,11 @@ import Link from "next/link";
 import { AssetSection } from "./components/AssetSection";
 import { Asset } from "./components/types";
 import { AssetAllocationPie } from "@/components/assetAllocationPie";
-import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { PorfolioPerformanceChart } from "@/components/PortfolioPerformance";
+import { AddAssetDialog } from "./components/dialogs/AddAssetDialog";
+import { EditPortfolioDialog } from "./components/dialogs/EditPortfolioDialog";
+import { EditAssetDialog } from "./components/dialogs/EditAssetDialog";
 
 export default function PortfolioDetail({
   params,
@@ -63,26 +40,17 @@ export default function PortfolioDetail({
   const routeParams = useParams();
   const portfolioId = routeParams.id as string;
 
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isBunkerCollapsed, setIsBunkerCollapsed] = useState(true);
-  const [newAsset, setNewAsset] = useState({
-    symbol: "",
-    name: "",
-    type: "stock" as Asset["type"],
-    shares: "",
-    avgBuyPrice: "",
-    currentPrice: "",
-  });
+  const deleteAsset = useMutation(api.assets.deleteAsset);
 
   // convex operations
   const portfolio = useQuery(api.portfolios.getPortfolioById, {
     portfolioId: portfolioId,
   });
 
+  // Filter assets by type
   const stockAssets =
     portfolio?.assets.filter((asset) => asset.type === "stock") || [];
   const propertyAssets =
@@ -98,97 +66,22 @@ export default function PortfolioDetail({
   const otherAssets =
     portfolio?.assets.filter((asset) => asset.type === "other") || [];
 
-  const handleAddAsset = () => {
-    const shares = Number.parseFloat(newAsset.shares);
-    const avgPrice = Number.parseFloat(newAsset.avgBuyPrice);
-    const currentPrice = Number.parseFloat(newAsset.currentPrice);
-
-    if (
-      !newAsset.symbol ||
-      !newAsset.name ||
-      !shares ||
-      !avgPrice ||
-      !currentPrice
-    )
-      return;
-
-    const currentValue = shares * currentPrice;
-    const change = shares * (currentPrice - avgPrice);
-    const changePercent = ((currentPrice - avgPrice) / avgPrice) * 100;
-
-    const asset: Asset = {
-      _id: Date.now().toString(),
-      symbol: newAsset.symbol.toUpperCase(),
-      name: newAsset.name,
-      type: newAsset.type,
-      quantity: shares,
-      avgBuyPrice: avgPrice,
-      currentPrice,
-      currentValue,
-      change,
-      changePercent,
-      allocation: 0,
-    };
-
-    const newAssets = [...assets, asset];
-    const newTotalValue = newAssets.reduce((sum, a) => sum + a.currentValue, 0);
-
-    const updatedAssets = newAssets.map((a) => ({
-      ...a,
-      allocation: (a.value / newTotalValue) * 100,
-    }));
-
-    setAssets(updatedAssets);
-    setNewAsset({
-      symbol: "",
-      name: "",
-      type: "stock",
-      shares: "",
-      avgBuyPrice: "",
-      currentPrice: "",
-    });
-    setIsAddDialogOpen(false);
-  };
-
   const handleEditAsset = (asset: Asset) => {
+    // Convert asset to properly handle currency for cash
+    if (asset.type === "cash" && !asset.currency) {
+      asset.currency = "USD";
+    }
     setEditingAsset(asset);
     setIsEditDialogOpen(true);
   };
 
   const handleDeleteAsset = (id: string) => {
-    const updatedAssets = assets.filter((a) => a._id !== id);
-    const newTotalValue = updatedAssets.reduce(
-      (sum, a) => sum + a.currentValue,
-      0,
-    );
-
-    const finalAssets = updatedAssets.map((a) => ({
-      ...a,
-      allocation:
-        newTotalValue > 0 ? (a.currentValue / newTotalValue) * 100 : 0,
-    }));
-
-    setAssets(finalAssets);
+    if (confirm("Are you sure you want to delete this asset?")) {
+      deleteAsset({
+        assetId: id as Id<"assets">,
+      });
+    }
   };
-
-  // For demonstration only, can be removed if not used elsewhere
-  console.log(`Editing portfolio ${portfolioId}`);
-
-  // Helper function to map API asset to our Asset type
-  const mapApiAssetToAsset = (a: any, portfolioValue: number) => ({
-    ...a,
-    currentValue: a.currentPrice * (a.quantity || 1),
-    avgBuyPrice: a.avgBuyPrice || 0,
-    change: a.currentPrice
-      ? (a.currentPrice - (a.avgBuyPrice || 0)) * (a.quantity || 1)
-      : 0,
-    changePercent: a.avgBuyPrice
-      ? (((a.currentPrice || 0) - a.avgBuyPrice) / a.avgBuyPrice) * 100
-      : 0,
-    allocation: portfolioValue
-      ? ((a.currentPrice * (a.quantity || 1)) / portfolioValue) * 100
-      : 0,
-  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -212,115 +105,23 @@ export default function PortfolioDetail({
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setIsGoalDialogOpen(true)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Portfolio
-            </Button>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Asset
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Asset</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="symbol">Symbol</Label>
-                    <Input
-                      id="symbol"
-                      value={newAsset.symbol}
-                      onChange={(e) =>
-                        setNewAsset({ ...newAsset, symbol: e.target.value })
-                      }
-                      placeholder="e.g., AAPL, MSFT"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      value={newAsset.name}
-                      onChange={(e) =>
-                        setNewAsset({ ...newAsset, name: e.target.value })
-                      }
-                      placeholder="e.g., Apple Inc."
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="type">Asset Type</Label>
-                    <Select
-                      value={newAsset.type}
-                      onValueChange={(value: Asset["type"]) =>
-                        setNewAsset({ ...newAsset, type: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="stock">Stock</SelectItem>
-                        <SelectItem value="bond">Bond</SelectItem>
-                        <SelectItem value="commodity">Commodity</SelectItem>
-                        <SelectItem value="real estate">
-                          Real Estate/Property
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="shares">Shares/Quantity</Label>
-                    <Input
-                      id="shares"
-                      type="number"
-                      value={newAsset.shares}
-                      onChange={(e) =>
-                        setNewAsset({ ...newAsset, shares: e.target.value })
-                      }
-                      placeholder="100"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="avgPrice">Average Buy Price</Label>
-                    <Input
-                      id="avgPrice"
-                      type="number"
-                      step="0.01"
-                      value={newAsset.avgBuyPrice}
-                      onChange={(e) =>
-                        setNewAsset({
-                          ...newAsset,
-                          avgBuyPrice: e.target.value,
-                        })
-                      }
-                      placeholder="150.00"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="currentPrice">Current Price</Label>
-                    <Input
-                      id="currentPrice"
-                      type="number"
-                      step="0.01"
-                      value={newAsset.currentPrice}
-                      onChange={(e) =>
-                        setNewAsset({
-                          ...newAsset,
-                          currentPrice: e.target.value,
-                        })
-                      }
-                      placeholder="155.00"
-                    />
-                  </div>
-                  <Button onClick={handleAddAsset} className="w-full">
-                    Add Asset
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            {portfolio && (
+              <EditPortfolioDialog
+                portfolioId={portfolioId}
+                userId={portfolio.userId}
+                initialName={portfolio.name}
+                initialDescription={portfolio.description}
+              />
+            )}
+            <AddAssetDialog portfolioId={portfolioId} />
+
+            {/* Edit Asset Dialog */}
+            <EditAssetDialog
+              isOpen={isEditDialogOpen}
+              onOpenChange={setIsEditDialogOpen}
+              asset={editingAsset}
+              onAssetUpdated={() => setEditingAsset(null)}
+            />
           </div>
         </div>
 
@@ -447,42 +248,49 @@ export default function PortfolioDetail({
             Holdings
           </h2>
           <AssetSection
+            key={`stocks-${stockAssets.length}-${portfolio?._id}`}
             title="Stocks"
             assets={stockAssets}
             onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
           />
           <AssetSection
+            key={`crypto-${cryptoAssets.length}-${portfolio?._id}`}
             title="Cryptocurrencies"
             assets={cryptoAssets}
             onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
           />
           <AssetSection
+            key={`property-${propertyAssets.length}-${portfolio?._id}`}
             title="Real Estate & Properties"
             assets={propertyAssets}
             onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
           />
           <AssetSection
+            key={`commodity-${commodityAssets.length}-${portfolio?._id}`}
             title="Commodities"
             assets={commodityAssets}
             onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
           />
           <AssetSection
+            key={`bonds-${bondAssets.length}-${portfolio?._id}`}
             title="Bonds"
             assets={bondAssets}
             onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
           />
           <AssetSection
+            key={`cash-${cashAssets.length}-${portfolio?._id}`}
             title="Cash"
             assets={cashAssets}
             onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
           />
           <AssetSection
+            key={`other-${otherAssets.length}-${portfolio?._id}`}
             title="Other Assets"
             assets={otherAssets}
             onEdit={handleEditAsset}

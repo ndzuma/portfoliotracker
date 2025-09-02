@@ -13,7 +13,9 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as assets from "../assets.js";
 import type * as portfolios from "../portfolios.js";
+import type * as transactions from "../transactions.js";
 import type * as users from "../users.js";
 
 /**
@@ -25,7 +27,9 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  assets: typeof assets;
   portfolios: typeof portfolios;
+  transactions: typeof transactions;
   users: typeof users;
 }>;
 export declare const api: FilterApi<
