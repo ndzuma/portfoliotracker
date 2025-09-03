@@ -8,5 +8,8 @@ healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "never"
 
-[phases.install]
+[setup]
+nixPkgs = ["nodejs_18", "pnpm-9_x"]
+
+[install]
 cmds = ["pnpm install --no-frozen-lockfile"]
