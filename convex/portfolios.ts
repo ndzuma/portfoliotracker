@@ -8,9 +8,14 @@ const aiPlaceholderHeadline = "Portfolio Diversification Analysis";
 // Get all portfolios for a user with computed fields
 export const getUserPorfolios = query({
   args: {
-    userId: v.union(v.id("users"), v.string()),
+    userId: v.optional(v.union(v.id("users"), v.string())),
   },
   handler: async (ctx, args) => {
+    // Return empty array if userId is not provided
+    if (!args.userId) {
+      return [];
+    }
+
     const portfolios = await ctx.db
       .query("portfolios")
       .withIndex("byUser", (q) => q.eq("userId", args.userId))

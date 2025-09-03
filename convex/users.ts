@@ -44,8 +44,11 @@ export const createUser = mutation({
 });
 
 export const getUsersName = query({
-  args: { userId: v.union(v.id("users"), v.string()) },
+  args: { userId: v.optional(v.union(v.id("users"), v.string())) },
   handler: async (ctx, args) => {
+    if (!args.userId) {
+      return null;
+    }
     const user = await ctx.db.get(args.userId);
     if (!user) {
       throw new Error("User not found");
@@ -55,8 +58,13 @@ export const getUsersName = query({
 });
 
 export const getUserPreferences = query({
-  args: { userId: v.union(v.id("users"), v.string()) },
+  args: { userId: v.optional(v.union(v.id("users"), v.string())) },
   handler: async (ctx, args) => {
+    // Return null if userId is not provided or empty
+    if (!args.userId) {
+      return null;
+    }
+
     const user = await ctx.db.get(args.userId);
     if (!user) {
       throw new Error("User not found");
@@ -77,6 +85,9 @@ export const updateUserPreferences = mutation({
     language: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (!args.userId) {
+      throw new Error("User ID is required");
+    }
     const user = await ctx.db.get(args.userId);
     if (!user) {
       throw new Error("User not found");
@@ -111,8 +122,13 @@ export const updateUserPreferences = mutation({
 // Extract all account data for a user: portfolios, assets, transactions
 // This can be used for exporting data or migrating to another service
 export const extractAccountData = query({
-  args: { userId: v.union(v.id("users"), v.string()) },
+  args: { userId: v.optional(v.union(v.id("users"), v.string())) },
   handler: async (ctx, args) => {
+    // Return empty data if userId is not provided or empty
+    if (!args.userId) {
+      return { user: null, portfolios: [] };
+    }
+
     const user = await ctx.db.get(args.userId);
     if (!user) {
       throw new Error("User not found");

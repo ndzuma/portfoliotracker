@@ -30,7 +30,7 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { ChartRadialStacked } from "@/components/allocationRadial";
@@ -247,12 +247,19 @@ export default function PortfoliosDashboard() {
     description: "",
   });
 
-  // convex operations  
+  // convex operations
   const { user } = useUser();
-  const convexUser = useQuery(api.users.getUserByClerkId, {clerkId: user?.id})
-  const userId = convexUser?._id
-  const usersName = user?.fullName
-  const userPortfolios = useQuery(api.portfolios.getUserPorfolios, { userId: convexUser?._id }) || [];
+  const convexUser = useQuery(api.users.getUserByClerkId, {
+    clerkId: user?.id,
+  });
+  const userId = convexUser?._id;
+  const usersName = user?.fullName;
+  const userPortfolios =
+    useQuery(
+      api.portfolios.getUserPorfolios,
+      { userId },
+      { enabled: !!userId },
+    ) || [];
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
   const editPortfolio = useMutation(api.portfolios.updatePortfolio);
   const deletePortfolio = useMutation(api.portfolios.deletePortfolio);
@@ -289,16 +296,18 @@ export default function PortfoliosDashboard() {
     totalValue > 0 ? (totalChange / (totalValue - totalChange)) * 100 : 0;
 
   const handleCreatePortfolio = () => {
-    createPortfolio({
-      userId: userId,
-      name: newPortfolio.name,
-      description: newPortfolio.description,
-    });
-    setNewPortfolio({
-      name: "",
-      description: "",
-    });
-    setIsCreateModalOpen(false);
+    if (userId) {
+      createPortfolio({
+        userId: userId,
+        name: newPortfolio.name,
+        description: newPortfolio.description,
+      });
+      setNewPortfolio({
+        name: "",
+        description: "",
+      });
+      setIsCreateModalOpen(false);
+    }
   };
 
   const handleEditPortfolio = (portfolio: Portfolio) => {
@@ -311,21 +320,25 @@ export default function PortfoliosDashboard() {
   };
 
   const handleDeletePortfolio = (portfolioId: string) => {
-    deletePortfolio({ portfolioId: portfolioId, userId: userId });
+    if (userId) {
+      deletePortfolio({ portfolioId: portfolioId, userId: userId });
+    }
   };
 
   const handleUpdatePortfolio = () => {
-    editPortfolio({
-      portfolioId: newPortfolio.id,
-      userId: userId,
-      name: newPortfolio.name,
-      description: newPortfolio.description,
-    });
-    setIsEditModalOpen(false);
-    setNewPortfolio({
-      name: "",
-      description: "",
-    });
+    if (userId) {
+      editPortfolio({
+        portfolioId: newPortfolio.id,
+        userId: userId,
+        name: newPortfolio.name,
+        description: newPortfolio.description,
+      });
+      setIsEditModalOpen(false);
+      setNewPortfolio({
+        name: "",
+        description: "",
+      });
+    }
   };
 
   if (loading) {
