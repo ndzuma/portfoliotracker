@@ -10,3 +10,6 @@ restartPolicyType = "never"
 
 [phases.setup]
 nixPkgs = ["nodejs_18", "pnpm-9_x"]
+
+[nixpacks]
+install_cmd = "pnpm install --no-frozen-lockfile"
