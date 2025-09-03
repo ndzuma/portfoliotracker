@@ -8,7 +8,7 @@ healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "never"
 
-[setup]
+[phases.setup]
 nixPkgs = ["nodejs_18", "pnpm-9_x"]
 
 [install]
