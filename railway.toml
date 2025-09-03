@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npx convex deploy --cmd 'npm run build'"
+buildCommand = "pnpm install --no-frozen-lockfile && npx convex deploy --cmd 'npm run build'"
 
 [deploy]
 startCommand = "pnpm run start"
