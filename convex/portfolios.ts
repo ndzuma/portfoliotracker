@@ -53,7 +53,17 @@ export const getUserPorfolios = query({
             0,
           );
 
-          const currentPrice = asset.currentPrice || 1;
+          // Check if there's a current price in marketCurrentData table
+          let currentPrice = asset.currentPrice || 1;
+          if (asset.symbol && typeof asset.symbol === "string") {
+            const marketData = await ctx.db
+              .query("marketCurrentData")
+              .withIndex("byTicker", (q) => q.eq("ticker", asset.symbol))
+              .first();
+            if (marketData && marketData.price) {
+              currentPrice = marketData.price;
+            }
+          }
           const currentValue = quantity * currentPrice;
 
           portfolioCostBasis += totalCost;
@@ -142,9 +152,20 @@ export const getPortfolioById = query({
       );
       const averageBuyPrice = quantity ? totalCost / quantity : 0;
 
-      const currentPrice = asset.currentPrice || 1;
+      // Check if there's a current price in marketCurrentData table
+      let currentPrice = asset.currentPrice || 1;
+      if (asset.symbol && typeof asset.symbol === "string") {
+        const marketData = await ctx.db
+          .query("marketCurrentData")
+          .withIndex("byTicker", (q) => q.eq("ticker", asset.symbol))
+          .first();
+        if (marketData && marketData.price) {
+          currentPrice = marketData.price;
+        }
+      }
       const currentValue = quantity * currentPrice;
 
+      asset.currentPrice = currentPrice;
       asset.quantity = quantity;
       asset.avgBuyPrice = averageBuyPrice;
       asset.costBasis = totalCost;

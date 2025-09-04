@@ -46,7 +46,7 @@ export function NewsCard({ item }: { item: NewsItem }) {
   return (
     <>
       <Card className="overflow-hidden h-full flex flex-col py-0">
-        <div className="relative h-40 bg-muted">
+        <div className="relative h-50 bg-muted">
           {item.image ? (
             <Image
               src={item.image}

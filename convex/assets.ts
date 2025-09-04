@@ -1,3 +1,4 @@
+import { api, internal } from "./_generated/api";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -19,26 +20,23 @@ export const createAsset = mutation({
     currentPrice: v.optional(v.number()),
     currency: v.optional(v.string()),
     notes: v.optional(v.string()),
-    // Initial transaction data
     quantity: v.number(),
     purchasePrice: v.number(),
-    purchaseDate: v.number(), // timestamp
+    purchaseDate: v.number(),
     fees: v.optional(v.number()),
     transactionNotes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // First, create the asset
     const assetId = await ctx.db.insert("assets", {
       portfolioId: args.portfolioId,
       name: args.name,
       symbol: args.symbol,
       type: args.type,
-      currentPrice: args.currentPrice || args.purchasePrice, // Default to purchase price if current not provided
+      currentPrice: args.currentPrice || args.purchasePrice,
       currency: args.currency,
       notes: args.notes,
     });
 
-    // Then create the initial transaction (buy)
     await ctx.db.insert("transactions", {
       assetId,
       type: "buy",
@@ -48,7 +46,15 @@ export const createAsset = mutation({
       fees: args.fees || 0,
       notes: args.transactionNotes,
     });
-
+    
+    // if asset is stocks, crypto, bonds, or commodity add to marketCurrentData
+    // schedule a background job to fetch current price data for this asset
+    // schedule a background job to fetch historical data for this asset
+    if (["stock", "crypto", "bond", "commodity"].includes(args.type)) {
+      await ctx.scheduler.runAfter(60000, api.marketData.updateCurrentPrices);
+      await ctx.scheduler.runAfter(120000, api.marketData.updateHistoricalData);
+    }
+    
     return assetId;
   },
 });
@@ -131,6 +137,26 @@ export const deleteAsset = mutation({
     return true;
   },
 });
+
+// get an asset by ticker
+export const getAssetBySymbol = query({
+  args: {
+    symbol: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const asset = await ctx.db
+      .query("assets")
+      .collect()
+    
+    for (const a of asset) {
+      if (a.symbol?.toLowerCase() === args.symbol.toLowerCase()) {
+        return a;
+      }
+    } 
+    return null;
+  },
+});
+  
 
 // Add a new transaction to an asset
 export const addTransaction = mutation({

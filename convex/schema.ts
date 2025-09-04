@@ -2,17 +2,20 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // user profiles
   users: defineTable({
     name: v.string(),
     email: v.string(),
     clerkId: v.optional(v.string()),
   }),
+  // user settings and preferences
   userPreferences: defineTable({
     userId: v.id("users"),
     theme: v.union(v.literal("light"), v.literal("dark")),
     currency: v.string(),
     language: v.string(),
   }).index("byUser", ["userId"]),
+  // portfolios, assets, transactions, and snapshots
   portfolios: defineTable({
     userId: v.id("users"),
     name: v.string(),
@@ -58,4 +61,39 @@ export default defineSchema({
     quantity: v.number(),
     totalValue: v.number(),
   }).index("byAsset", ["assetId", "date"]),
+  // marketHistoricData
+  marketHistoricData: defineTable({
+    ticker: v.string(),
+    date: v.string(), // YYYY-MM-DD
+    open: v.number(),
+    high: v.number(),
+    low: v.number(),
+    close: v.number(),
+    volume: v.number(),
+  }).index("byTicker", ["ticker", "date"]),
+  marketCurrentData: defineTable({
+    ticker: v.string(),
+    logo: v.optional(v.string()),
+    name: v.optional(v.string()),
+    type: v.union(
+      v.literal("stock"),
+      v.literal("bond"),
+      v.literal("commodity"),
+      v.literal("real estate"),
+      v.literal("cash"),
+      v.literal("crypto"),
+      v.literal("other"),
+    ),
+    price: v.number(),
+    updatedAt: v.number(),
+  }).index("byTicker", ["ticker"]),
+  marketBenchmarks: defineTable({
+    name: v.string(),
+    ticker: v.string(),
+    exchange: v.optional(v.string()),
+    percentageChange: v.optional(v.number()),
+    close: v.number(),
+    isMarketOpen: v.boolean(),
+    updatedAt: v.number(),
+  }).index("byTicker", ["ticker"]),
 });

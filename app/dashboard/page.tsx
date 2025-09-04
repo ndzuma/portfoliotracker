@@ -55,8 +55,9 @@ interface Benchmark {
   changePercent: number;
 }
 
-function BenchmarkCard({ benchmark }: { benchmark: Benchmark }) {
-  const isPositive = benchmark.change >= 0;
+function BenchmarkCard({ benchmark }: { benchmark }) {
+  const isPositive = benchmark.percentageChange >= 0;
+  const change = benchmark.close * (benchmark.percentageChange / 100);
 
   return (
     <Card className="p-4 bg-card border-border">
@@ -64,7 +65,7 @@ function BenchmarkCard({ benchmark }: { benchmark: Benchmark }) {
         <div>
           <h3 className="font-medium text-foreground">{benchmark.name}</h3>
           <p className="text-2xl font-semibold text-foreground mt-1">
-            {benchmark.value.toLocaleString()}
+            {benchmark.close.toLocaleString()}
           </p>
         </div>
         <div className="text-right">
@@ -78,14 +79,14 @@ function BenchmarkCard({ benchmark }: { benchmark: Benchmark }) {
             )}
             <span className="font-medium">
               {isPositive ? "+" : ""}
-              {benchmark.change.toFixed(2)}
+              {change.toFixed(2)}
             </span>
           </div>
           <div
             className={`text-sm ${isPositive ? "text-primary" : "text-secondary"}`}
           >
             ({isPositive ? "+" : ""}
-            {benchmark.changePercent.toFixed(2)}%)
+            {benchmark.percentageChange.toFixed(2)}%)
           </div>
         </div>
       </div>
@@ -240,8 +241,6 @@ function PortfolioRow({
 export default function PortfoliosDashboard() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
-  const [loading, setLoading] = useState(true);
   const [newPortfolio, setNewPortfolio] = useState({
     name: "",
     description: "",
@@ -254,35 +253,11 @@ export default function PortfoliosDashboard() {
   });
   const userId = convexUser?._id;
   const usersName = user?.fullName;
-  const userPortfolios =
-    useQuery(
-      api.portfolios.getUserPorfolios,
-      { userId },
-      { enabled: !!userId },
-    ) || [];
+  const userPortfolios = useQuery(api.portfolios.getUserPorfolios, { userId }) || [];
+  const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
   const editPortfolio = useMutation(api.portfolios.updatePortfolio);
   const deletePortfolio = useMutation(api.portfolios.deletePortfolio);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [benchmarksResponse] = await Promise.all([
-          fetch("/api/benchmarks"),
-        ]);
-
-        const benchmarksData = await benchmarksResponse.json();
-
-        setBenchmarks(benchmarksData);
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   const totalValue = userPortfolios.reduce(
     (sum, portfolio) => sum + portfolio.currentValue,
@@ -340,14 +315,6 @@ export default function PortfoliosDashboard() {
       });
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex bg-background items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -517,9 +484,15 @@ export default function PortfoliosDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:col-span-2">
-            {benchmarks.map((benchmark) => (
-              <BenchmarkCard key={benchmark.name} benchmark={benchmark} />
-            ))}
+            {benchmarkData.length > 0 ? (
+              benchmarkData.map((benchmark) => (
+                <BenchmarkCard key={benchmark.ticker} benchmark={benchmark} />
+              ))
+            ) : (
+              <div className="flex justify-center items-center col-span-2 py-8">
+                <p className="text-muted-foreground">No benchmark data found.</p>
+              </div>
+            )}
           </div>
           <MarketNewsCard
             title="AI Market Summary"

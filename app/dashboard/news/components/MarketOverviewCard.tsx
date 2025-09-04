@@ -3,7 +3,17 @@
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { BarChart4 } from "lucide-react";
 
-export function MarketOverviewCard() {
+interface MarketData {
+  name: string;
+  percentageChange: number;
+  ticker: string;
+}
+
+export function MarketOverviewCard({
+  data,
+}:{
+  data: MarketData[];
+}) {
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
@@ -14,30 +24,17 @@ export function MarketOverviewCard() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">S&P 500</span>
-            <div className="flex items-center">
-              <span className="text-sm font-medium text-primary">+1.2%</span>
+          {data.map((market) => (
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{market.name}</span>
+              <div className="flex items-center">
+                <span className={`text-sm font-medium ${market.percentageChange >= 0 ? 'text-primary' : 'text-secondary'}`}>
+                  {market.percentageChange >= 0 ? '+' : ''}
+                  {market.percentageChange.toFixed(2)}%
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Nasdaq</span>
-            <div className="flex items-center">
-              <span className="text-sm font-medium text-primary">+1.5%</span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Dow Jones</span>
-            <div className="flex items-center">
-              <span className="text-sm font-medium text-primary">+0.8%</span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">10Y Treasury</span>
-            <div className="flex items-center">
-              <span className="text-sm font-medium text-secondary">-0.3%</span>
-            </div>
-          </div>
+          ))}
         </div>
       </CardContent>
     </Card>
