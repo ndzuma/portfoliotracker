@@ -1,6 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useParams } from "next/navigation";
@@ -31,12 +36,14 @@ import { EditPortfolioDialog } from "./components/dialogs/EditPortfolioDialog";
 import { EditAssetDialog } from "./components/dialogs/EditAssetDialog";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { api } from "../../../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 
 export default function PortfolioDetail({
   params,
 }: {
   params: { id: string };
 }) {
+  const { user } = useUser();
   const routeParams = useParams();
   const portfolioId = routeParams.id as string;
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
@@ -44,6 +51,9 @@ export default function PortfolioDetail({
   const [isBunkerCollapsed, setIsBunkerCollapsed] = useState(true);
 
   // convex operations
+  const convexUser = useQuery(api.users.getUserByClerkId, {
+    clerkId: user?.id || "",
+  });
   const canUserAccess = useQuery(api.portfolios.canUserAccessPortfolio, {
     portfolioId: portfolioId,
   });
@@ -51,6 +61,10 @@ export default function PortfolioDetail({
     portfolioId: portfolioId,
   });
   const deleteAsset = useMutation(api.assets.deleteAsset);
+  const chartData =
+    useQuery(api.marketData.getHistoricalData, {
+      portfolioId: portfolioId,
+    }) || [];
 
   // Filter assets by type
   const stockAssets =
@@ -84,7 +98,7 @@ export default function PortfolioDetail({
       });
     }
   };
-  
+
   if (!canUserAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -151,9 +165,7 @@ export default function PortfolioDetail({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-1">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Value
-              </CardTitle>
+              <CardTitle>Total Value</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -177,10 +189,7 @@ export default function PortfolioDetail({
 
           <Card>
             <CardHeader className="pb-1">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Investing Calendar
-              </CardTitle>
+              <CardTitle>Investing Calendar</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -205,7 +214,7 @@ export default function PortfolioDetail({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <PorfolioPerformanceChart />
+          <PorfolioPerformanceChart data={chartData} />
           <AssetAllocationPie
             value={portfolio?.currentValue || 0}
             assets={portfolio?.assets || []}
@@ -239,24 +248,24 @@ export default function PortfolioDetail({
 
           {!isBunkerCollapsed && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Goal Tracker Card - spans 2 rows */}
-              <GoalTrackerCard
-                portfolioValue={25000}
-                targetValue={100000}
-                annualReturn={5.8}
-                targetReturn={8}
-                monthlyContribution={500}
-                targetContribution={500}
-              />
+            {/* Goal Tracker Card - spans 2 rows */}
+            <GoalTrackerCard
+              portfolioValue={25000}
+              targetValue={100000}
+              annualReturn={5.8}
+              targetReturn={8}
+              monthlyContribution={500}
+              targetContribution={500}
+            />
 
-              {/* Document Storage Card */}
-              <DocumentStorageCard />
+            {/* Document Storage Card */}
+            <DocumentStorageCard userId={ convexUser?._id} portfolioId={portfolioId} />
 
-              {/* Article Saver Card */}
-              <ArticleSaverCard />
+            {/* Article Saver Card */}
+            <ArticleSaverCard userId={ convexUser?._id} portfolioId={portfolioId} />
 
-              {/* Performance Metrics Card */}
-              <PerformanceMetricsCard />
+            {/* Performance Metrics Card */}
+            <PerformanceMetricsCard />
 
               {/* Templates Card */}
               <TemplatesCard />
