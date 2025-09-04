@@ -4,6 +4,7 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { BarChart4 } from "lucide-react";
 
 interface MarketData {
+  _id: string;
   name: string;
   percentageChange: number;
   ticker: string;
@@ -25,7 +26,7 @@ export function MarketOverviewCard({
       <CardContent>
         <div className="space-y-4">
           {data.map((market) => (
-            <div className="flex items-center justify-between">
+            <div key={market._id} className="flex items-center justify-between">
               <span className="text-sm font-medium">{market.name}</span>
               <div className="flex items-center">
                 <span className={`text-sm font-medium ${market.percentageChange >= 0 ? 'text-primary' : 'text-secondary'}`}>

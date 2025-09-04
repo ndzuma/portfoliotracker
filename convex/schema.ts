@@ -20,6 +20,8 @@ export default defineSchema({
     userId: v.id("users"),
     name: v.string(),
     description: v.optional(v.string()),
+    includeInNetworth: v.optional(v.boolean()),
+    allowSubscriptions: v.optional(v.boolean()),
   }).index("byUser", ["userId"]),
   assets: defineTable({
     portfolioId: v.id("portfolios"),

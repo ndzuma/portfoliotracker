@@ -451,7 +451,7 @@ export default function PortfoliosDashboard() {
               <div className="flex items-center justify-between h-full">
                 <div>
                   <h2 className="text-lg font-medium text-muted-foreground mb-2">
-                    Total Portfolio Value
+                    Net Worth
                   </h2>
                   <p className="text-4xl font-bold text-foreground">
                     ${totalValue.toLocaleString()}

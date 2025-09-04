@@ -15,7 +15,7 @@ crons.interval(
 // This job will fetch latest prices for all tracked assets
 crons.interval(
   "update current market prices",
-  { hours: 1 }, 
+  { hours: 2 }, 
   api.marketData.updateCurrentPrices,
 );
 
@@ -24,6 +24,6 @@ export default crons;
 // Update benchmark data every 2 minutes
 crons.interval(
   "update benchmark data",
-  { minutes: 10 },
+  { minutes: 30 },
   api.marketData.updateBenchmarkData,
 );

@@ -9,6 +9,9 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  CalendarDaysIcon,
+  BookmarkIcon,
+  BinocularsIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +22,9 @@ import Image from "next/image";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Briefcase },
   { name: "News", href: "/dashboard/news", icon: Newspaper },
+  { name: "Watchlist", href: "#", icon: BookmarkIcon },
+  { name: "Research", href: "#", icon: BinocularsIcon },
+  { name: "Earnings", href: "#", icon: CalendarDaysIcon },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

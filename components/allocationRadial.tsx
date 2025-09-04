@@ -6,6 +6,8 @@ import {
   Card,
   CardContent,
 
+  CardDescription,
+
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -77,7 +79,10 @@ export function ChartRadialStacked({
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center">
-        <CardTitle>Portfolio Weighting</CardTitle>
+        <CardTitle>Net Worth Composition</CardTitle>
+        <CardDescription>
+          Portfolio distribution across total assets
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 items-center pb-0 -mb-25 -mt-5">
         <ChartContainer
