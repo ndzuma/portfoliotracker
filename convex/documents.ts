@@ -16,7 +16,6 @@ export const uploadDocument = mutation({
     type: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    
     await ctx.db.insert("userDocuments", {
       storageId: args.storageId,
       userId: args.userId,

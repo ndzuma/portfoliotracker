@@ -1,8 +1,17 @@
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ArrowRight, CheckCircle, TrendingUp, Shield, BarChart3, Users, Star, ChevronDown } from "lucide-react"
-import Link from "next/link"
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowRight,
+  CheckCircle,
+  TrendingUp,
+  Shield,
+  BarChart3,
+  Users,
+  Star,
+  ChevronDown,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function LandingPage() {
   return (
@@ -18,16 +27,28 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
             <nav className="flex items-center space-x-6 text-sm font-medium">
-              <Link href="#features" className="transition-colors hover:text-foreground/80 text-foreground/60">
+              <Link
+                href="#features"
+                className="transition-colors hover:text-foreground/80 text-foreground/60"
+              >
                 Features
               </Link>
-              <Link href="#pricing" className="transition-colors hover:text-foreground/80 text-foreground/60">
+              <Link
+                href="#pricing"
+                className="transition-colors hover:text-foreground/80 text-foreground/60"
+              >
                 Pricing
               </Link>
-              <Link href="#testimonials" className="transition-colors hover:text-foreground/80 text-foreground/60">
+              <Link
+                href="#testimonials"
+                className="transition-colors hover:text-foreground/80 text-foreground/60"
+              >
                 Testimonials
               </Link>
-              <Link href="#faq" className="transition-colors hover:text-foreground/80 text-foreground/60">
+              <Link
+                href="#faq"
+                className="transition-colors hover:text-foreground/80 text-foreground/60"
+              >
                 FAQ
               </Link>
             </nav>
@@ -55,11 +76,12 @@ export default function LandingPage() {
             Track Your Investments Like a Pro
           </Badge>
           <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-balance">
-            Master Your Portfolio with <span className="text-primary">Smart Analytics</span>
+            Master Your Portfolio with{" "}
+            <span className="text-primary">Smart Analytics</span>
           </h1>
           <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8 text-balance">
-            Take control of your investments with real-time tracking, AI-powered insights, and comprehensive portfolio
-            management tools.
+            Take control of your investments with real-time tracking, AI-powered
+            insights, and comprehensive portfolio management tools.
           </p>
           <div className="flex flex-col gap-4 sm:flex-row">
             <Link href="/dashboard">
@@ -68,7 +90,11 @@ export default function LandingPage() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto bg-transparent">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto bg-transparent"
+            >
               Watch Demo
             </Button>
           </div>
@@ -78,7 +104,9 @@ export default function LandingPage() {
       {/* Partners Section */}
       <section className="container py-8 md:py-12">
         <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-          <p className="text-sm text-muted-foreground">Trusted by investors worldwide</p>
+          <p className="text-sm text-muted-foreground">
+            Trusted by investors worldwide
+          </p>
           <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
               <div key={i} className="h-8 w-16 bg-muted rounded"></div>
@@ -88,7 +116,10 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container space-y-6 py-8 md:py-12 lg:py-24">
+      <section
+        id="features"
+        className="container space-y-6 py-8 md:py-12 lg:py-24"
+      >
         <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
           <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl">
             Everything you need to manage your portfolio
@@ -104,7 +135,8 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <h3 className="font-bold">Real-time Tracking</h3>
                 <p className="text-sm text-muted-foreground">
-                  Monitor your investments with live market data and instant portfolio updates.
+                  Monitor your investments with live market data and instant
+                  portfolio updates.
                 </p>
               </div>
             </div>
@@ -115,7 +147,8 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <h3 className="font-bold">Secure & Private</h3>
                 <p className="text-sm text-muted-foreground">
-                  Bank-level security with end-to-end encryption to protect your financial data.
+                  Bank-level security with end-to-end encryption to protect your
+                  financial data.
                 </p>
               </div>
             </div>
@@ -126,7 +159,8 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <h3 className="font-bold">AI Insights</h3>
                 <p className="text-sm text-muted-foreground">
-                  Get personalized recommendations and market insights powered by AI.
+                  Get personalized recommendations and market insights powered
+                  by AI.
                 </p>
               </div>
             </div>
@@ -137,7 +171,8 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <h3 className="font-bold">Multi-Portfolio</h3>
                 <p className="text-sm text-muted-foreground">
-                  Manage multiple portfolios for different investment strategies.
+                  Manage multiple portfolios for different investment
+                  strategies.
                 </p>
               </div>
             </div>
@@ -147,7 +182,9 @@ export default function LandingPage() {
               <BarChart3 className="h-12 w-12 text-primary" />
               <div className="space-y-2">
                 <h3 className="font-bold">Advanced Analytics</h3>
-                <p className="text-sm text-muted-foreground">Detailed performance metrics and risk analysis tools.</p>
+                <p className="text-sm text-muted-foreground">
+                  Detailed performance metrics and risk analysis tools.
+                </p>
               </div>
             </div>
           </Card>
@@ -168,7 +205,9 @@ export default function LandingPage() {
       {/* How it works */}
       <section className="container space-y-6 py-8 md:py-12 lg:py-24 bg-muted/50">
         <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-          <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl">How it works?</h2>
+          <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl">
+            How it works?
+          </h2>
           <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
             Get started with your portfolio in 3 simple steps
           </p>
@@ -180,7 +219,8 @@ export default function LandingPage() {
             </div>
             <h3 className="font-bold mb-2">Connect Your Accounts</h3>
             <p className="text-sm text-muted-foreground">
-              Securely link your investment accounts or manually add your holdings.
+              Securely link your investment accounts or manually add your
+              holdings.
             </p>
           </Card>
           <Card className="p-6 text-center">
@@ -189,7 +229,8 @@ export default function LandingPage() {
             </div>
             <h3 className="font-bold mb-2">Track Performance</h3>
             <p className="text-sm text-muted-foreground">
-              Monitor your portfolio's performance with real-time data and analytics.
+              Monitor your portfolio's performance with real-time data and
+              analytics.
             </p>
           </Card>
           <Card className="p-6 text-center">
@@ -198,16 +239,22 @@ export default function LandingPage() {
             </div>
             <h3 className="font-bold mb-2">Make Informed Decisions</h3>
             <p className="text-sm text-muted-foreground">
-              Use AI insights and analytics to optimize your investment strategy.
+              Use AI insights and analytics to optimize your investment
+              strategy.
             </p>
           </Card>
         </div>
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="container space-y-6 py-8 md:py-12 lg:py-24">
+      <section
+        id="pricing"
+        className="container space-y-6 py-8 md:py-12 lg:py-24"
+      >
         <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-          <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl">Simple, transparent pricing</h2>
+          <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl">
+            Simple, transparent pricing
+          </h2>
           <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
             Choose the plan that's right for your investment journey
           </p>
@@ -310,25 +357,35 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials */}
-      <section id="testimonials" className="container space-y-6 py-8 md:py-12 lg:py-24 bg-muted/50">
+      <section
+        id="testimonials"
+        className="container space-y-6 py-8 md:py-12 lg:py-24 bg-muted/50"
+      >
         <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-          <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl">Loved by investors worldwide</h2>
+          <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl">
+            Loved by investors worldwide
+          </h2>
         </div>
         <div className="mx-auto grid justify-center gap-4 sm:grid-cols-3 md:max-w-[64rem]">
           <Card className="p-6">
             <div className="space-y-4">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-4 w-4 fill-primary text-primary" />
+                  <Star
+                    key={star}
+                    className="h-4 w-4 fill-primary text-primary"
+                  />
                 ))}
               </div>
               <p className="text-sm">
-                "PortfolioTracker has completely transformed how I manage my investments. The AI insights are incredibly
-                valuable."
+                "PortfolioTracker has completely transformed how I manage my
+                investments. The AI insights are incredibly valuable."
               </p>
               <div>
                 <p className="font-semibold">Sarah Johnson</p>
-                <p className="text-sm text-muted-foreground">Individual Investor</p>
+                <p className="text-sm text-muted-foreground">
+                  Individual Investor
+                </p>
               </div>
             </div>
           </Card>
@@ -336,16 +393,21 @@ export default function LandingPage() {
             <div className="space-y-4">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-4 w-4 fill-primary text-primary" />
+                  <Star
+                    key={star}
+                    className="h-4 w-4 fill-primary text-primary"
+                  />
                 ))}
               </div>
               <p className="text-sm">
-                "The real-time tracking and analytics have helped me make better investment decisions and improve my
-                returns."
+                "The real-time tracking and analytics have helped me make better
+                investment decisions and improve my returns."
               </p>
               <div>
                 <p className="font-semibold">Michael Chen</p>
-                <p className="text-sm text-muted-foreground">Financial Advisor</p>
+                <p className="text-sm text-muted-foreground">
+                  Financial Advisor
+                </p>
               </div>
             </div>
           </Card>
@@ -353,15 +415,21 @@ export default function LandingPage() {
             <div className="space-y-4">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-4 w-4 fill-primary text-primary" />
+                  <Star
+                    key={star}
+                    className="h-4 w-4 fill-primary text-primary"
+                  />
                 ))}
               </div>
               <p className="text-sm">
-                "Simple, intuitive, and powerful. Everything I need to track my portfolio performance in one place."
+                "Simple, intuitive, and powerful. Everything I need to track my
+                portfolio performance in one place."
               </p>
               <div>
                 <p className="font-semibold">Emily Rodriguez</p>
-                <p className="text-sm text-muted-foreground">Portfolio Manager</p>
+                <p className="text-sm text-muted-foreground">
+                  Portfolio Manager
+                </p>
               </div>
             </div>
           </Card>
@@ -371,25 +439,31 @@ export default function LandingPage() {
       {/* FAQ */}
       <section id="faq" className="container space-y-6 py-8 md:py-12 lg:py-24">
         <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-          <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl">Frequently Asked Questions</h2>
+          <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-6xl">
+            Frequently Asked Questions
+          </h2>
         </div>
         <div className="mx-auto max-w-[42rem] space-y-4">
           {[
             {
               question: "How secure is my financial data?",
-              answer: "We use bank-level security with 256-bit SSL encryption and never store your login credentials.",
+              answer:
+                "We use bank-level security with 256-bit SSL encryption and never store your login credentials.",
             },
             {
               question: "Can I track multiple portfolios?",
-              answer: "Yes, you can create and manage multiple portfolios for different investment strategies.",
+              answer:
+                "Yes, you can create and manage multiple portfolios for different investment strategies.",
             },
             {
               question: "Do you support international markets?",
-              answer: "We support major international exchanges and markets worldwide.",
+              answer:
+                "We support major international exchanges and markets worldwide.",
             },
             {
               question: "Is there a mobile app?",
-              answer: "Yes, our mobile app is available for both iOS and Android devices.",
+              answer:
+                "Yes, our mobile app is available for both iOS and Android devices.",
             },
           ].map((faq, index) => (
             <Card key={index} className="p-4">
@@ -411,7 +485,8 @@ export default function LandingPage() {
               Ready to take control of your investments?
             </h2>
             <p className="max-w-[85%] mx-auto leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-              Join thousands of investors who trust PortfolioTracker to manage their wealth.
+              Join thousands of investors who trust PortfolioTracker to manage
+              their wealth.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Link href="/dashboard">
@@ -519,5 +594,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

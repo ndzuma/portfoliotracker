@@ -15,7 +15,7 @@ crons.interval(
 // This job will fetch latest prices for all tracked assets
 crons.interval(
   "update current market prices",
-  { hours: 2 }, 
+  { hours: 2 },
   api.marketData.updateCurrentPrices,
 );
 

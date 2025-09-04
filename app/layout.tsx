@@ -11,9 +11,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Portfolio Manager",
-  description: "Professional portfolio management dashboard",
-  generator: "v0.app",
+  title: "Pulseportfolio",
+  description: "Track and manage your investments with ease.",
 };
 
 export default function RootLayout({
@@ -25,7 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ThemeProvider defaultTheme="system" storageKey="portfolio-theme">
-          <ClerkProvider >
+          <ClerkProvider>
             <ConvexClientProvider>
               <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
               <Toaster position="top-right" richColors />

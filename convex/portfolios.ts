@@ -241,11 +241,6 @@ export const createPortfolio = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const newPortfolio = await ctx.db.insert("portfolios", {
-      userId: args.userId,
-      name: args.name,
-      description: args.description || "",
-    });
   },
 });
 

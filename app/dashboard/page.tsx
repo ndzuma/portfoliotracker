@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -26,7 +26,6 @@ import {
   TrendingUp,
   TrendingDown,
   Briefcase,
-  Loader2,
   MoreHorizontal,
   Edit,
   Trash2,
@@ -253,7 +252,8 @@ export default function PortfoliosDashboard() {
   });
   const userId = convexUser?._id;
   const usersName = user?.fullName;
-  const userPortfolios = useQuery(api.portfolios.getUserPorfolios, { userId }) || [];
+  const userPortfolios =
+    useQuery(api.portfolios.getUserPorfolios, { userId }) || [];
   const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
   const editPortfolio = useMutation(api.portfolios.updatePortfolio);
@@ -490,7 +490,9 @@ export default function PortfoliosDashboard() {
               ))
             ) : (
               <div className="flex justify-center items-center col-span-2 py-8">
-                <p className="text-muted-foreground">No benchmark data found.</p>
+                <p className="text-muted-foreground">
+                  No benchmark data found.
+                </p>
               </div>
             )}
           </div>

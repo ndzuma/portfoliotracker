@@ -105,16 +105,20 @@ export default defineSchema({
     portfolioId: v.optional(v.union(v.string(), v.id("portfolios"))),
     fileName: v.string(),
     format: v.optional(v.string()),
-    type: v.optional(v.union(
-      v.literal("Strategy Document"),
-      v.literal("Account Statement"),
-      v.literal("Research Report"),
-      v.literal("Tax Document"),
-      v.literal("Annual Report"),
-      v.literal("Other"),
-    )),
+    type: v.optional(
+      v.union(
+        v.literal("Strategy Document"),
+        v.literal("Account Statement"),
+        v.literal("Research Report"),
+        v.literal("Tax Document"),
+        v.literal("Annual Report"),
+        v.literal("Other"),
+      ),
+    ),
     updatedAt: v.number(),
-  }).index("byUser", ["userId", "portfolioId"]).index("byPortfolio", ["portfolioId"]),
+  })
+    .index("byUser", ["userId", "portfolioId"])
+    .index("byPortfolio", ["portfolioId"]),
   // user articles
   userArticles: defineTable({
     userId: v.union(v.string(), v.id("users")),

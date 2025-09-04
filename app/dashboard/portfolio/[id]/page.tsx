@@ -1,11 +1,7 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useParams } from "next/navigation";
@@ -22,7 +18,6 @@ import {
   ArrowLeft,
   TrendingUp,
   TrendingDown,
-  Calendar,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -248,24 +243,30 @@ export default function PortfolioDetail({
 
           {!isBunkerCollapsed && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Goal Tracker Card - spans 2 rows */}
-            <GoalTrackerCard
-              portfolioValue={25000}
-              targetValue={100000}
-              annualReturn={5.8}
-              targetReturn={8}
-              monthlyContribution={500}
-              targetContribution={500}
-            />
+              {/* Goal Tracker Card - spans 2 rows */}
+              <GoalTrackerCard
+                portfolioValue={25000}
+                targetValue={100000}
+                annualReturn={5.8}
+                targetReturn={8}
+                monthlyContribution={500}
+                targetContribution={500}
+              />
 
-            {/* Document Storage Card */}
-            <DocumentStorageCard userId={ convexUser?._id} portfolioId={portfolioId} />
+              {/* Document Storage Card */}
+              <DocumentStorageCard
+                userId={convexUser?._id}
+                portfolioId={portfolioId}
+              />
 
-            {/* Article Saver Card */}
-            <ArticleSaverCard userId={ convexUser?._id} portfolioId={portfolioId} />
+              {/* Article Saver Card */}
+              <ArticleSaverCard
+                userId={convexUser?._id}
+                portfolioId={portfolioId}
+              />
 
-            {/* Performance Metrics Card */}
-            <PerformanceMetricsCard />
+              {/* Performance Metrics Card */}
+              <PerformanceMetricsCard />
 
               {/* Templates Card */}
               <TemplatesCard />

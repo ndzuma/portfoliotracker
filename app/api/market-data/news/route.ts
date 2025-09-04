@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const marketDataServiceUrl = process.env.MARKET_DATA_SERVICE_URL;
     if (!marketDataServiceUrl) {

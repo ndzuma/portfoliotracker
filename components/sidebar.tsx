@@ -11,10 +11,9 @@ import {
   ChevronRight,
   CalendarDaysIcon,
   BookmarkIcon,
-  BinocularsIcon
+  BinocularsIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";

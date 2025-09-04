@@ -18,7 +18,6 @@ import Image from "next/image";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { RedirectToSignIn } from "@clerk/nextjs";
 
-
 export default function OnboardingPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();

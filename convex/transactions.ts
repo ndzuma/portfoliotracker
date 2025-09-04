@@ -1,6 +1,5 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
 
 // Create a new transaction
 export const createTransaction = mutation({
@@ -76,7 +75,9 @@ export const getTransactionById = query({
 export const updateTransaction = mutation({
   args: {
     transactionId: v.id("transactions"),
-    type: v.optional(v.union(v.literal("buy"), v.literal("sell"), v.literal("dividend"))),
+    type: v.optional(
+      v.union(v.literal("buy"), v.literal("sell"), v.literal("dividend")),
+    ),
     date: v.optional(v.number()),
     quantity: v.optional(v.number()),
     price: v.optional(v.number()),
@@ -143,7 +144,7 @@ export const getAssetTransactionStats = query({
     let currentQuantity = 0;
 
     // Calculate statistics
-    transactions.forEach(transaction => {
+    transactions.forEach((transaction) => {
       const quantity = transaction.quantity || 0;
       const price = transaction.price || 0;
       const amount = quantity * price;
@@ -196,7 +197,7 @@ export const getPortfolioTransactions = query({
       .withIndex("byPortfolio", (q) => q.eq("portfolioId", args.portfolioId))
       .collect();
 
-    const assetIds = assets.map(asset => asset._id);
+    const assetIds = assets.map((asset) => asset._id);
 
     // Get transactions for each asset and combine them
     let allTransactions: Array<any> = [];
@@ -208,12 +209,12 @@ export const getPortfolioTransactions = query({
         .collect();
 
       // Add asset information to each transaction
-      const assetInfo = assets.find(a => a._id === assetId);
-      const enrichedTransactions = transactions.map(t => ({
+      const assetInfo = assets.find((a) => a._id === assetId);
+      const enrichedTransactions = transactions.map((t) => ({
         ...t,
         assetName: assetInfo?.name || "Unknown Asset",
         assetSymbol: assetInfo?.symbol,
-        assetType: assetInfo?.type
+        assetType: assetInfo?.type,
       }));
 
       allTransactions = [...allTransactions, ...enrichedTransactions];

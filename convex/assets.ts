@@ -46,7 +46,7 @@ export const createAsset = mutation({
       fees: args.fees || 0,
       notes: args.transactionNotes,
     });
-    
+
     // if asset is stocks, crypto, bonds, or commodity add to marketCurrentData
     // schedule a background job to fetch current price data for this asset
     // schedule a background job to fetch historical data for this asset
@@ -54,7 +54,7 @@ export const createAsset = mutation({
       await ctx.scheduler.runAfter(60000, api.marketData.updateCurrentPrices);
       await ctx.scheduler.runAfter(120000, api.marketData.updateHistoricalData);
     }
-    
+
     return assetId;
   },
 });
@@ -144,19 +144,16 @@ export const getAssetBySymbol = query({
     symbol: v.string(),
   },
   handler: async (ctx, args) => {
-    const asset = await ctx.db
-      .query("assets")
-      .collect()
-    
+    const asset = await ctx.db.query("assets").collect();
+
     for (const a of asset) {
       if (a.symbol?.toLowerCase() === args.symbol.toLowerCase()) {
         return a;
       }
-    } 
+    }
     return null;
   },
 });
-  
 
 // Add a new transaction to an asset
 export const addTransaction = mutation({

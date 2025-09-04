@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, FormEvent, ChangeEvent } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -22,13 +21,10 @@ import {
   PlusCircle,
   Loader2,
   XCircle,
-  Download,
   Trash2,
   Pencil,
   Save,
   X,
-  Filter,
-  FileType,
   MoreVertical,
   ExternalLink,
 } from "lucide-react";

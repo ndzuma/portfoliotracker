@@ -67,9 +67,12 @@ export const createHistoricalData = action({
     ticker: v.string(),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.runQuery(internal.marketData.doesHistoricalDataExist, {
-      ticker: args.ticker,
-    });
+    const existing = await ctx.runQuery(
+      internal.marketData.doesHistoricalDataExist,
+      {
+        ticker: args.ticker,
+      },
+    );
     if (existing) {
       console.log(`Historical data for ${args.ticker} already exists`);
       return;
@@ -98,7 +101,7 @@ export const createHistoricalData = action({
       });
     }
   },
-})
+});
 
 export const doesHistoricalDataExist = internalQuery({
   args: {
@@ -196,7 +199,7 @@ export const getHistoricalData = query({
         .query("transactions")
         .withIndex("byAsset", (q) => q.eq("assetId", asset._id))
         .collect();
-      for(const transaction of transactions) { 
+      for (const transaction of transactions) {
         allTransactions.push({
           transactionId: transaction._id,
           name: asset.name,
@@ -209,7 +212,9 @@ export const getHistoricalData = query({
       }
     }
     // sort by date ascending
-    allTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    allTransactions.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
     if (allTransactions.length === 0) {
       return [];
     }
@@ -242,13 +247,15 @@ export const getHistoricalData = query({
         .collect();
       historicalData[symbol] = data;
     }
-    
+
     // calculate the values for each date and return the data
     // in the format {date, value}
-    const result: { date: string; value: number}[] = [];
+    const result: { date: string; value: number }[] = [];
     const portfolioStartDate = new Date(
       Math.min(
-        ...Object.values(symbolEarliestDate).map((date) => new Date(date).getTime()),
+        ...Object.values(symbolEarliestDate).map((date) =>
+          new Date(date).getTime(),
+        ),
       ),
     );
     const today = new Date();
@@ -267,12 +274,15 @@ export const getHistoricalData = query({
         if (!transaction.symbol) {
           //if the asset has no symbol, calculate it if the transaction date is on or before the current date
           if (new Date(transaction.date) <= date) {
-            const assetValue =  transaction.quantity * transaction.price * (transaction.type === "buy" ? 1 : -1);
-            dailyValue += assetValue
+            const assetValue =
+              transaction.quantity *
+              transaction.price *
+              (transaction.type === "buy" ? 1 : -1);
+            dailyValue += assetValue;
             calculatedAssets.push(transaction.transactionId);
           }
           continue;
-        };
+        }
         const symbol = transaction.symbol;
         const txnDate = new Date(transaction.date);
         if (txnDate > date) continue; // skip transactions that are after the current date
@@ -289,24 +299,26 @@ export const getHistoricalData = query({
         if (!priceRecord) continue; // no price data available for this date
 
         // Check if we're processing today's date to use current market data
-        const isToday = date.toISOString().split('T')[0] === today.toISOString().split('T')[0];
+        const isToday =
+          date.toISOString().split("T")[0] ===
+          today.toISOString().split("T")[0];
         if (isToday) {
           // Look up current price from marketCurrentData table
           const currentMarketData = await ctx.db
             .query("marketCurrentData")
             .withIndex("byTicker", (q) => q.eq("ticker", symbol))
             .first();
-          
+
           // If we have current market data, use it instead of historical data
           if (currentMarketData && currentMarketData.price) {
             // Replace the historical close price with current market price
             priceRecord = {
               ...priceRecord, // Keep other fields if they exist
-              close: currentMarketData.price
+              close: currentMarketData.price,
             };
           }
         }
-        
+
         // calculate quantity held up to this date
         let quantityHeld = 0;
         for (const txn of allTransactions) {
@@ -321,7 +333,7 @@ export const getHistoricalData = query({
 
       result.push({
         date: formattedDate,
-        value: dailyValue
+        value: dailyValue,
       });
     }
     return result;
@@ -482,17 +494,17 @@ export const createAssetMarketCurrentData = internalMutation({
   },
 });
 
-// you need to fix this, get all the assets without a logo, and then fetch the logo from the market data api, 
+// you need to fix this, get all the assets without a logo, and then fetch the logo from the market data api,
 // and then update the asset with the logo
 export const updateAssetLogos = internalAction({
   args: {
     ticker: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     const response = await fetch(`${marketDataUrl}/logo/${args.ticker}`);
     if (response.ok) {
       const data = await response.json();
-    }    
+    }
   },
 });
 
@@ -581,7 +593,6 @@ export const updateBenchmarkData = action({
   },
 });
 
-
 // add benchmark data
 export const addBenchmarkData = internalMutation({
   args: {
@@ -597,11 +608,11 @@ export const addBenchmarkData = internalMutation({
       .query("marketBenchmarks")
       .withIndex("byTicker", (q) => q.eq("ticker", args.ticker))
       .first();
-    
+
     if (existing) {
       return;
     }
-    
+
     await ctx.db.insert("marketBenchmarks", {
       name: args.name,
       ticker: args.ticker,
@@ -627,7 +638,7 @@ export const patchBenchmarkDataClose = internalMutation({
       .query("marketBenchmarks")
       .withIndex("byTicker", (q) => q.eq("ticker", args.ticker))
       .first();
-    
+
     if (benchmark) {
       await ctx.db.patch(benchmark._id, {
         close: args.close,

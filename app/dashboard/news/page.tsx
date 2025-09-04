@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUser } from "@clerk/nextjs";
 import { NewsCard } from "./components/NewsCard";
 import { AISummaryCard } from "./components/AISummaryCard";
 import { MarketOverviewCard } from "./components/MarketOverviewCard";
@@ -48,7 +47,7 @@ export default function NewsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
   const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
-  
+
   useEffect(() => {
     const fetchNews = async () => {
       try {
@@ -129,7 +128,7 @@ export default function NewsPage() {
           <div className="lg:col-span-2">
             <AISummaryCard />
           </div>
-          <MarketOverviewCard data={ benchmarkData } />
+          <MarketOverviewCard data={benchmarkData} />
         </div>
 
         {/* News Cards */}

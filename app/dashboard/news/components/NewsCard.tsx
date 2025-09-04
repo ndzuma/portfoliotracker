@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Newspaper, ExternalLink } from "lucide-react";
+import { Calendar, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import {
   Dialog,

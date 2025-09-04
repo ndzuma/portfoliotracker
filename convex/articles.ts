@@ -14,9 +14,7 @@ export const getArticles = query({
 
     // If portfolioId is provided, filter articles by portfolioId
     const filteredArticles = args.portfolioId
-      ? articles.filter(
-          (article) => article.portfolioId === args.portfolioId
-        )
+      ? articles.filter((article) => article.portfolioId === args.portfolioId)
       : articles;
 
     return filteredArticles;
@@ -88,11 +86,11 @@ export const deleteArticlesByPortfolio = mutation({
       .collect();
 
     const articlesToDelete = articles.filter(
-      (article) => article.portfolioId === args.portfolioId
+      (article) => article.portfolioId === args.portfolioId,
     );
 
     for (const article of articlesToDelete) {
       await ctx.db.delete(article._id);
     }
   },
-}); 
+});
