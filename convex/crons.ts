@@ -24,6 +24,6 @@ export default crons;
 // Update benchmark data every x
 crons.interval(
   "update benchmark data",
-  { minutes: 30 },
+  { minutes: 60 },
   api.marketData.updateBenchmarkData,
 );

@@ -66,7 +66,7 @@ export default defineSchema({
   // marketHistoricData
   marketHistoricData: defineTable({
     ticker: v.string(),
-    date: v.string(), // YYYY-MM-DD
+    date: v.string(),
     open: v.number(),
     high: v.number(),
     low: v.number(),
@@ -98,4 +98,28 @@ export default defineSchema({
     isMarketOpen: v.boolean(),
     updatedAt: v.number(),
   }).index("byTicker", ["ticker"]),
+  // documents for user-uploaded files
+  userDocuments: defineTable({
+    storageId: v.union(v.string(), v.id("_storage")),
+    userId: v.union(v.string(), v.id("users")),
+    portfolioId: v.optional(v.union(v.string(), v.id("portfolios"))),
+    fileName: v.string(),
+    format: v.optional(v.string()),
+    type: v.optional(v.union(
+      v.literal("Strategy Document"),
+      v.literal("Account Statement"),
+      v.literal("Research Report"),
+      v.literal("Tax Document"),
+      v.literal("Annual Report"),
+      v.literal("Other"),
+    )),
+    updatedAt: v.number(),
+  }).index("byUser", ["userId", "portfolioId"]).index("byPortfolio", ["portfolioId"]),
+  // user articles
+  userArticles: defineTable({
+    userId: v.union(v.string(), v.id("users")),
+    portfolioId: v.optional(v.union(v.string(), v.id("portfolios"))),
+    title: v.string(),
+    url: v.string(),
+  }).index("byUser", ["userId"]),
 });

@@ -62,6 +62,60 @@ export const updateHistoricalData = action({
   },
 });
 
+export const createHistoricalData = action({
+  args: {
+    ticker: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.runQuery(internal.marketData.doesHistoricalDataExist, {
+      ticker: args.ticker,
+    });
+    if (existing) {
+      console.log(`Historical data for ${args.ticker} already exists`);
+      return;
+    }
+
+    const response = await fetch(
+      `${marketDataUrl}/historical/${args.ticker.replace(/\//g, "_")}`,
+    );
+    if (!response.ok) {
+      console.error(
+        `Failed to fetch historical data for ${args.ticker.replace(/\//g, "_")}`,
+      );
+      return;
+    }
+    const historicalData = await response.json();
+
+    for (const record of historicalData) {
+      await ctx.runMutation(internal.marketData.addHistoricalData, {
+        ticker: args.ticker,
+        date: record.datetime,
+        open: Number(record.open),
+        high: Number(record.high),
+        low: Number(record.low),
+        close: Number(record.close),
+        volume: Number(record.volume),
+      });
+    }
+  },
+})
+
+export const doesHistoricalDataExist = internalQuery({
+  args: {
+    ticker: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("marketHistoricData")
+      .withIndex("byTicker", (q) => q.eq("ticker", args.ticker))
+      .first();
+    if (existing) {
+      return true;
+    }
+    return false;
+  },
+});
+
 // get assets without historical data
 export const getAssetsWithoutHistoricalData = internalQuery({
   handler: async (ctx) => {
@@ -119,6 +173,158 @@ export const addHistoricalData = internalMutation({
       close: args.close,
       volume: args.volume,
     });
+  },
+});
+
+// get HistoricalData for the charts
+export const getHistoricalData = query({
+  args: {
+    portfolioId: v.union(v.id("portfolios"), v.string()),
+  },
+  handler: async (ctx, args) => {
+    // get portfolio assets and transactions and format the data into {symbol, date, quantity, price, type}
+    const assets = await ctx.db
+      .query("assets")
+      .withIndex("byPortfolio", (q) => q.eq("portfolioId", args.portfolioId))
+      .collect();
+    if (assets.length === 0) {
+      return [];
+    }
+    const allTransactions: any[] = [];
+    for (const asset of assets) {
+      const transactions = await ctx.db
+        .query("transactions")
+        .withIndex("byAsset", (q) => q.eq("assetId", asset._id))
+        .collect();
+      for(const transaction of transactions) { 
+        allTransactions.push({
+          transactionId: transaction._id,
+          name: asset.name,
+          symbol: asset.symbol,
+          date: transaction.date,
+          quantity: transaction.quantity,
+          price: transaction.price,
+          type: transaction.type,
+        });
+      }
+    }
+    // sort by date ascending
+    allTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    if (allTransactions.length === 0) {
+      return [];
+    }
+    // make a kv pair of symbol and earliest date
+    const symbolEarliestDate: Record<string, string> = {};
+    for (const transaction of allTransactions) {
+      if (!transaction.symbol) continue;
+      if (!symbolEarliestDate[transaction.symbol]) {
+        symbolEarliestDate[transaction.symbol] = transaction.date;
+      } else {
+        const existingDate = new Date(symbolEarliestDate[transaction.symbol]);
+        const transactionDate = new Date(transaction.date);
+        if (transactionDate < existingDate) {
+          symbolEarliestDate[transaction.symbol] = transaction.date;
+        }
+      }
+    }
+    // get historicalData for each symbol from the earliest date to today
+    // mind you the historical data date is in YYYY-MM-DD format but the transaction date is in ISO format
+    const historicalData: Record<string, any[]> = {};
+    let formattedStartDate: string;
+    for (const symbol in symbolEarliestDate) {
+      const startDate = new Date(symbolEarliestDate[symbol]);
+      formattedStartDate = startDate.toISOString().split("T")[0];
+      const data = await ctx.db
+        .query("marketHistoricData")
+        .withIndex("byTicker", (q) =>
+          q.eq("ticker", symbol).gte("date", formattedStartDate),
+        )
+        .collect();
+      historicalData[symbol] = data;
+    }
+    
+    // calculate the values for each date and return the data
+    // in the format {date, value}
+    const result: { date: string; value: number}[] = [];
+    const portfolioStartDate = new Date(
+      Math.min(
+        ...Object.values(symbolEarliestDate).map((date) => new Date(date).getTime()),
+      ),
+    );
+    const today = new Date();
+    for (
+      let date = new Date(portfolioStartDate);
+      date <= today;
+      date.setDate(date.getDate() + 1)
+    ) {
+      const formattedDate = date.toISOString().split("T")[0];
+      let dailyValue = 0;
+      let calculatedAssets: any[] = [];
+      for (const transaction of allTransactions) {
+        if (calculatedAssets.includes(transaction.transactionId)) {
+          continue;
+        }
+        if (!transaction.symbol) {
+          //if the asset has no symbol, calculate it if the transaction date is on or before the current date
+          if (new Date(transaction.date) <= date) {
+            const assetValue =  transaction.quantity * transaction.price * (transaction.type === "buy" ? 1 : -1);
+            dailyValue += assetValue
+            calculatedAssets.push(transaction.transactionId);
+          }
+          continue;
+        };
+        const symbol = transaction.symbol;
+        const txnDate = new Date(transaction.date);
+        if (txnDate > date) continue; // skip transactions that are after the current date
+        const historicalPrices = historicalData[symbol] || [];
+        // find the closest historical price on or before the current date
+        let priceRecord = null;
+        for (let i = historicalPrices.length - 1; i >= 0; i--) {
+          const recordDate = new Date(historicalPrices[i].date);
+          if (recordDate <= date) {
+            priceRecord = historicalPrices[i];
+            break;
+          }
+        }
+        if (!priceRecord) continue; // no price data available for this date
+
+        // Check if we're processing today's date to use current market data
+        const isToday = date.toISOString().split('T')[0] === today.toISOString().split('T')[0];
+        if (isToday) {
+          // Look up current price from marketCurrentData table
+          const currentMarketData = await ctx.db
+            .query("marketCurrentData")
+            .withIndex("byTicker", (q) => q.eq("ticker", symbol))
+            .first();
+          
+          // If we have current market data, use it instead of historical data
+          if (currentMarketData && currentMarketData.price) {
+            // Replace the historical close price with current market price
+            priceRecord = {
+              ...priceRecord, // Keep other fields if they exist
+              close: currentMarketData.price
+            };
+          }
+        }
+        
+        // calculate quantity held up to this date
+        let quantityHeld = 0;
+        for (const txn of allTransactions) {
+          if (txn.symbol !== symbol) continue;
+          const txnDate = new Date(txn.date);
+          if (txnDate > date) continue; // skip transactions that are after the current date
+          quantityHeld += txn.type === "buy" ? txn.quantity : -txn.quantity;
+          calculatedAssets.push(txn.transactionId);
+        }
+        dailyValue += quantityHeld * priceRecord.close;
+      }
+
+      result.push({
+        date: formattedDate,
+        value: dailyValue
+      });
+    }
+    return result;
   },
 });
 
