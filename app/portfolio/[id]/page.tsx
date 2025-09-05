@@ -29,8 +29,8 @@ import { PorfolioPerformanceChart } from "@/components/PortfolioPerformance";
 import { AddAssetDialog } from "./components/dialogs/AddAssetDialog";
 import { EditPortfolioDialog } from "./components/dialogs/EditPortfolioDialog";
 import { EditAssetDialog } from "./components/dialogs/EditAssetDialog";
-import { Id } from "../../../../convex/_generated/dataModel";
-import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
+import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 
 export default function PortfolioDetail({
@@ -104,7 +104,7 @@ export default function PortfolioDetail({
           <p className="text-muted-foreground mb-6">
             You do not have permission to view this portfolio.
           </p>
-          <Link href="/dashboard">
+          <Link href="/">
             <Button variant="ghost">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Portfolios
@@ -119,7 +119,7 @@ export default function PortfolioDetail({
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex items-center gap-4 mb-6">
-          <Link href="/dashboard">
+          <Link href="/">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Portfolios

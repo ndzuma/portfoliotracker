@@ -138,7 +138,7 @@ export default function OnboardingPage() {
 
               <div className="flex justify-center mb-10">
                 <Button asChild size="lg" className="group">
-                  <Link href="/dashboard">
+                  <Link href="/">
                     Go to Dashboard
                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </Link>

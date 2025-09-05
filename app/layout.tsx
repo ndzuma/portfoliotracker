@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
+import { AuthenticatedWrapper } from "./auth-wrapper";
 
 export const metadata: Metadata = {
   title: "Pulseportfolio",
@@ -26,7 +27,9 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="system" storageKey="portfolio-theme">
           <ClerkProvider>
             <ConvexClientProvider>
-              <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+              <Suspense fallback={<div>Loading...</div>}>
+                <AuthenticatedWrapper>{children}</AuthenticatedWrapper>;
+              </Suspense>
               <Toaster position="top-right" richColors />
             </ConvexClientProvider>
           </ClerkProvider>

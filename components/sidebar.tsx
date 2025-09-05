@@ -20,12 +20,12 @@ import Image from "next/image";
 import { dark } from '@clerk/themes'
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Briefcase },
-  { name: "News", href: "/dashboard/news", icon: Newspaper },
+  { name: "Dashboard", href: "/", icon: Briefcase },
+  { name: "News", href: "/news", icon: Newspaper },
   { name: "Watchlist", href: "#", icon: BookmarkIcon },
   { name: "Research", href: "#", icon: BinocularsIcon },
   { name: "Earnings", href: "#", icon: CalendarDaysIcon },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 // get sign out url from env

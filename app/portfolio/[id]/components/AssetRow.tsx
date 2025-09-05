@@ -14,7 +14,6 @@ import {
   Trash2,
   Receipt,
 } from "lucide-react";
-
 import { Asset } from "./types";
 import { getAssetConfig } from "./AssetRowConfig";
 import { TransactionDialog } from "./dialogs/TransactionDialog";

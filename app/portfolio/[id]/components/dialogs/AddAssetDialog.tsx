@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, TrendingUp } from "lucide-react";
 import { useMutation } from "convex/react";
-import { api } from "../../../../../../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 import { Asset } from "../types";
 
 interface AddAssetDialogProps {
