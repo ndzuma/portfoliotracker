@@ -26,6 +26,7 @@ import { AssetSection } from "./components/AssetSection";
 import { Asset } from "./components/types";
 import { AssetAllocationPie } from "@/components/assetAllocationPie";
 import { PorfolioPerformanceChart } from "@/components/PortfolioPerformance";
+import { CircleSlash } from "lucide-react";
 import { AddAssetDialog } from "./components/dialogs/AddAssetDialog";
 import { EditPortfolioDialog } from "./components/dialogs/EditPortfolioDialog";
 import { EditAssetDialog } from "./components/dialogs/EditAssetDialog";
@@ -280,55 +281,75 @@ export default function PortfolioDetail({
           <h2 className="text-2xl font-semibold text-foreground mb-6">
             Holdings
           </h2>
-          <AssetSection
-            key={`stocks-${stockAssets.length}-${portfolio?._id}`}
-            title="Stocks"
-            assets={stockAssets}
-            onEdit={handleEditAsset}
-            onDelete={handleDeleteAsset}
-          />
-          <AssetSection
-            key={`crypto-${cryptoAssets.length}-${portfolio?._id}`}
-            title="Cryptocurrencies"
-            assets={cryptoAssets}
-            onEdit={handleEditAsset}
-            onDelete={handleDeleteAsset}
-          />
-          <AssetSection
-            key={`property-${propertyAssets.length}-${portfolio?._id}`}
-            title="Real Estate & Properties"
-            assets={propertyAssets}
-            onEdit={handleEditAsset}
-            onDelete={handleDeleteAsset}
-          />
-          <AssetSection
-            key={`commodity-${commodityAssets.length}-${portfolio?._id}`}
-            title="Commodities"
-            assets={commodityAssets}
-            onEdit={handleEditAsset}
-            onDelete={handleDeleteAsset}
-          />
-          <AssetSection
-            key={`bonds-${bondAssets.length}-${portfolio?._id}`}
-            title="Bonds"
-            assets={bondAssets}
-            onEdit={handleEditAsset}
-            onDelete={handleDeleteAsset}
-          />
-          <AssetSection
-            key={`cash-${cashAssets.length}-${portfolio?._id}`}
-            title="Cash"
-            assets={cashAssets}
-            onEdit={handleEditAsset}
-            onDelete={handleDeleteAsset}
-          />
-          <AssetSection
-            key={`other-${otherAssets.length}-${portfolio?._id}`}
-            title="Other Assets"
-            assets={otherAssets}
-            onEdit={handleEditAsset}
-            onDelete={handleDeleteAsset}
-          />
+          {portfolio?.assets && portfolio.assets.length > 0 ? (
+            <>
+              <AssetSection
+                key={`stocks-${stockAssets.length}-${portfolio?._id}`}
+                title="Stocks"
+                assets={stockAssets}
+                onEdit={handleEditAsset}
+                onDelete={handleDeleteAsset}
+              />
+              <AssetSection
+                key={`crypto-${cryptoAssets.length}-${portfolio?._id}`}
+                title="Cryptocurrencies"
+                assets={cryptoAssets}
+                onEdit={handleEditAsset}
+                onDelete={handleDeleteAsset}
+              />
+              <AssetSection
+                key={`property-${propertyAssets.length}-${portfolio?._id}`}
+                title="Real Estate & Properties"
+                assets={propertyAssets}
+                onEdit={handleEditAsset}
+                onDelete={handleDeleteAsset}
+              />
+              <AssetSection
+                key={`commodity-${commodityAssets.length}-${portfolio?._id}`}
+                title="Commodities"
+                assets={commodityAssets}
+                onEdit={handleEditAsset}
+                onDelete={handleDeleteAsset}
+              />
+              <AssetSection
+                key={`bonds-${bondAssets.length}-${portfolio?._id}`}
+                title="Bonds"
+                assets={bondAssets}
+                onEdit={handleEditAsset}
+                onDelete={handleDeleteAsset}
+              />
+              <AssetSection
+                key={`cash-${cashAssets.length}-${portfolio?._id}`}
+                title="Cash"
+                assets={cashAssets}
+                onEdit={handleEditAsset}
+                onDelete={handleDeleteAsset}
+              />
+              <AssetSection
+                key={`other-${otherAssets.length}-${portfolio?._id}`}
+                title="Other Assets"
+                assets={otherAssets}
+                onEdit={handleEditAsset}
+                onDelete={handleDeleteAsset}
+              />
+            </>
+          ) : (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Assets (0)</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center justify-center py-10">
+                <CircleSlash className="h-10 w-10 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-2">
+                  No asset data available
+                </p>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Add your first asset using the button above
+                </p>
+                <AddAssetDialog portfolioId={portfolioId} />
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
