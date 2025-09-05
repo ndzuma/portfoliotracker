@@ -26,7 +26,13 @@ import { AssetSection } from "./components/AssetSection";
 import { Asset } from "./components/types";
 import { AssetAllocationPie } from "@/components/assetAllocationPie";
 import { PorfolioPerformanceChart } from "@/components/PortfolioPerformance";
-import { CircleSlash } from "lucide-react";
+import { CircleSlash, Calendar, ChevronRight, ArrowRight } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { AddAssetDialog } from "./components/dialogs/AddAssetDialog";
 import { EditPortfolioDialog } from "./components/dialogs/EditPortfolioDialog";
 import { EditAssetDialog } from "./components/dialogs/EditAssetDialog";
@@ -45,6 +51,17 @@ export default function PortfolioDetail({
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isBunkerCollapsed, setIsBunkerCollapsed] = useState(true);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+
+  // Temporary investing calendar data
+  const investingCalendarEvents = [
+    { date: "Dec 15", description: "AAPL Dividend Ex-Date" },
+    { date: "Dec 20", description: "MSFT Earnings Call" },
+    { date: "Jan 05", description: "AMZN Quarterly Report" },
+    { date: "Jan 12", description: "GOOGL Board Meeting" },
+    { date: "Jan 15", description: "TSLA Product Announcement" },
+    { date: "Jan 28", description: "NVDA Dividend Payment" },
+  ];
 
   // convex operations
   const convexUser = useQuery(api.users.getUserByClerkId, {
@@ -187,15 +204,32 @@ export default function PortfolioDetail({
             <CardHeader className="pb-1">
               <CardTitle>Investing Calendar</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="text-sm">
-                  <div className="text-2xl font-bold">Dec 15</div>
-                  <div className="text-muted-foreground">
-                    AAPL Dividend Ex-Date
+            <CardContent className="flex flex-col h-full">
+              <div className="flex-grow space-y-3">
+                {investingCalendarEvents.length > 0 ? (
+                  <div className="text-sm">
+                    <div className="text-2xl font-bold">
+                      {investingCalendarEvents[0].date}
+                    </div>
+                    <div className="text-muted-foreground">
+                      {investingCalendarEvents[0].description}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-sm">
+                    <p className="text-muted-foreground">No available events</p>
+                  </div>
+                )}
               </div>
+              {investingCalendarEvents.length > 0 && (
+                <div
+                  onClick={() => setIsCalendarModalOpen(true)}
+                  className="mt-auto pt-3 text-sm text-muted-foreground hover:text-foreground cursor-pointer self-start flex items-center transition-colors"
+                >
+                  <span>See all events</span>
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -352,6 +386,38 @@ export default function PortfolioDetail({
           )}
         </div>
       </div>
+
+      {/* Investing Calendar Dialog */}
+      <Dialog open={isCalendarModalOpen} onOpenChange={setIsCalendarModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Investing Calendar
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            {investingCalendarEvents.length > 0 ? (
+              investingCalendarEvents.map((event, index) => (
+                <div
+                  key={index}
+                  className="flex items-start pb-4 border-b border-border last:border-0 last:pb-0"
+                >
+                  <div className="text-center bg-muted/50 rounded px-2 py-1 min-w-[80px]">
+                    <div className="font-medium">{event.date}</div>
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <div className="font-medium">{event.description}</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No events available</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
