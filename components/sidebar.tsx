@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
+import { dark } from '@clerk/themes'
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Briefcase },
@@ -26,6 +27,9 @@ const navigation = [
   { name: "Earnings", href: "#", icon: CalendarDaysIcon },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
+
+// get sign out url from env
+const signedOutUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_OUT_URL || "/";
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -94,7 +98,8 @@ export function Sidebar() {
         <div className="p-4 border-t border-[#8d745d]/30 min-h-18 ">
           <div className="flex items-center gap-3">
             <UserButton
-              appearance={{ elements: { userButtonAvatarBox: "w-10 h-10" } }}
+              appearance={{ elements: { userButtonAvatarBox: "w-10 h-10" }, baseTheme: dark }}
+              afterSignOutUrl={signedOutUrl}
             />
             {!collapsed && (
               <div className="flex-1 min-w-0">
