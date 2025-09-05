@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     description:
       "Monitor your entire financial picture in one place with powerful analytics and AI insights.",
     images: ["/LoadingScreen.png"],
-    creator: "@pulseportfolio",
+    //creator: "@pulseportfolio",
   },
 };
 
