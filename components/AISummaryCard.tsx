@@ -66,10 +66,10 @@ export function AISummaryCard({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
-            {headline && <p className="text-primary mt-2">{headline}</p>}
+            {headline && <p className="text-primary">{headline}</p>}
           </DialogHeader>
-          <div className="mt-4 text-muted-foreground">{content}</div>
-          <div className="flex flex-col items-center my-4">
+          <div className="mt-2 text-muted-foreground">{content}</div>
+          <div className="flex flex-col items-center mt-2 -mb-6">
             <Button
               className="bg-gradient-to-r from-indigo-400/80 via-purple-400/80 to-pink-400/80 text-white hover:opacity-90 transition-opacity shadow-md hover:shadow-lg relative overflow-hidden group py-1.5 px-3"
               onClick={() => {

@@ -46,7 +46,8 @@ export function PorfolioPerformanceChart({
   data?: ChartDataPoint[];
 }) {
   const [timeRange, setTimeRange] = useState<string>("all");
-  const isLoading = !data || data.length === 0;
+  const isLoading = !data;
+  const hasNoData = data && data.length === 0;
 
   // Available time periods
   const timePeriods = ["1m", "3m", "6m", "1y", "all"];
@@ -214,6 +215,12 @@ export function PorfolioPerformanceChart({
           <div className="aspect-auto h-[250px] w-full flex flex-col space-y-2">
             <Skeleton className="h-[250px] w-full" />
           </div>
+        ) : hasNoData || filteredData.length === 0 ? (
+          <div className="aspect-auto h-[250px] w-full flex items-center justify-center">
+            <p className="text-muted-foreground">
+              No performance data available
+            </p>
+          </div>
         ) : (
           <ChartContainer
             config={chartConfig}
@@ -273,7 +280,7 @@ export function PorfolioPerformanceChart({
           </ChartContainer>
         )}
       </CardContent>
-      {!isLoading && (
+      {!isLoading && !hasNoData && filteredData.length > 0 && (
         <div className="px-6 pb-4 text-xs text-muted-foreground">
           * Historical data available from January 1, 2015
         </div>
