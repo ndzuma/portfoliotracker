@@ -126,4 +126,10 @@ export default defineSchema({
     title: v.string(),
     url: v.string(),
   }).index("byUser", ["userId"]),
+  // calendar events
+  calendarEvents: defineTable({
+    date: v.string(), // YYYY-MM-DD
+    title: v.string(),
+    description: v.optional(v.string()),
+  }).index("byDate", ["date"]),
 });
