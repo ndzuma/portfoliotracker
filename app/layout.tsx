@@ -12,8 +12,30 @@ import { Toaster } from "sonner";
 import { AuthenticatedWrapper } from "./auth-wrapper";
 
 export const metadata: Metadata = {
-  title: "Pulseportfolio",
-  description: "Track and manage your investments with ease.",
+  title: "PulsePortfolio App - Manage Your Investments",
+  description:
+    "Monitor stocks, crypto, real estate, and more with powerful tools for investors. Track multiple portfolios and get AI-powered insights to optimize your investments.",
+  keywords:
+    "portfolio tracker, investment management, stock tracker, crypto tracker, real estate investments, financial dashboard, multiple portfolios",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
+  openGraph: {
+    title: "PulsePortfolio App - Investment Dashboard",
+    description:
+      "Monitor your entire financial picture in one place with powerful analytics and AI insights.",
+    images: ["/LoadingScreen.png"],
+    url: "https://app.pulsefolio.net",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PulsePortfolio App - Investment Dashboard",
+    description:
+      "Monitor your entire financial picture in one place with powerful analytics and AI insights.",
+    images: ["/LoadingScreen.png"],
+    creator: "@pulseportfolio",
+  },
 };
 
 export default function RootLayout({
