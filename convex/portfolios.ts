@@ -461,7 +461,7 @@ export const getPortfolioAnalytics = query({
         assetTypes: countAssetTypes(assets),
       },
     };
-    console.log(final);
+    return final;
   },
 });
 
