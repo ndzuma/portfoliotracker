@@ -282,7 +282,7 @@ const SettingsPage = () => {
           </CardHeader>
           <Separator className="bg-[#8d745d]/20" />
           <CardContent className="pt-4 space-y-4">
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-4 gap-3">
               <Button
                 variant="outline"
                 onClick={handleExportPortfolio}
@@ -295,7 +295,7 @@ const SettingsPage = () => {
               <Button
                 variant="outline"
                 onClick={handleExportPortfolio}
-                disabled={isExporting}
+                disabled={true}
                 className="flex items-center gap-2 border-[#8d745d]/30 hover:bg-[#8d745d]/10"
               >
                 <Download className="h-4 w-4" />
@@ -304,7 +304,7 @@ const SettingsPage = () => {
               <Button
                 variant="outline"
                 onClick={handleExportPortfolio}
-                disabled={isExporting}
+                disabled={true}
                 className="flex items-center gap-2 border-[#8d745d]/30 hover:bg-[#8d745d]/10"
               >
                 <Download className="h-4 w-4" />
@@ -313,7 +313,7 @@ const SettingsPage = () => {
               <Button
                 variant="outline"
                 onClick={handleExportPortfolio}
-                disabled={isExporting}
+                disabled={true}
                 className="flex items-center gap-2 border-[#8d745d]/30 hover:bg-[#8d745d]/10"
               >
                 <Download className="h-4 w-4" />
@@ -324,7 +324,6 @@ const SettingsPage = () => {
               Note: Exporting large portfolios may take a few moments.
             </p>
           </CardContent>
-          {/* Footer with version info */}
         </Card>
 
         {/* API key management for the api-based data fetching for pro users, with link to docs */}
@@ -589,7 +588,11 @@ const SettingsPage = () => {
             </div>
           </CardContent>
         </Card>
+        
         {/* Footer with version info */}
+        <p className="text-xs text-muted-foreground text-center mt-4">
+          PortfolioTracker v1.0.0
+        </p>
       </div>
     </div>
   );
