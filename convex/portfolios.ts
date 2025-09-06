@@ -1,5 +1,6 @@
+import { api } from "./_generated/api";
 import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { GenericId, v } from "convex/values";
 
 const aiPlaceholderSummary =
   "Strong tech performance (+18.2% MTD)** driving growth, but **underweight on dividends (2.3%)**. Consider adding **renewable energy stocks** and **international equities** (5-10%) to enhance diversification. Current **cash position (12%)** appropriate amid market volatility.";
@@ -240,8 +241,7 @@ export const createPortfolio = mutation({
     name: v.string(),
     description: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-  },
+  handler: async (ctx, args) => {},
 });
 
 // Update an existing portfolio
@@ -307,3 +307,769 @@ export const deletePortfolio = mutation({
     await ctx.db.delete(args.portfolioId);
   },
 });
+
+// get portfolio analytics
+export const getPortfolioAnalytics = query({
+  args: {
+    portfolioId: v.union(v.id("portfolios"), v.string()),
+  },
+  handler: async (ctx, args) => {
+    const portfolio = await ctx.db.get(args.portfolioId);
+    if (!portfolio) throw new Error("Portfolio not found");
+
+    // Get assets in this portfolio
+    const assets = await ctx.db
+      .query("assets")
+      .filter((q) => q.eq(q.field("portfolioId"), args.portfolioId))
+      .collect();
+
+    for (const asset of assets) {
+      const transactions = await ctx.db
+        .query("transactions")
+        .filter((q) => q.eq(q.field("assetId"), asset._id))
+        .collect();
+      asset.transactions = transactions;
+    }
+
+    // get current price for each asset if symbol is available
+    for (const asset of assets) {
+      if (asset.symbol && typeof asset.symbol === "string") {
+        const marketData = await ctx.db
+          .query("marketCurrentData")
+          .withIndex("byTicker", (q) => q.eq("ticker", asset.symbol))
+          .first();
+        if (marketData && marketData.price) {
+          asset.currentPrice = marketData.price;
+        }
+      }
+    }
+
+    const startDate = new Date("2015-01-01");
+    let historicalData = await ctx.runQuery(api.marketData.getHistoricalData, {
+      portfolioId: args.portfolioId,
+    });
+
+    historicalData = historicalData.filter((data) => {
+      const dataDate = new Date(data.date);
+      return dataDate >= startDate;
+    });
+    // format this correctly later
+    if (historicalData.length === 0) {
+      throw new Error("No historical data available for this portfolio");
+    }
+
+    const start = getEarliestDate(historicalData);
+    const returns = calculateDailyReturns(historicalData);
+
+    const benchmarkData = await ctx.db
+      .query("marketHistoricData")
+      .withIndex("byTicker", (q) =>
+        q
+          .eq("ticker", "SPY")
+          .gte("date", start?.toISOString().split("T")[0] || "2015-01-01"),
+      )
+      .collect();
+
+    if (benchmarkData.length === 0) {
+      throw new Error("No benchmark data available");
+    }
+
+    const formatedBenchmarkData = benchmarkData.map((d) => ({
+      date: d.date,
+      value: d.close,
+    }));
+
+    const benchmarkReturns = calculateDailyReturns(formatedBenchmarkData);
+
+    // Calculate Risk metrics
+    const riskMetrics = {
+      // Standard deviation of returns (annualized)
+      volatility: calculateVolatility(returns),
+      maxDrawdown: calculateMaxDrawdown(historicalData),
+      beta: calculateBeta(returns, benchmarkReturns),
+      valueAtRisk: {
+        daily: calculateVaR(returns, 0.95),
+        monthly: calculateVaR(aggregateReturns(returns, 21), 0.95), // ~21 trading days
+      },
+      sharpeRatio: calculateSharpeRatio(returns, getRiskFreeRate()),
+      downsideDeviation: calculateDownsideDeviation(returns),
+      assetDiversification: calculateAssetDiversification(assets),
+    };
+    // Calculate Performance metrics
+    const performanceMetrics = {
+      totalReturn: calculateTotalReturn(historicalData),
+      annualizedReturn: calculateAnnualizedReturn(historicalData),
+      monthlyReturns: calculateMonthlyReturns(historicalData),
+      ytdReturn: calculateYTDReturn(historicalData),
+      rollingReturns: calculateRollingReturns(historicalData),
+      bestWorstPeriods: {
+        bestMonth: findBestPeriod(returns, 21), // ~21 trading days
+        worstMonth: findWorstPeriod(returns, 21),
+        bestYear: findBestPeriod(returns, 252), // ~252 trading days
+        worstYear: findWorstPeriod(returns, 252),
+      },
+      alpha: calculateAlpha(returns, benchmarkReturns, riskMetrics.beta),
+      winRate: calculateWinRate(returns),
+    };
+
+    // Benchmark comparisons
+    const benchmarkComparisons = {
+      cumulativeOutperformance: calculateCumulativeOutperformance(
+        historicalData,
+        benchmarkData,
+      ),
+      trackingError: calculateTrackingError(returns, benchmarkReturns),
+      marketCapture: {
+        upCapture: calculateUpMarketCapture(returns, benchmarkReturns),
+        downCapture: calculateDownMarketCapture(returns, benchmarkReturns),
+      },
+      informationRatio: calculateInformationRatio(
+        returns,
+        benchmarkReturns,
+        calculateTrackingError(returns, benchmarkReturns),
+      ),
+      correlation: calculateCorrelation(returns, benchmarkReturns),
+      yearlyComparison: calculateYearlyComparison(
+        historicalData,
+        benchmarkData,
+      ),
+    };
+    const assetAllocation = {
+      // Breakdown by asset type
+      byType: calculateAllocationByType(assets),
+      // todo add:
+      // Current allocation vs historical (if historical allocation data available)
+      // Contribution to performance by asset type
+      // Risk contribution by asset type
+    };
+
+    const final = {
+      riskMetrics,
+      performanceMetrics,
+      benchmarkComparisons,
+      assetAllocation,
+      metadata: {
+        calculatedAt: new Date().toISOString(),
+        dataPoints: historicalData.length,
+        dateRange: {
+          start: historicalData[0]?.date || startDate.toISOString(),
+          end:
+            historicalData[historicalData.length - 1]?.date ||
+            new Date().toISOString(),
+        },
+        assetCount: assets.length,
+        assetTypes: countAssetTypes(assets),
+      },
+    };
+    console.log(final);
+  },
+});
+
+// Helper functions returns {date, returnValue}[]
+function calculateDailyReturns(priceData: any[]) {
+  // Convert price/value series to returns
+  const returns = [];
+  for (let i = 1; i < priceData.length; i++) {
+    const prev = priceData[i - 1];
+    const curr = priceData[i];
+    const returnValue = (curr.value - prev.value) / prev.value;
+    returns.push({ date: curr.date, returnValue });
+  }
+  return returns;
+}
+
+// get earliest date. the data is in format {date: string, value: number}[]
+function getEarliestDate(dates: { date: string; value: number }[]) {
+  if (dates.length === 0) return null;
+  let earliest = new Date(dates[0].date);
+  for (const d of dates) {
+    const current = new Date(d.date);
+    if (current < earliest) {
+      earliest = current;
+    }
+  }
+  return earliest;
+}
+function calculateVolatility(returns: { date: any; returnValue: number }[]) {
+  const n = returns.length;
+  if (n === 0) return 0;
+  const mean = returns.reduce((sum, r) => sum + r.returnValue, 0) / n;
+  const variance =
+    returns.reduce((sum, r) => sum + (r.returnValue - mean) ** 2, 0) / n;
+  const dailyVolatility = Math.sqrt(variance);
+  const annualizedVolatility = dailyVolatility * Math.sqrt(252); // Assuming 252 trading days
+  return annualizedVolatility;
+}
+
+function calculateMaxDrawdown(
+  historicalData: { date: string; value: number }[],
+) {
+  let peak = historicalData[0].value;
+  let maxDrawdown = 0;
+
+  for (const data of historicalData) {
+    if (data.value > peak) {
+      peak = data.value;
+    }
+    const drawdown = (peak - data.value) / peak;
+    if (drawdown > maxDrawdown) {
+      maxDrawdown = drawdown;
+    }
+  }
+  return maxDrawdown;
+}
+
+function calculateBeta(
+  returns: { date: any; returnValue: number }[],
+  benchmarkReturns: { date: any; returnValue: number }[],
+) {
+  if (returns.length === 0 || benchmarkReturns.length === 0) return 0;
+  const n = Math.min(returns.length, benchmarkReturns.length);
+  const meanR = returns.reduce((sum, r) => sum + r.returnValue, 0) / n;
+  const meanB = benchmarkReturns.reduce((sum, r) => sum + r.returnValue, 0) / n;
+
+  let covariance = 0;
+  let varianceB = 0;
+
+  for (let i = 0; i < n; i++) {
+    covariance +=
+      (returns[i].returnValue - meanR) *
+      (benchmarkReturns[i].returnValue - meanB);
+    varianceB += (benchmarkReturns[i].returnValue - meanB) ** 2;
+  }
+
+  covariance /= n;
+  varianceB /= n;
+
+  return varianceB === 0 ? 0 : covariance / varianceB;
+}
+
+function calculateVaR(
+  returns: { date: any; returnValue: number }[],
+  arg1: number,
+) {
+  if (returns.length === 0) return 0;
+  const sortedReturns = returns.map((r) => r.returnValue).sort((a, b) => a - b);
+  const index = Math.floor((1 - arg1) * sortedReturns.length);
+  return Math.abs(sortedReturns[index]);
+}
+
+function aggregateReturns(
+  returns: { date: any; returnValue: number }[],
+  arg1: number,
+): { date: any; returnValue: number }[] {
+  const aggregated = [];
+
+  if (returns.length <= arg1) {
+    return returns;
+  }
+
+  for (let i = 0; i < returns.length; i += arg1) {
+    const chunk = returns.slice(i, i + arg1);
+    if (chunk.length === 0) continue;
+    const totalReturn = chunk.reduce((sum, r) => sum + r.returnValue, 0);
+    aggregated.push({
+      date: chunk[chunk.length - 1].date,
+      returnValue: totalReturn,
+    });
+  }
+  return aggregated;
+}
+
+function calculateSharpeRatio(
+  returns: { date: any; returnValue: number }[],
+  arg1: any,
+) {
+  const n = returns.length;
+  if (n === 0) return 0;
+  const meanReturn = returns.reduce((sum, r) => sum + r.returnValue, 0) / n;
+  const stdDev = calculateVolatility(returns) / Math.sqrt(252); // Daily std dev
+  const excessReturn = meanReturn - arg1; // Assuming arg1 is daily risk-free rate
+  return stdDev === 0 ? 0 : (excessReturn / stdDev) * Math.sqrt(252); // Annualized Sharpe Ratio
+}
+
+function getRiskFreeRate(): any {
+  // Placeholder: return a fixed risk-free rate (e.g., 3% annualized)
+  return 0.03 / 252; // Daily risk-free rate
+}
+
+function calculateDownsideDeviation(
+  returns: { date: any; returnValue: number }[],
+) {
+  const n = returns.length;
+  if (n === 0) return 0;
+  const mean = returns.reduce((sum, r) => sum + r.returnValue, 0) / n;
+  const downsideReturns = returns
+    .map((r) => (r.returnValue < mean ? r.returnValue - mean : 0))
+    .filter((r) => r < 0);
+  const downsideVariance =
+    downsideReturns.reduce((sum, r) => sum + r ** 2, 0) / n;
+  return Math.sqrt(downsideVariance) * Math.sqrt(252); // Annualized downside deviation
+}
+
+function calculateAssetDiversification(
+  assets: {
+    _id: GenericId<"assets">;
+    _creationTime: number;
+    symbol?: string | undefined;
+    currency?: string | undefined;
+    currentPrice?: number | undefined;
+    notes?: string | undefined;
+    type:
+      | "stock"
+      | "bond"
+      | "commodity"
+      | "real estate"
+      | "cash"
+      | "crypto"
+      | "other";
+    name: string;
+    portfolioId: GenericId<"portfolios">;
+  }[],
+) {
+  const typeCounts: Record<string, number> = {};
+  for (const asset of assets) {
+    typeCounts[asset.type] = (typeCounts[asset.type] || 0) + 1;
+  }
+  const totalAssets = assets.length;
+  const diversification = Object.entries(typeCounts).map(([type, count]) => ({
+    type,
+    percentage: (count / totalAssets) * 100,
+  }));
+  return diversification;
+}
+
+function calculateAnnualizedReturn(
+  historicalData: { date: string; value: number }[],
+) {
+  if (historicalData.length === 0) return 0;
+  const startValue = historicalData[0].value;
+  const endValue = historicalData[historicalData.length - 1].value;
+  const startDate = new Date(historicalData[0].date);
+  const endDate = new Date(historicalData[historicalData.length - 1].date);
+  const years =
+    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+  return years > 0 ? Math.pow(endValue / startValue, 1 / years) - 1 : 0;
+}
+
+function calculateRollingReturns(
+  historicalData: { date: string; value: number }[],
+) {
+  const rollingPeriods = [1, 3, 5]; // in years
+  const rollingReturns: Record<string, number> = {};
+  const n = historicalData.length;
+  if (n === 0) return rollingReturns;
+
+  for (const period of rollingPeriods) {
+    const periodDays = period * 252; // Approximate trading days
+    if (n > periodDays) {
+      const startValue = historicalData[n - periodDays - 1].value;
+      const endValue = historicalData[n - 1].value;
+      rollingReturns[`${period}Y`] = (endValue - startValue) / startValue;
+    } else {
+      rollingReturns[`${period}Y`] = 0; // Not enough data
+    }
+  }
+  return rollingReturns;
+}
+
+function calculateTotalReturn(
+  historicalData: { date: string; value: number }[],
+) {
+  if (historicalData.length === 0) return 0;
+  const startValue = historicalData[0].value;
+  const endValue = historicalData[historicalData.length - 1].value;
+  return (endValue - startValue) / startValue;
+}
+
+function calculateMonthlyReturns(
+  historicalData: { date: string; value: number }[],
+) {
+  if (historicalData.length === 0) return [];
+  const monthlyReturns: Record<
+    string,
+    { startValue: number; endValue: number }
+  > = {};
+
+  for (const data of historicalData) {
+    const date = new Date(data.date);
+    const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`; // e.g., "2023-1" for January 2023
+
+    if (!monthlyReturns[monthKey]) {
+      monthlyReturns[monthKey] = {
+        startValue: data.value,
+        endValue: data.value,
+      };
+    } else {
+      monthlyReturns[monthKey].endValue = data.value;
+    }
+  }
+
+  return Object.entries(monthlyReturns).map(([month, values]) => ({
+    month,
+    return: (values.endValue - values.startValue) / values.startValue,
+  }));
+}
+
+function calculateYTDReturn(historicalData: { date: string; value: number }[]) {
+  if (historicalData.length === 0) return 0;
+  const currentYear = new Date().getFullYear();
+  const startOfYearData = historicalData.find((d) => {
+    const date = new Date(d.date);
+    return date.getFullYear() === currentYear && date.getMonth() === 0; // January of current year
+  });
+  if (!startOfYearData) return 0;
+  const startValue = startOfYearData.value;
+  const endValue = historicalData[historicalData.length - 1].value;
+  return (endValue - startValue) / startValue;
+}
+
+function findBestPeriod(
+  returns: { date: any; returnValue: number }[],
+  arg1: number,
+) {
+  if (returns.length === 0) return null;
+  let bestPeriod = null;
+  let bestReturn = -Infinity;
+
+  if (returns.length <= arg1) {
+    const totalReturn = returns.reduce((sum, r) => sum + r.returnValue, 0);
+    return {
+      startDate: returns[0].date,
+      endDate: returns[returns.length - 1].date,
+      return: totalReturn,
+    };
+  }
+
+  for (let i = 0; i <= returns.length - arg1; i++) {
+    const periodReturns = returns.slice(i, i + arg1);
+    const totalReturn = periodReturns.reduce(
+      (sum, r) => sum + r.returnValue,
+      0,
+    );
+    if (totalReturn > bestReturn) {
+      bestReturn = totalReturn;
+      bestPeriod = {
+        startDate: periodReturns[0].date,
+        endDate: periodReturns[periodReturns.length - 1].date,
+        return: totalReturn,
+      };
+    }
+  }
+  return bestPeriod;
+}
+function findWorstPeriod(
+  returns: { date: any; returnValue: number }[],
+  arg1: number,
+) {
+  if (returns.length === 0) return null;
+  let worstPeriod = null;
+  let worstReturn = Infinity;
+
+  if (returns.length <= arg1) {
+    const totalReturn = returns.reduce((sum, r) => sum + r.returnValue, 0);
+    return {
+      startDate: returns[0].date,
+      endDate: returns[returns.length - 1].date,
+      return: totalReturn,
+    };
+  }
+
+  for (let i = 0; i <= returns.length - arg1; i++) {
+    const periodReturns = returns.slice(i, i + arg1);
+    const totalReturn = periodReturns.reduce(
+      (sum, r) => sum + r.returnValue,
+      0,
+    );
+    if (totalReturn < worstReturn) {
+      worstReturn = totalReturn;
+      worstPeriod = {
+        startDate: periodReturns[0].date,
+        endDate: periodReturns[periodReturns.length - 1].date,
+        return: totalReturn,
+      };
+    }
+  }
+  return worstPeriod;
+}
+
+function calculateAlpha(
+  returns: { date: any; returnValue: number }[],
+  benchmarkReturns: { date: any; returnValue: number }[],
+  beta: number,
+) {
+  if (returns.length === 0 || benchmarkReturns.length === 0) return 0;
+  const n = Math.min(returns.length, benchmarkReturns.length);
+  const meanR = returns.reduce((sum, r) => sum + r.returnValue, 0) / n;
+  const meanB = benchmarkReturns.reduce((sum, r) => sum + r.returnValue, 0) / n;
+  return meanR - beta * meanB;
+}
+
+function calculateWinRate(returns: { date: any; returnValue: number }[]) {
+  if (returns.length === 0) return 0;
+  const wins = returns.filter((r) => r.returnValue > 0).length;
+  return (wins / returns.length) * 100;
+}
+function calculateCumulativeOutperformance(
+  historicalData: { date: string; value: number }[],
+  benchmarkData: {
+    _id: GenericId<"marketHistoricData">;
+    _creationTime: number;
+    date: string;
+    ticker: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }[],
+) {
+  if (historicalData.length === 0 || benchmarkData.length === 0) return 0;
+  const startValue = historicalData[0].value;
+  const endValue = historicalData[historicalData.length - 1].value;
+  const benchmarkStartValue = benchmarkData[0].close;
+  const benchmarkEndValue = benchmarkData[benchmarkData.length - 1].close;
+
+  const portfolioReturn = (endValue - startValue) / startValue;
+  const benchmarkReturn =
+    (benchmarkEndValue - benchmarkStartValue) / benchmarkStartValue;
+
+  return portfolioReturn - benchmarkReturn;
+}
+
+function calculateTrackingError(
+  returns: { date: any; returnValue: number }[],
+  benchmarkReturns: { date: any; returnValue: number }[],
+) {
+  if (returns.length === 0 || benchmarkReturns.length === 0) return 0;
+  const n = Math.min(returns.length, benchmarkReturns.length);
+  const diffs = [];
+  for (let i = 0; i < n; i++) {
+    diffs.push(returns[i].returnValue - benchmarkReturns[i].returnValue);
+  }
+  const meanDiff = diffs.reduce((sum, d) => sum + d, 0) / n;
+  const variance = diffs.reduce((sum, d) => sum + (d - meanDiff) ** 2, 0) / n;
+  return Math.sqrt(variance) * Math.sqrt(252); // Annualized tracking error
+}
+
+// Calculates the up-market capture ratio, which measures how well a portfolio performs in up markets compared to a benchmark.
+function calculateUpMarketCapture(
+  returns: { date: any; returnValue: number }[],
+  benchmarkReturns: { date: any; returnValue: number }[],
+) {
+  if (returns.length === 0 || benchmarkReturns.length === 0) return 0;
+  let upMarketReturns = 0;
+  let portfolioUpReturns = 0;
+  let count = 0;
+
+  for (let i = 0; i < Math.min(returns.length, benchmarkReturns.length); i++) {
+    if (benchmarkReturns[i].returnValue > 0) {
+      upMarketReturns += benchmarkReturns[i].returnValue;
+      portfolioUpReturns += returns[i].returnValue;
+      count++;
+    }
+  }
+
+  return upMarketReturns === 0
+    ? 0
+    : (portfolioUpReturns / upMarketReturns) * 100;
+}
+
+// Calculates the down-market capture ratio, which measures how well a portfolio performs in down markets compared to a benchmark.
+// A lower down-market capture ratio indicates better performance during market downturns.
+// For example, a down-market capture ratio of 80% means the portfolio loses only 80% of what the benchmark loses in down markets.
+// but a negative ratio means the portfolio actually gained when the benchmark lost money.
+function calculateDownMarketCapture(
+  returns: { date: any; returnValue: number }[],
+  benchmarkReturns: { date: any; returnValue: number }[],
+) {
+  if (returns.length === 0 || benchmarkReturns.length === 0) return 0;
+  let downMarketReturns = 0;
+  let portfolioDownReturns = 0;
+  let count = 0;
+
+  for (let i = 0; i < Math.min(returns.length, benchmarkReturns.length); i++) {
+    if (benchmarkReturns[i].returnValue < 0) {
+      downMarketReturns += benchmarkReturns[i].returnValue;
+      portfolioDownReturns += returns[i].returnValue;
+      count++;
+    }
+  }
+
+  return downMarketReturns === 0
+    ? 0
+    : (portfolioDownReturns / downMarketReturns) * 100;
+}
+
+// Information Ratio: Measures the portfolio's excess return relative to a benchmark per unit of tracking error.
+// A higher information ratio indicates better risk-adjusted performance relative to the benchmark.
+// Typically, an information ratio above 0.5 is considered good, above 1.0 is excellent.
+function calculateInformationRatio(
+  returns: { date: any; returnValue: number }[],
+  benchmarkReturns: { date: any; returnValue: number }[],
+  arg2: number,
+) {
+  if (returns.length === 0 || benchmarkReturns.length === 0) return 0;
+  const n = Math.min(returns.length, benchmarkReturns.length);
+  const excessReturns = [];
+  for (let i = 0; i < n; i++) {
+    excessReturns.push(
+      returns[i].returnValue - benchmarkReturns[i].returnValue,
+    );
+  }
+  const meanExcessReturn = excessReturns.reduce((sum, r) => sum + r, 0) / n;
+  return arg2 === 0 ? 0 : (meanExcessReturn * Math.sqrt(252)) / arg2; // Annualized Information Ratio
+}
+
+// Correlation to Benchmark: Measures the degree to which the portfolio's returns move in relation to the benchmark's returns.
+// A correlation of +1 indicates perfect positive correlation, -1 indicates perfect negative correlation, and 0 indicates no correlation.
+function calculateCorrelation(
+  returns: { date: any; returnValue: number }[],
+  benchmarkReturns: { date: any; returnValue: number }[],
+) {
+  if (returns.length === 0 || benchmarkReturns.length === 0) return 0;
+  const n = Math.min(returns.length, benchmarkReturns.length);
+  const meanR = returns.reduce((sum, r) => sum + r.returnValue, 0) / n;
+  const meanB = benchmarkReturns.reduce((sum, r) => sum + r.returnValue, 0) / n;
+
+  let covariance = 0;
+  let varianceR = 0;
+  let varianceB = 0;
+
+  for (let i = 0; i < n; i++) {
+    covariance +=
+      (returns[i].returnValue - meanR) *
+      (benchmarkReturns[i].returnValue - meanB);
+    varianceR += (returns[i].returnValue - meanR) ** 2;
+    varianceB += (benchmarkReturns[i].returnValue - meanB) ** 2;
+  }
+
+  covariance /= n;
+  varianceR /= n;
+  varianceB /= n;
+
+  const stdDevR = Math.sqrt(varianceR);
+  const stdDevB = Math.sqrt(varianceB);
+
+  return stdDevR === 0 || stdDevB === 0 ? 0 : covariance / (stdDevR * stdDevB);
+}
+
+// Yearly Comparison: Compares the portfolio's annual returns to the benchmark's annual returns to see how they performed each year.
+function calculateYearlyComparison(
+  historicalData: { date: string; value: number }[],
+  benchmarkData: {
+    _id: GenericId<"marketHistoricData">;
+    _creationTime: number;
+    date: string;
+    ticker: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }[],
+) {
+  if (historicalData.length === 0 || benchmarkData.length === 0) return [];
+  const portfolioByYear: Record<
+    string,
+    { startValue: number; endValue: number }
+  > = {};
+  const benchmarkByYear: Record<
+    string,
+    { startValue: number; endValue: number }
+  > = {};
+
+  for (const data of historicalData) {
+    const date = new Date(data.date);
+    const year = date.getFullYear().toString();
+
+    if (!portfolioByYear[year]) {
+      portfolioByYear[year] = { startValue: data.value, endValue: data.value };
+    } else {
+      portfolioByYear[year].endValue = data.value;
+    }
+  }
+
+  for (const data of benchmarkData) {
+    const date = new Date(data.date);
+    const year = date.getFullYear().toString();
+
+    if (!benchmarkByYear[year]) {
+      benchmarkByYear[year] = { startValue: data.close, endValue: data.close };
+    } else {
+      benchmarkByYear[year].endValue = data.close;
+    }
+  }
+
+  const years = Object.keys(portfolioByYear).filter((year) =>
+    benchmarkByYear.hasOwnProperty(year),
+  );
+
+  return years.map((year) => {
+    const pData = portfolioByYear[year];
+    const bData = benchmarkByYear[year];
+    const portfolioReturn =
+      (pData.endValue - pData.startValue) / pData.startValue;
+    const benchmarkReturn =
+      (bData.endValue - bData.startValue) / bData.startValue;
+    return {
+      year,
+      portfolioReturn,
+      benchmarkReturn,
+      outperformance: portfolioReturn - benchmarkReturn,
+    };
+  });
+}
+
+function calculateAllocationByType(
+  assets: {
+    _id: GenericId<"assets">;
+    _creationTime: number;
+    symbol?: string | undefined;
+    currency?: string | undefined;
+    currentPrice?: number | undefined;
+    notes?: string | undefined;
+    type:
+      | "stock"
+      | "bond"
+      | "commodity"
+      | "real estate"
+      | "cash"
+      | "crypto"
+      | "other";
+    name: string;
+    portfolioId: GenericId<"portfolios">;
+  }[],
+) {
+  const typeValues: Record<string, number> = {};
+  let totalValue = 0;
+
+  for (const asset of assets) {
+    let quantity = 0;
+    for (const txn of asset.transactions || []) {
+      if (txn.type === "buy") {
+        quantity += txn.quantity;
+      } else if (txn.type === "sell") {
+        quantity -= txn.quantity;
+      }
+    }
+    const assetValue = (asset.currentPrice || 0) * quantity;
+
+    typeValues[asset.type] = (typeValues[asset.type] || 0) + assetValue;
+    totalValue += assetValue;
+  }
+
+  const allocation = Object.entries(typeValues).map(([type, value]) => ({
+    type,
+    percentage: totalValue ? (value / totalValue) * 100 : 0,
+  }));
+  return allocation;
+}
+function countAssetTypes(assets: { _id: GenericId<"assets">; _creationTime: number; symbol?: string | undefined; currency?: string | undefined; currentPrice?: number | undefined; notes?: string | undefined; type: "stock" | "bond" | "commodity" | "real estate" | "cash" | "crypto" | "other"; name: string; portfolioId: GenericId<"portfolios">; }[]) {
+  const typeCounts: Record<string, number> = {};
+  for (const asset of assets) {
+    typeCounts[asset.type] = (typeCounts[asset.type] || 0) + 1;
+  }
+  return typeCounts;
+}
+
