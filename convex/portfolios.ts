@@ -330,7 +330,14 @@ export const getPortfolioAnalytics = query({
         .collect();
       asset.transactions = transactions;
     }
-
+    
+    let transactions: any[] = [];
+    for (const asset of assets) {
+      transactions = transactions.concat(asset.transactions || []);
+    }
+    
+    transactions.sort((a, b) => a.date - b.date);
+    
     // get current price for each asset if symbol is available
     for (const asset of assets) {
       if (asset.symbol && typeof asset.symbol === "string") {
@@ -383,7 +390,6 @@ export const getPortfolioAnalytics = query({
 
     // Calculate Risk metrics
     const riskMetrics = {
-      // Standard deviation of returns (annualized)
       volatility: calculateVolatility(returns),
       maxDrawdown: calculateMaxDrawdown(historicalData),
       beta: calculateBeta(returns, benchmarkReturns),
@@ -398,6 +404,7 @@ export const getPortfolioAnalytics = query({
     // Calculate Performance metrics
     const performanceMetrics = {
       totalReturn: calculateTotalReturn(historicalData),
+      timeWeightedReturn: calculateTimeWeightedReturn(historicalData, transactions),
       annualizedReturn: calculateAnnualizedReturn(historicalData),
       monthlyReturns: calculateMonthlyReturns(historicalData),
       ytdReturn: calculateYTDReturn(historicalData),
@@ -442,8 +449,8 @@ export const getPortfolioAnalytics = query({
       // Contribution to performance by asset type
       // Risk contribution by asset type
     };
-
-    const final = {
+    
+    return {
       riskMetrics,
       performanceMetrics,
       benchmarkComparisons,
@@ -461,7 +468,6 @@ export const getPortfolioAnalytics = query({
         assetTypes: countAssetTypes(assets),
       },
     };
-    return final;
   },
 });
 
@@ -1090,4 +1096,185 @@ function countAssetTypes(
     typeCounts[asset.type] = (typeCounts[asset.type] || 0) + 1;
   }
   return typeCounts;
+}
+
+function calculateTimeWeightedReturn(
+  historicalData: { date: string; value: number }[],
+  transactions: Array<{
+    assetId: string;
+    type: "buy" | "sell" | "dividend";
+    date: number; // timestamp
+    quantity?: number;
+    price?: number;
+    fees?: number;
+  }>
+): number {
+  if (historicalData.length === 0) return 0;
+  
+  // Sort historical data by date
+  const sortedHistoricalData = [...historicalData].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  
+  // Convert to timestamp format for easier comparison
+  const timestampedData = sortedHistoricalData.map(entry => ({
+    date: new Date(entry.date).getTime(),
+    value: entry.value
+  }));
+  
+  // Sort transactions by date
+  const sortedTransactions = [...transactions].sort((a, b) => a.date - b.date);
+  
+  // If no transactions or only one data point, return simple return
+  if (sortedTransactions.length === 0 || timestampedData.length <= 1) {
+    return calculateSimpleReturn(sortedHistoricalData);
+  }
+  
+  // Group transactions by date
+  const transactionsByDate = new Map<number, number>();
+  
+  for (const transaction of sortedTransactions) {
+    // Round timestamp to nearest day for consistency
+    const dayTimestamp = roundToDay(transaction.date);
+    
+    let cashFlowAmount = 0;
+    
+    if (transaction.type === "buy") {
+      // Buy is negative cash flow (money leaving portfolio)
+      cashFlowAmount = -((transaction.quantity || 0) * (transaction.price || 0) + (transaction.fees || 0));
+    } else if (transaction.type === "sell") {
+      // Sell is positive cash flow (money entering portfolio)
+      cashFlowAmount = (transaction.quantity || 0) * (transaction.price || 0) - (transaction.fees || 0);
+    } else if (transaction.type === "dividend") {
+      // Dividend is positive cash flow
+      cashFlowAmount = transaction.price || 0;
+    }
+    
+    const existingAmount = transactionsByDate.get(dayTimestamp) || 0;
+    transactionsByDate.set(dayTimestamp, existingAmount + cashFlowAmount);
+  }
+  
+  // Calculate TWR
+  let cumulativeReturn = 1;
+  let previousValue = timestampedData[0].value;
+  let previousDate = timestampedData[0].date;
+  
+  // Check if first day has transactions
+  const firstDayTransactions = transactionsByDate.get(roundToDay(previousDate)) || 0;
+  if (firstDayTransactions !== 0) {
+    // If first day has transactions, we need to adjust the starting value
+    previousValue = Math.max(0.01, previousValue - firstDayTransactions); // Ensure not zero
+  }
+  
+  // Process each historical data point
+  for (let i = 1; i < timestampedData.length; i++) {
+    const currentEntry = timestampedData[i];
+    const currentDate = roundToDay(currentEntry.date);
+    const prevDate = roundToDay(previousDate);
+    
+    // Skip if same day (after rounding)
+    if (currentDate === prevDate) continue;
+    
+    // Check if there were transactions between previous and current dates
+    let transactionsInBetween = false;
+    let adjustedPrevValue = previousValue;
+    
+    // Process all transaction dates between previous and current
+    for (const [txDate, cashFlow] of transactionsByDate.entries()) {
+      if (txDate > prevDate && txDate <= currentDate) {
+        transactionsInBetween = true;
+        
+        // Find portfolio value just before this transaction
+        const valueBefore = interpolateValue(timestampedData, txDate, previousDate);
+        
+        // Calculate period return up to this transaction
+        if (adjustedPrevValue > 0) { // Prevent division by zero
+          const periodReturn = valueBefore / adjustedPrevValue;
+          cumulativeReturn *= periodReturn;
+        }
+        
+        // Update for next sub-period
+        adjustedPrevValue = Math.max(0.01, valueBefore + cashFlow); // Ensure not zero
+      }
+    }
+    
+    // If no transactions between dates, calculate period return directly
+    if (!transactionsInBetween && adjustedPrevValue > 0) {
+      const periodReturn = currentEntry.value / adjustedPrevValue;
+      cumulativeReturn *= periodReturn;
+    }
+    
+    // Update for next iteration
+    previousValue = currentEntry.value;
+    previousDate = currentEntry.date;
+  }
+  
+  // Return the final TWR as percentage
+  return cumulativeReturn - 1;
+}
+
+// Helper function to round timestamp to nearest day (midnight)
+function roundToDay(timestamp: number): number {
+  const date = new Date(timestamp);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+// Helper function to interpolate portfolio value at a specific date
+function interpolateValue(
+  data: { date: number; value: number }[],
+  targetDate: number,
+  fallbackDate: number
+): number {
+  // Find closest data points before and after target date
+  let beforeEntry = null;
+  let afterEntry = null;
+  
+  for (const entry of data) {
+    if (entry.date <= targetDate) {
+      if (!beforeEntry || entry.date > beforeEntry.date) {
+        beforeEntry = entry;
+      }
+    }
+    
+    if (entry.date >= targetDate) {
+      if (!afterEntry || entry.date < afterEntry.date) {
+        afterEntry = entry;
+      }
+    }
+  }
+  
+  // If we have both before and after, interpolate
+  if (beforeEntry && afterEntry && beforeEntry.date !== afterEntry.date) {
+    const ratio = (targetDate - beforeEntry.date) / (afterEntry.date - beforeEntry.date);
+    return beforeEntry.value + ratio * (afterEntry.value - beforeEntry.value);
+  }
+  
+  // If we only have before, use that
+  if (beforeEntry) {
+    return beforeEntry.value;
+  }
+  
+  // If we only have after, use that
+  if (afterEntry) {
+    return afterEntry.value;
+  }
+  
+  // If we have neither, use fallback value from a previous period
+  // This is a fallback that should rarely happen with sufficient data
+  const fallbackEntry = data.find(entry => entry.date <= fallbackDate);
+  return fallbackEntry ? fallbackEntry.value : data[0].value;
+}
+
+// Simple return calculation for comparison
+function calculateSimpleReturn(
+  historicalData: { date: string; value: number }[]
+): number {
+  if (historicalData.length < 2) return 0;
+  
+  const startValue = historicalData[0].value;
+  const endValue = historicalData[historicalData.length - 1].value;
+  
+  // Avoid division by zero
+  return startValue > 0 ? (endValue - startValue) / startValue : 0;
 }
