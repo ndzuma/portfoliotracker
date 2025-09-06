@@ -14,6 +14,10 @@ export default defineSchema({
     theme: v.union(v.literal("light"), v.literal("dark")),
     currency: v.string(),
     language: v.string(),
+    aiProvider: v.optional(v.string()),
+    openRouterApiKey: v.optional(v.string()),
+    tunnelId: v.optional(v.string()),
+    selfHostedUrl: v.optional(v.string()),
   }).index("byUser", ["userId"]),
   // portfolios, assets, transactions, and snapshots
   portfolios: defineTable({
