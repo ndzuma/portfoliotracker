@@ -1065,11 +1065,29 @@ function calculateAllocationByType(
   }));
   return allocation;
 }
-function countAssetTypes(assets: { _id: GenericId<"assets">; _creationTime: number; symbol?: string | undefined; currency?: string | undefined; currentPrice?: number | undefined; notes?: string | undefined; type: "stock" | "bond" | "commodity" | "real estate" | "cash" | "crypto" | "other"; name: string; portfolioId: GenericId<"portfolios">; }[]) {
+function countAssetTypes(
+  assets: {
+    _id: GenericId<"assets">;
+    _creationTime: number;
+    symbol?: string | undefined;
+    currency?: string | undefined;
+    currentPrice?: number | undefined;
+    notes?: string | undefined;
+    type:
+      | "stock"
+      | "bond"
+      | "commodity"
+      | "real estate"
+      | "cash"
+      | "crypto"
+      | "other";
+    name: string;
+    portfolioId: GenericId<"portfolios">;
+  }[],
+) {
   const typeCounts: Record<string, number> = {};
   for (const asset of assets) {
     typeCounts[asset.type] = (typeCounts[asset.type] || 0) + 1;
   }
   return typeCounts;
 }
-
