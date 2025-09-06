@@ -8,7 +8,7 @@ import {
 } from "./_generated/server";
 import { v } from "convex/values";
 
-export const marketDataUrl = process.env.MARKET_DATA_URL || "https://market-data-api.up.railway.app";
+export const marketDataUrl = process.env.MARKET_DATA_SERVICE_URL || process.env.MARKET_DATA_URL || "https://market-data-api.up.railway.app";
 
 export const updateHistoricalData = action({
   handler: async (ctx) => {
