@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pnpm install --no-frozen-lockfile && npx convex deploy --cmd 'npm run build'"
+buildCommand = "BUILD_ID=$RAILWAY_GIT_COMMIT_SHA pnpm install --no-frozen-lockfile && npx convex deploy --cmd 'npm run build'"
 
 [deploy]
 startCommand = "pnpm run start"

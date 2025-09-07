@@ -10,6 +10,7 @@ import { ConvexClientProvider } from "./ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { AuthenticatedWrapper } from "./auth-wrapper";
+import { DeploymentNotificationProvider } from "@/components/DeploymentNotificationProvider";
 
 export const metadata: Metadata = {
   title: "PulsePortfolio App - Manage Your Investments",
@@ -52,6 +53,7 @@ export default function RootLayout({
               <Suspense fallback={<div>Loading...</div>}>
                 <AuthenticatedWrapper>{children}</AuthenticatedWrapper>
               </Suspense>
+              <DeploymentNotificationProvider />
               <Toaster position="top-right" richColors />
             </ConvexClientProvider>
           </ClerkProvider>
