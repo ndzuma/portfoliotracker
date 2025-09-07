@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress/index";
 import { Button } from "@/components/ui/button";
@@ -14,30 +14,59 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Target, Edit } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../../convex/_generated/api";
+import { Id } from "../../../../../convex/_generated/dataModel";
 
 interface GoalTrackerCardProps {
+  portfolioId: string;
   portfolioValue: number;
-  targetValue: number;
-  annualReturn: number;
-  targetReturn: number;
-  monthlyContribution: number;
-  targetContribution: number;
+  annualReturn?: number;
+  monthlyContribution?: number;
 }
 
 export function GoalTrackerCard({
-  portfolioValue = 25000,
-  targetValue = 100000,
-  annualReturn = 5.8,
-  targetReturn = 8,
-  monthlyContribution = 500,
-  targetContribution = 500,
+  portfolioId,
+  portfolioValue,
+  annualReturn = 0,
+  monthlyContribution = 0,
 }: GoalTrackerCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Fetch goals from Convex
+  const goals = useQuery(api.goals.getGoalsByPortfolio, {
+    portfolioId: portfolioId as Id<"portfolios">,
+  });
+
+  // Mutation to save goals
+  const upsertGoals = useMutation(api.goals.upsertGoals);
+
+  // Default goal values if none exist
+  const defaultGoals = {
+    targetValue: 100000,
+    targetReturn: 8,
+    targetContribution: 500,
+  };
+
+  const currentGoals = goals || defaultGoals;
+  const { targetValue, targetReturn, targetContribution } = currentGoals;
+
   const [goalValues, setGoalValues] = useState({
     targetValue,
     targetReturn,
     targetContribution,
   });
+
+  // Update state when goals data changes
+  React.useEffect(() => {
+    if (goals) {
+      setGoalValues({
+        targetValue: goals.targetValue,
+        targetReturn: goals.targetReturn,
+        targetContribution: goals.targetContribution,
+      });
+    }
+  }, [goals]);
 
   // Calculate percentages
   const valuePercentage = Math.min(
@@ -53,9 +82,18 @@ export function GoalTrackerCard({
     100
   );
 
-  const handleSaveGoals = () => {
-    // In a real app, you would save these to your backend
-    setIsEditDialogOpen(false);
+  const handleSaveGoals = async () => {
+    try {
+      await upsertGoals({
+        portfolioId: portfolioId as Id<"portfolios">,
+        targetValue: goalValues.targetValue,
+        targetReturn: goalValues.targetReturn,
+        targetContribution: goalValues.targetContribution,
+      });
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to save goals:", error);
+    }
   };
 
   return (
@@ -95,7 +133,7 @@ export function GoalTrackerCard({
             <div className="flex items-center justify-between mb-2">
               <div className="text-sm font-medium">Annual Return</div>
               <div className="text-sm text-muted-foreground">
-                {annualReturn}% / {targetReturn}%
+                {annualReturn.toFixed(1)}% / {targetReturn}%
               </div>
             </div>
             <Progress value={returnPercentage} className="h-2" />
@@ -142,7 +180,7 @@ export function GoalTrackerCard({
                 onChange={(e) =>
                   setGoalValues({
                     ...goalValues,
-                    targetValue: parseInt(e.target.value),
+                    targetValue: parseInt(e.target.value) || 0,
                   })
                 }
               />
@@ -157,7 +195,7 @@ export function GoalTrackerCard({
                 onChange={(e) =>
                   setGoalValues({
                     ...goalValues,
-                    targetReturn: parseFloat(e.target.value),
+                    targetReturn: parseFloat(e.target.value) || 0,
                   })
                 }
               />
@@ -173,7 +211,7 @@ export function GoalTrackerCard({
                 onChange={(e) =>
                   setGoalValues({
                     ...goalValues,
-                    targetContribution: parseInt(e.target.value),
+                    targetContribution: parseInt(e.target.value) || 0,
                   })
                 }
               />
