@@ -251,6 +251,8 @@ export default function PortfolioDetail({
             assets={portfolio?.assets || []}
           />
         </div>
+        
+        <Separator className="mb-6" />
 
         <PortfolioAnalytics portfolioId={portfolioId} />
 
@@ -291,23 +293,17 @@ export default function PortfolioDetail({
                 targetContribution={500}
               />
 
-              {/* Document Storage Card */}
-              <DocumentStorageCard
-                userId={convexUser?._id}
-                portfolioId={portfolioId}
-              />
-
               {/* Article Saver Card */}
               <ArticleSaverCard
                 userId={convexUser?._id}
                 portfolioId={portfolioId}
               />
 
-              {/* Performance Metrics Card */}
-              <PerformanceMetricsCard />
-
-              {/* Templates Card */}
-              <TemplatesCard />
+              {/* Document Storage Card */}
+              <DocumentStorageCard
+                userId={convexUser?._id}
+                portfolioId={portfolioId}
+              />
             </div>
           )}
         </div>

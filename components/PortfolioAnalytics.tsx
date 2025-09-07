@@ -345,26 +345,6 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Win Rate */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Target className="h-4 w-4 text-primary" />
-                    Win Rate
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatPercentage(analytics.performanceMetrics.winRate / 100)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Positive trading periods
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
           </div>
 
           <Separator />
@@ -568,7 +548,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
             </div>
 
             {/* Tracking & Outperformance */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium">Tracking Error</CardTitle>
@@ -637,7 +617,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               </CardContent>
             </Card>
 
-            {/* Yearly Comparison Table */}
+            {/* Yearly Comparison Table 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -682,6 +662,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                 </div>
               </CardContent>
             </Card>
+            */}
           </div>
 
           <Separator />
@@ -694,7 +675,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
             </h3>
             
             <Card>
-              <CardContent className="pt-6">
+              <CardContent >
                 <div className="space-y-3">
                   {analytics.assetAllocation.byType.map((allocation: any, index: number) => (
                     <div key={index} className="flex items-center justify-between">
