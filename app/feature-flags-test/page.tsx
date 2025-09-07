@@ -7,13 +7,13 @@ import { CheckCircle, XCircle, Code } from "lucide-react";
 
 export default function FeatureFlagsTestPage() {
   const features = [
-    { key: 'watchlist', name: 'Watchlist' },
-    { key: 'research', name: 'Research' },
-    { key: 'earningsCalendar', name: 'Earnings Calendar' },
-    { key: 'byoai', name: 'BYOAI (Bring Your Own AI)' },
-    { key: 'apiKeyManagement', name: 'API Key Management' },
-    { key: 'appearanceToggle', name: 'Appearance Toggle' },
-    { key: 'portfolioAnalytics', name: 'Portfolio Analytics' },
+    { key: "watchlist", name: "Watchlist" },
+    { key: "research", name: "Research" },
+    { key: "earningsCalendar", name: "Earnings Calendar" },
+    { key: "byoai", name: "BYOAI (Bring Your Own AI)" },
+    { key: "apiKeyManagement", name: "API Key Management" },
+    { key: "appearanceToggle", name: "Appearance Toggle" },
+    { key: "portfolioAnalytics", name: "Portfolio Analytics" },
   ] as const;
 
   return (
@@ -38,12 +38,16 @@ export default function FeatureFlagsTestPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium">NODE_ENV</p>
-                <Badge variant="outline">{process.env.NODE_ENV || 'undefined'}</Badge>
+                <p className="text-sm font-medium">NEXT_PUBLIC_NODE_ENV</p>
+                <Badge variant="outline">
+                  {process.env.NEXT_PUBLIC_NODE_ENV || "undefined"}
+                </Badge>
               </div>
               <div>
-                <p className="text-sm font-medium">DEV_MODE</p>
-                <Badge variant="outline">{process.env.DEV_MODE || 'undefined'}</Badge>
+                <p className="text-sm font-medium">NEXT_PUBLIC_DEV_MODE</p>
+                <Badge variant="outline">
+                  {process.env.NEXT_PUBLIC_DEV_MODE || "undefined"}
+                </Badge>
               </div>
             </div>
           </CardContent>
@@ -58,7 +62,10 @@ export default function FeatureFlagsTestPage() {
               {features.map((feature) => {
                 const isEnabled = isFeatureEnabled(feature.key);
                 return (
-                  <div key={feature.key} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={feature.key}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
                     <div className="flex items-center gap-3">
                       {isEnabled ? (
                         <CheckCircle className="h-5 w-5 text-green-500" />
@@ -68,9 +75,11 @@ export default function FeatureFlagsTestPage() {
                       <span className="font-medium">{feature.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge 
+                      <Badge
                         variant={isEnabled ? "default" : "secondary"}
-                        className={isEnabled ? "bg-green-500 hover:bg-green-600" : ""}
+                        className={
+                          isEnabled ? "bg-green-500 hover:bg-green-600" : ""
+                        }
                       >
                         {isEnabled ? "Enabled" : "Disabled"}
                       </Badge>
@@ -91,11 +100,23 @@ export default function FeatureFlagsTestPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-sm">
-              <p><strong>Current Logic:</strong></p>
+              <p>
+                <strong>Current Logic:</strong>
+              </p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>When <code>NODE_ENV === 'development'</code> AND <code>DEV_MODE === 'true'</code>, all features are enabled</li>
-                <li>In production or when dev mode is off, individual environment variables control each feature</li>
-                <li>This allows developers to test all features locally while maintaining production control</li>
+                <li>
+                  When <code>NEXT_PUBLIC_NODE_ENV === 'development'</code> AND{" "}
+                  <code>NEXT_PUBLIC_DEV_MODE === 'true'</code>, all features are
+                  enabled
+                </li>
+                <li>
+                  In production or when dev mode is off, individual environment
+                  variables control each feature
+                </li>
+                <li>
+                  This allows developers to test all features locally while
+                  maintaining production control
+                </li>
               </ul>
             </div>
           </CardContent>
