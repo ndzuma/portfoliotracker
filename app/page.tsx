@@ -36,6 +36,7 @@ import { ChartRadialStacked } from "@/components/allocationRadial";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
+import { formatCurrency, convertFromUSD } from "@/lib/currency";
 
 interface Portfolio {
   _id: string;
@@ -160,12 +161,21 @@ function PortfolioRow({
   portfolio,
   onEdit,
   onDelete,
+  userCurrency = "USD",
+  fxRate = 1,
 }: {
   portfolio: Portfolio;
   onEdit: (portfolio: Portfolio) => void;
   onDelete: (portfolioId: string) => void;
+  userCurrency?: string;
+  fxRate?: number;
 }) {
   const isPositive = portfolio.change >= 0;
+
+  // Helper function to convert USD values to user's currency
+  const convertValue = (usdValue: number) => {
+    return convertFromUSD(usdValue, userCurrency, fxRate);
+  };
 
   return (
     <div className="flex items-center gap-4 py-3 px-4 hover:bg-muted/50 transition-colors">
@@ -190,7 +200,7 @@ function PortfolioRow({
           <div
             className={`font-medium ${isPositive ? "text-primary" : "text-secondary"}`}
           >
-            ${Math.abs(portfolio.change).toLocaleString()} (
+            {formatCurrency(Math.abs(convertValue(portfolio.change)), userCurrency)} (
             {isPositive ? "+" : ""}
             {portfolio.changePercent.toFixed(2)}%)
           </div>
@@ -199,7 +209,7 @@ function PortfolioRow({
 
       <div className="text-right min-w-[100px]">
         <div className="font-semibold">
-          ${portfolio.currentValue.toLocaleString()}
+          {formatCurrency(convertValue(portfolio.currentValue), userCurrency)}
         </div>
       </div>
 
@@ -251,10 +261,26 @@ export default function PortfoliosDashboard() {
     clerkId: user?.id,
   });
   const userId = convexUser?._id;
+  const userPreferences = useQuery(api.users.getUserPreferences, {
+    userId: userId,
+  });
   const usersName = user?.fullName;
   const userPortfolios =
     useQuery(api.portfolios.getUserPorfolios, { userId }) || [];
   const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
+  
+  // Get user's preferred currency and FX rate for conversion
+  const userCurrency = userPreferences?.currency || "USD";
+  const fxRate = useQuery(api.fx.getLatestFxRate, {
+    baseCurrency: "USD",
+    targetCurrency: userCurrency,
+  }) || 1;
+
+  // Helper function to convert USD values to user's currency
+  const convertValue = (usdValue: number) => {
+    return convertFromUSD(usdValue, userCurrency, fxRate);
+  };
+  
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
   const editPortfolio = useMutation(api.portfolios.updatePortfolio);
   const deletePortfolio = useMutation(api.portfolios.deletePortfolio);
@@ -454,7 +480,7 @@ export default function PortfoliosDashboard() {
                     Net Worth
                   </h2>
                   <p className="text-4xl font-bold text-foreground">
-                    ${totalValue.toLocaleString()}
+                    {formatCurrency(convertValue(totalValue), userCurrency)}
                   </p>
                   <div
                     className={`flex items-center gap-2 text-lg font-medium mt-2 ${
@@ -467,8 +493,8 @@ export default function PortfoliosDashboard() {
                       <TrendingDown className="h-5 w-5" />
                     )}
                     <span>
-                      {totalChange >= 0 ? "+" : ""}$
-                      {Math.abs(totalChange).toLocaleString()} (
+                      {totalChange >= 0 ? "+" : ""}
+                      {formatCurrency(Math.abs(convertValue(totalChange)), userCurrency)} (
                       {totalChange >= 0 ? "+" : ""}
                       {totalChangePercent.toFixed(2)}%)
                     </span>
@@ -533,6 +559,8 @@ export default function PortfoliosDashboard() {
                   portfolio={portfolio}
                   onEdit={handleEditPortfolio}
                   onDelete={handleDeletePortfolio}
+                  userCurrency={userCurrency}
+                  fxRate={fxRate}
                 />
               ))
             ) : (
