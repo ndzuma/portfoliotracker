@@ -184,7 +184,7 @@ export function PorfolioPerformanceChart({
   });
 
   return (
-    <Card className="col-span-2 pb-0">
+    <Card className="col-span-2 pb-0" data-chart="performance">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Historical Performance</CardTitle>

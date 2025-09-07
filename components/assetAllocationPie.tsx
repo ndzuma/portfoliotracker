@@ -67,7 +67,7 @@ export function AssetAllocationPie({ value, assets }: AssetAllocation) {
   const hasNoData = assets && assets.length === 0;
 
   return (
-    <Card className="col-span-1 ">
+    <Card className="col-span-1" data-chart="allocation">
       <CardHeader>
         <CardTitle>Asset Allocation</CardTitle>
         <CardDescription>

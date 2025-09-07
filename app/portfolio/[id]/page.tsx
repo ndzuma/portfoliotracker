@@ -36,6 +36,7 @@ import {
 import { AddAssetDialog } from "./components/dialogs/AddAssetDialog";
 import { EditPortfolioDialog } from "./components/dialogs/EditPortfolioDialog";
 import { EditAssetDialog } from "./components/dialogs/EditAssetDialog";
+import { ExportPortfolio } from "@/components/ExportPortfolio";
 import { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
@@ -81,19 +82,19 @@ export default function PortfolioDetail({
 
   // Filter assets by type
   const stockAssets =
-    portfolio?.assets.filter((asset) => asset.type === "stock") || [];
+    portfolio?.assets.filter((asset: any) => asset.type === "stock") || [];
   const propertyAssets =
-    portfolio?.assets.filter((asset) => asset.type === "real estate") || [];
+    portfolio?.assets.filter((asset: any) => asset.type === "real estate") || [];
   const commodityAssets =
-    portfolio?.assets.filter((asset) => asset.type === "commodity") || [];
+    portfolio?.assets.filter((asset: any) => asset.type === "commodity") || [];
   const bondAssets =
-    portfolio?.assets.filter((asset) => asset.type === "bond") || [];
+    portfolio?.assets.filter((asset: any) => asset.type === "bond") || [];
   const cashAssets =
-    portfolio?.assets.filter((asset) => asset.type === "cash") || [];
+    portfolio?.assets.filter((asset: any) => asset.type === "cash") || [];
   const cryptoAssets =
-    portfolio?.assets.filter((asset) => asset.type === "crypto") || [];
+    portfolio?.assets.filter((asset: any) => asset.type === "crypto") || [];
   const otherAssets =
-    portfolio?.assets.filter((asset) => asset.type === "other") || [];
+    portfolio?.assets.filter((asset: any) => asset.type === "other") || [];
 
   const handleEditAsset = (asset: Asset) => {
     // Convert asset to properly handle currency for cash
@@ -156,12 +157,15 @@ export default function PortfolioDetail({
           </div>
           <div className="flex gap-3">
             {portfolio && (
-              <EditPortfolioDialog
-                portfolioId={portfolioId}
-                userId={portfolio.userId}
-                initialName={portfolio.name}
-                initialDescription={portfolio.description}
-              />
+              <>
+                <ExportPortfolio portfolio={portfolio} />
+                <EditPortfolioDialog
+                  portfolioId={portfolioId}
+                  userId={portfolio.userId}
+                  initialName={portfolio.name}
+                  initialDescription={portfolio.description}
+                />
+              </>
             )}
             <AddAssetDialog portfolioId={portfolioId} />
 
@@ -290,13 +294,13 @@ export default function PortfolioDetail({
 
               {/* Document Storage Card */}
               <DocumentStorageCard
-                userId={convexUser?._id}
+                userId={convexUser?._id as string}
                 portfolioId={portfolioId}
               />
 
               {/* Article Saver Card */}
               <ArticleSaverCard
-                userId={convexUser?._id}
+                userId={convexUser?._id as string}
                 portfolioId={portfolioId}
               />
 
