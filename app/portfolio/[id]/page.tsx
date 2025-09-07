@@ -280,12 +280,10 @@ export default function PortfolioDetail({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Goal Tracker Card - spans 2 rows */}
               <GoalTrackerCard
-                portfolioValue={25000}
-                targetValue={100000}
-                annualReturn={5.8}
-                targetReturn={8}
-                monthlyContribution={500}
-                targetContribution={500}
+                portfolioId={portfolioId}
+                portfolioValue={portfolio?.currentValue || 0}
+                annualReturn={portfolio?.changePercent || 0}
+                monthlyContribution={0} // TODO: Calculate from recent transactions
               />
 
               {/* Document Storage Card */}

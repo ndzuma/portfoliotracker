@@ -136,4 +136,13 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
   }).index("byDate", ["date"]),
+  // portfolio goals
+  goals: defineTable({
+    portfolioId: v.id("portfolios"),
+    targetValue: v.number(),
+    targetReturn: v.number(),
+    targetContribution: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("byPortfolio", ["portfolioId"]),
 });
