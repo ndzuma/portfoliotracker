@@ -1,0 +1,52 @@
+"use client";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { BookmarkIcon, Plus, Search } from "lucide-react";
+
+export default function WatchlistPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-semibold text-foreground mb-2">
+              Watchlist
+            </h1>
+            <p className="text-muted-foreground">
+              Track stocks and assets you're interested in
+            </p>
+          </div>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Symbol
+          </Button>
+        </div>
+
+        <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookmarkIcon className="h-5 w-5" />
+                Your Watchlist
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <BookmarkIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-lg font-medium mb-2">No watchlist items yet</p>
+                <p className="text-muted-foreground mb-6">
+                  Start tracking stocks, ETFs, and other assets you're interested in
+                </p>
+                <Button variant="outline">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search Symbols
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

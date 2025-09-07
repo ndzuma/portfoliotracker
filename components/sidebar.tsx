@@ -18,15 +18,26 @@ import { UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { dark } from '@clerk/themes'
+import { isFeatureEnabled } from "@/lib/featureFlags";
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: Briefcase },
-  { name: "News", href: "/news", icon: Newspaper },
-  { name: "Watchlist", href: "#", icon: BookmarkIcon },
-  { name: "Research", href: "#", icon: BinocularsIcon },
-  { name: "Earnings", href: "#", icon: CalendarDaysIcon },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+const getNavigation = () => {
+  const baseNavigation = [
+    { name: "Dashboard", href: "/", icon: Briefcase },
+    { name: "News", href: "/news", icon: Newspaper },
+  ];
+
+  const conditionalNavigation = [
+    ...(isFeatureEnabled('watchlist') ? [{ name: "Watchlist", href: "/watchlist", icon: BookmarkIcon }] : []),
+    ...(isFeatureEnabled('research') ? [{ name: "Research", href: "/research", icon: BinocularsIcon }] : []),
+    ...(isFeatureEnabled('earningsCalendar') ? [{ name: "Earnings", href: "/earnings", icon: CalendarDaysIcon }] : []),
+  ];
+
+  return [
+    ...baseNavigation,
+    ...conditionalNavigation,
+    { name: "Settings", href: "/settings", icon: Settings },
+  ];
+};
 
 // get sign out url from env
 const signedOutUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_OUT_URL || "/";
@@ -35,6 +46,7 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const { user } = useUser();
+  const navigation = getNavigation();
 
   return (
     <div

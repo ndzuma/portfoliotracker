@@ -37,6 +37,7 @@ import {
 import { api } from "../../convex/_generated/api";
 import { useQuery, useMutation } from "convex/react";
 import { useUser } from "@clerk/nextjs";
+import { isFeatureEnabled } from "@/lib/featureFlags";
 
 const SettingsPage = () => {
   const [language, setLanguage] = useState("en");
@@ -162,6 +163,7 @@ const SettingsPage = () => {
 
       <div className="grid gap-6">
         {/* Appearance Settings */}
+        {isFeatureEnabled('appearanceToggle') && (
         <Card className="border border-[#8d745d]/30 bg-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center text-lg font-semibold">
@@ -198,6 +200,7 @@ const SettingsPage = () => {
             </p>
           </CardContent>
         </Card>
+        )}
 
         {/* Language & Region Settings */}
         <Card className="border border-[#8d745d]/30 bg-card">
@@ -327,6 +330,7 @@ const SettingsPage = () => {
         </Card>
 
         {/* API key management for the api-based data fetching for pro users, with link to docs */}
+        {isFeatureEnabled('apiKeyManagement') && (
         <Card className="border border-[#8d745d]/30 bg-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center text-lg font-semibold">
@@ -368,8 +372,10 @@ const SettingsPage = () => {
             </a>
           </CardContent>
         </Card>
+        )}
 
         {/* BYOAI feature - Bring Your Own AI */}
+        {isFeatureEnabled('byoai') && (
         <Card className="border border-[#8d745d]/30 bg-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center text-lg font-semibold">
@@ -588,6 +594,7 @@ const SettingsPage = () => {
             </div>
           </CardContent>
         </Card>
+        )}
         
         {/* Footer with version info */}
         <p className="text-xs text-muted-foreground text-center mt-4">

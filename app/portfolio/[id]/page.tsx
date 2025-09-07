@@ -39,6 +39,7 @@ import { EditAssetDialog } from "./components/dialogs/EditAssetDialog";
 import { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
+import { PortfolioAnalytics } from "@/components/PortfolioAnalytics";
 
 export default function PortfolioDetail({
   params,
@@ -250,6 +251,10 @@ export default function PortfolioDetail({
             assets={portfolio?.assets || []}
           />
         </div>
+        
+        <Separator className="mb-6" />
+
+        <PortfolioAnalytics portfolioId={portfolioId} />
 
         <Separator className="mb-6" />
 
@@ -288,23 +293,17 @@ export default function PortfolioDetail({
                 targetContribution={500}
               />
 
-              {/* Document Storage Card */}
-              <DocumentStorageCard
-                userId={convexUser?._id}
-                portfolioId={portfolioId}
-              />
-
               {/* Article Saver Card */}
               <ArticleSaverCard
                 userId={convexUser?._id}
                 portfolioId={portfolioId}
               />
 
-              {/* Performance Metrics Card */}
-              <PerformanceMetricsCard />
-
-              {/* Templates Card */}
-              <TemplatesCard />
+              {/* Document Storage Card */}
+              <DocumentStorageCard
+                userId={convexUser?._id}
+                portfolioId={portfolioId}
+              />
             </div>
           )}
         </div>
