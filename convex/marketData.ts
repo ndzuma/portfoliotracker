@@ -6,7 +6,7 @@ import {
   internalQuery,
   query,
 } from "./_generated/server";
-import { v } from "convex/values";
+import { v, Id } from "convex/values";
 
 export const marketDataUrl =
   process.env.MARKET_DATA_SERVICE_URL ||
@@ -16,51 +16,44 @@ export const marketDataUrl =
 export const updateHistoricalData = action({
   handler: async (ctx) => {
     const data = await ctx.runQuery(
-      internal.marketData.getAssetsWithoutHistoricalData,
+      internal.marketData.getAssetsForHistoricalUpdate,
     );
 
-    // split data into chunks of 5 by splitting the array into subarrays of 5 elements each
-    const chunkSize = 5;
-    for (let i = 0; i < data.length; i += chunkSize) {
-      const chunk = data.slice(i, i + chunkSize);
-      const response = await fetch(
-        `${marketDataUrl}/historical/${chunk.join(",").replace(/\//g, "_")}`,
-      );
+    // Process each symbol individually to use correct start_date
+    for (const item of data) {
+      if (!item.symbol) continue;
+      const symbol = item.symbol;
+      const startDate = item.lastDate
+        ? (() => {
+            const nextDay = new Date(item.lastDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            return nextDay.toISOString().split("T")[0];
+          })()
+        : "2015-01-01";
+
+      const url = `${marketDataUrl}/historical/${symbol.replace(/\//g, "_")}?start_date=${startDate}`;
+
+      const response = await fetch(url);
       if (!response.ok) {
-        console.error(
-          `Failed to fetch historical data for chunk: ${chunk.join(",").replace(/\//g, "_")}`,
-        );
+        console.error(`Failed to fetch historical data for ${symbol}`);
         continue;
       }
       const historicalData = await response.json();
 
-      if (chunk.length === 1) {
-        for (const record of historicalData) {
-          await ctx.runMutation(internal.marketData.addHistoricalData, {
-            ticker: chunk[0].replace(/_/g, "/"),
-            date: record.datetime,
-            open: Number(record.open),
-            high: Number(record.high),
-            low: Number(record.low),
-            close: Number(record.close),
-            volume: Number(record.volume),
-          });
-        }
-      } else {
-        for (const symbol in historicalData) {
-          for (const record of historicalData[symbol]) {
-            await ctx.runMutation(internal.marketData.addHistoricalData, {
-              ticker: symbol,
-              date: record.datetime,
-              open: Number(record.open),
-              high: Number(record.high),
-              low: Number(record.low),
-              close: Number(record.close),
-              volume: Number(record.volume),
-            });
-          }
-        }
+      for (const record of historicalData) {
+        await ctx.runMutation(internal.marketData.addHistoricalData, {
+          ticker: symbol,
+          date: record.datetime,
+          open: Number(record.open),
+          high: Number(record.high),
+          low: Number(record.low),
+          close: Number(record.close),
+          volume: Number(record.volume),
+        });
       }
+
+      // Add a short delay between requests to avoid rate limits
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
 
     // Trigger snapshot updates for all portfolios that had historical data updated
@@ -69,10 +62,10 @@ export const updateHistoricalData = action({
       const allAssets = await ctx.runQuery(
         internal.marketData.getAllAssetsForSnapshots,
       );
-      const updatedPortfolios = new Set<string>();
+      const updatedPortfolios = new Set<string | Id<"portfolios">>();
 
       for (const asset of allAssets) {
-        if (asset.symbol && data.includes(asset.symbol)) {
+        if (asset.symbol && data.some((item) => item.symbol === asset.symbol)) {
           updatedPortfolios.add(asset.portfolioId);
         }
       }
@@ -83,7 +76,7 @@ export const updateHistoricalData = action({
           0,
           internal.marketData.triggerSnapshotUpdate,
           {
-            portfolioId,
+            portfolioId: portfolioId as Id<"portfolios">,
             reason: "historical_data_updated",
             startDate: Date.now(), // Start from today for historical data updates
           },
@@ -157,7 +150,11 @@ export const getAssetsWithoutHistoricalData = internalQuery({
 
     // extract each unique symbol
     const symbols = Array.from(
-      new Set(assets.map((asset) => asset.symbol).filter(Boolean)),
+      new Set(
+        assets
+          .map((asset) => asset.symbol)
+          .filter((s): s is string => s != null),
+      ),
     );
 
     // get historical data for each symbol
@@ -171,6 +168,34 @@ export const getAssetsWithoutHistoricalData = internalQuery({
     }
 
     return assetsWithoutData;
+  },
+});
+
+// get assets with their latest historical data date for updating
+export const getAssetsForHistoricalUpdate = internalQuery({
+  handler: async (ctx) => {
+    const assets = await ctx.db.query("assets").collect();
+
+    // extract each unique symbol
+    const symbols = Array.from(
+      new Set(assets.map((asset) => asset.symbol).filter(Boolean)),
+    );
+
+    const result = [];
+    for (const symbol of symbols) {
+      const latestData = await ctx.db
+        .query("marketHistoricData")
+        .withIndex("byTicker", (q) => q.eq("ticker", symbol))
+        .order("desc")
+        .first();
+
+      result.push({
+        symbol,
+        lastDate: latestData ? latestData.date : null,
+      });
+    }
+
+    return result;
   },
 });
 
@@ -320,7 +345,7 @@ export const getHistoricalData = query({
           const todayValue = await ctx.runQuery(
             internal.marketData.calculatePortfolioValueAtDate,
             {
-              portfolioId: args.portfolioId,
+              portfolioId: args.portfolioId as Id<"portfolios">,
               date: today.getTime(),
             },
           );
@@ -616,7 +641,7 @@ export const calculatePortfolioValueAtDate = internalQuery({
           .order("desc")
           .first();
 
-        if (priceData) {
+        if (priceData && priceData.close != null) {
           totalValue += quantityHeld * priceData.close;
         } else if (asset.currentPrice) {
           // Fallback to current price if no historical data
@@ -696,7 +721,7 @@ export const calculatePortfolioSnapshots = internalAction({
     // If force recalculate, delete existing snapshots
     if (args.forceRecalculate) {
       await ctx.runMutation(internal.marketData.deletePortfolioSnapshots, {
-        portfolioId: args.portfolioId,
+        portfolioId: args.portfolioId as Id<"portfolios">,
       });
     }
 
@@ -704,7 +729,7 @@ export const calculatePortfolioSnapshots = internalAction({
     const latestSnapshot = await ctx.runQuery(
       internal.marketData.getLatestPortfolioSnapshot,
       {
-        portfolioId: args.portfolioId,
+        portfolioId: args.portfolioId as Id<"portfolios">,
       },
     );
 
@@ -733,12 +758,12 @@ export const calculatePortfolioSnapshots = internalAction({
       const value = await ctx.runQuery(
         internal.marketData.calculatePortfolioValueAtDate,
         {
-          portfolioId: args.portfolioId,
+          portfolioId: args.portfolioId as Id<"portfolios">,
           date: date.getTime(),
         },
       );
       snapshotsToCreate.push({
-        portfolioId: args.portfolioId,
+        portfolioId: args.portfolioId as Id<"portfolios">,
         date: date.getTime(),
         totalValue: value,
       });
@@ -1082,7 +1107,10 @@ export const updateBenchmarkData = action({
     }
     const benchmarks = await data.json();
 
-    for (const [symbol, benchmarkData] of Object.entries(benchmarks)) {
+    for (const [symbol, benchmarkData] of Object.entries(benchmarks) as [
+      string,
+      any,
+    ][]) {
       const exists = await ctx.runQuery(
         internal.marketData.doesBenchmarkExist,
         { ticker: symbol },
