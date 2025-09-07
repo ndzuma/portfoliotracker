@@ -59,6 +59,7 @@ export const createAsset = mutation({
     await ctx.scheduler.runAfter(0, internal.marketData.triggerSnapshotUpdate, {
       portfolioId: args.portfolioId,
       reason: "asset_added",
+      startDate: args.purchaseDate,
     });
 
     return assetId;
@@ -103,6 +104,14 @@ export const updateAsset = mutation({
     if (args.notes !== undefined) updates.notes = args.notes;
 
     await ctx.db.patch(args.assetId, updates);
+
+    // Trigger portfolio snapshot update when asset is modified
+    await ctx.scheduler.runAfter(500, internal.marketData.triggerSnapshotUpdate, {
+      portfolioId: asset.portfolioId,
+      reason: "asset_modified",
+      startDate: Date.now(), // Recalculate from today
+    });
+
     return args.assetId;
   },
 });
@@ -201,9 +210,68 @@ export const addTransaction = mutation({
     await ctx.scheduler.runAfter(0, internal.marketData.triggerSnapshotUpdate, {
       portfolioId: asset.portfolioId,
       reason: "transaction_added",
+      startDate: args.date,
     });
 
     return transactionId;
+  },
+});
+
+// Update an existing transaction
+export const updateTransaction = mutation({
+  args: {
+    transactionId: v.id("transactions"),
+    type: v.optional(
+      v.union(v.literal("buy"), v.literal("sell"), v.literal("dividend")),
+    ),
+    date: v.optional(v.number()), // timestamp
+    quantity: v.optional(v.number()), // Required for buy/sell
+    price: v.optional(v.number()), // Required for buy/sell
+    fees: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const transaction = await ctx.db.get(args.transactionId);
+    if (!transaction) {
+      throw new Error("Transaction not found");
+    }
+
+    // Get the asset to access portfolioId
+    const asset = await ctx.db.get(transaction.assetId);
+    if (!asset) {
+      throw new Error("Asset not found");
+    }
+
+    // Validate required fields based on transaction type
+    const newType = args.type || transaction.type;
+    if (
+      ((newType === "buy" || newType === "sell") &&
+        args.quantity === undefined &&
+        transaction.quantity === undefined) ||
+      (args.price === undefined && transaction.price === undefined)
+    ) {
+      throw new Error("Buy and sell transactions require quantity and price");
+    }
+
+    // Only update fields that were provided
+    const updates: Record<string, any> = {};
+    if (args.type !== undefined) updates.type = args.type;
+    if (args.date !== undefined) updates.date = args.date;
+    if (args.quantity !== undefined) updates.quantity = args.quantity;
+    if (args.price !== undefined) updates.price = args.price;
+    if (args.fees !== undefined) updates.fees = args.fees;
+    if (args.notes !== undefined) updates.notes = args.notes;
+
+    await ctx.db.patch(args.transactionId, updates);
+
+    // Trigger portfolio snapshot update when transaction is modified
+    await ctx.scheduler.runAfter(500, internal.marketData.triggerSnapshotUpdate, {
+      portfolioId: asset.portfolioId,
+      reason: "transaction_modified",
+      startDate: args.date || transaction.date, // Use new date or existing date
+    });
+
+    return args.transactionId;
   },
 });
 

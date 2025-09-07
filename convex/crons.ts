@@ -19,6 +19,18 @@ const crons = cronJobs();
 //  api.marketData.updateCurrentPrices,
 //);
 
+// Update portfolio snapshots weekly
+// This job will update weekly snapshots for all portfolios
+crons.weekly(
+  "update portfolio snapshots",
+  {
+    dayOfWeek: "monday",
+    hourUTC: 19,
+    minuteUTC: 0,
+  },
+  api.marketData.updateAllPortfolioSnapshots,
+);
+
 export default crons;
 
 // Update benchmark data every x

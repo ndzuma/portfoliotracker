@@ -85,6 +85,7 @@ export const updateHistoricalData = action({
           {
             portfolioId,
             reason: "historical_data_updated",
+            startDate: Date.now(), // Start from today for historical data updates
           },
         );
       }
@@ -241,8 +242,9 @@ export const getHistoricalData = query({
       dataGranularity = "weekly";
     }
 
-    // For non-chart usage, always use snapshots if available and data is 3+ months
-    const useSnapshots = !args.isForChart && daysDifference > 90;
+    // Use snapshots for charts when view is 3+ months, or for analytics
+    const useSnapshots =
+      (args.isForChart && daysDifference > 90) || !args.isForChart;
 
     // get portfolio assets and transactions and format the data into {symbol, date, quantity, price, type}
     const assets = await ctx.db
@@ -310,7 +312,7 @@ export const getHistoricalData = query({
           value: snapshot.totalValue,
         }));
 
-        // Add today's value if not already included
+        // Add today's value if not already included (always calculate live)
         const todayStr = today.toISOString().split("T")[0];
         const hasTodayValue = result.some((item) => item.date === todayStr);
 
@@ -327,6 +329,9 @@ export const getHistoricalData = query({
             value: todayValue,
           });
         }
+
+        // Sort results by date
+        result.sort((a, b) => a.date.localeCompare(b.date));
 
         return result.sort((a, b) => a.date.localeCompare(b.date));
       }
@@ -500,6 +505,52 @@ export const getLatestPortfolioSnapshot = internalQuery({
   },
 });
 
+export const getPortfolioSnapshotCount = internalQuery({
+  args: {
+    portfolioId: v.union(v.id("portfolios"), v.string()),
+    startDate: v.number(),
+    endDate: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const snapshots = await ctx.db
+      .query("portfolioSnapshots")
+      .withIndex("byPortfolio", (q) =>
+        q
+          .eq("portfolioId", args.portfolioId)
+          .gte("date", args.startDate)
+          .lte("date", args.endDate),
+      )
+      .collect();
+
+    return snapshots.length;
+  },
+});
+
+export const getPortfolioSnapshotsForAnalytics = internalQuery({
+  args: {
+    portfolioId: v.union(v.id("portfolios"), v.string()),
+    startDate: v.number(),
+    endDate: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const snapshots = await ctx.db
+      .query("portfolioSnapshots")
+      .withIndex("byPortfolio", (q) =>
+        q
+          .eq("portfolioId", args.portfolioId)
+          .gte("date", args.startDate)
+          .lte("date", args.endDate),
+      )
+      .collect();
+
+    // Convert to the same format as historical data for compatibility
+    return snapshots.map((snapshot) => ({
+      date: new Date(snapshot.date).toISOString().split("T")[0],
+      value: snapshot.totalValue,
+    }));
+  },
+});
+
 export const calculatePortfolioValueAtDate = internalQuery({
   args: {
     portfolioId: v.union(v.id("portfolios"), v.string()),
@@ -611,6 +662,7 @@ export const calculatePortfolioSnapshots = internalAction({
   args: {
     portfolioId: v.id("portfolios"),
     forceRecalculate: v.optional(v.boolean()), // Override all snapshots if true
+    startFromDate: v.optional(v.number()), // Start recalculation from this date
   },
   handler: async (ctx, args) => {
     // Get portfolio assets and earliest transaction date
@@ -656,9 +708,18 @@ export const calculatePortfolioSnapshots = internalAction({
       },
     );
 
-    const startDate = latestSnapshot
-      ? new Date(latestSnapshot.date + 24 * 60 * 60 * 1000) // Next day after latest snapshot
-      : earliestDate;
+    // Determine start date for recalculation
+    let startDate: Date;
+    if (args.startFromDate) {
+      // Start from specified date (for modifications/additions)
+      startDate = new Date(args.startFromDate);
+    } else if (latestSnapshot && !args.forceRecalculate) {
+      // Continue from latest snapshot
+      startDate = new Date(latestSnapshot.date + 24 * 60 * 60 * 1000);
+    } else {
+      // Start from earliest transaction
+      startDate = earliestDate;
+    }
 
     const today = new Date();
     const snapshotsToCreate: any[] = [];
@@ -706,11 +767,41 @@ export const triggerSnapshotUpdate = internalAction({
       v.literal("asset_added"),
       v.literal("transaction_added"),
       v.literal("historical_data_updated"),
+      v.literal("periodic_update"),
+      v.literal("asset_modified"),
+      v.literal("transaction_modified"),
     ),
+    startDate: v.optional(v.number()), // For date-based recalculation
   },
   handler: async (ctx, args) => {
-    // Only recalculate snapshots if historical data was updated, otherwise just update latest
-    const forceRecalculate = args.reason === "historical_data_updated";
+    // Determine recalculation strategy based on reason
+    let forceRecalculate = false;
+    let startFromDate: Date | null = null;
+
+    switch (args.reason) {
+      case "historical_data_updated":
+        forceRecalculate = true;
+        break;
+      case "asset_modified":
+      case "transaction_modified":
+        // For modifications, recalculate from the event date
+        if (args.startDate) {
+          startFromDate = new Date(args.startDate);
+        }
+        break;
+      case "asset_added":
+      case "transaction_added":
+        // For additions, only update from the addition date
+        if (args.startDate) {
+          startFromDate = new Date(args.startDate);
+        }
+        break;
+      case "periodic_update":
+        // For periodic updates, only update recent snapshots
+        startFromDate = new Date();
+        startFromDate.setDate(startFromDate.getDate() - 7); // Last week
+        break;
+    }
 
     await ctx.scheduler.runAfter(
       0,
@@ -718,7 +809,48 @@ export const triggerSnapshotUpdate = internalAction({
       {
         portfolioId: args.portfolioId,
         forceRecalculate,
+        startFromDate: startFromDate?.getTime(),
       },
+    );
+  },
+});
+
+// Periodic snapshot update for all portfolios (for cron jobs)
+export const updateAllPortfolioSnapshots = action({
+  handler: async (ctx) => {
+    // Get all portfolios
+    const portfolios = await ctx.db.query("portfolios").collect();
+
+    if (portfolios.length === 0) {
+      console.log("No portfolios found for snapshot update");
+      return;
+    }
+
+    console.log(
+      `Starting periodic snapshot update for ${portfolios.length} portfolios`,
+    );
+
+    // Update snapshots for each portfolio
+    for (const portfolio of portfolios) {
+      try {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.marketData.triggerSnapshotUpdate,
+          {
+            portfolioId: portfolio._id,
+            reason: "periodic_update",
+          },
+        );
+      } catch (error) {
+        console.error(
+          `Failed to update snapshots for portfolio ${portfolio._id}:`,
+          error,
+        );
+      }
+    }
+
+    console.log(
+      `Periodic snapshot update scheduled for ${portfolios.length} portfolios`,
     );
   },
 });
