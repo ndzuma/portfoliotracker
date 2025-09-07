@@ -62,7 +62,7 @@ const SettingsPage = () => {
   );
   const updatePreferences = useMutation(api.users.updateUserPreferences);
   const accountData = useQuery(
-    api.users.extractAccountData,
+    api.users.extractAccountDataForExport,
     { userId },
     { enabled: !!userId },
   );
