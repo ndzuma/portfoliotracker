@@ -40,6 +40,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { PortfolioAnalytics } from "@/components/PortfolioAnalytics";
+import { formatCurrency, convertFromUSD } from "@/lib/currency";
 
 export default function PortfolioDetail({
   params,
@@ -68,6 +69,9 @@ export default function PortfolioDetail({
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: user?.id || "",
   });
+  const userPreferences = useQuery(api.users.getUserPreferences, {
+    userId: convexUser?._id,
+  });
   const canUserAccess = useQuery(api.portfolios.canUserAccessPortfolio, {
     portfolioId: portfolioId,
   });
@@ -79,6 +83,18 @@ export default function PortfolioDetail({
     useQuery(api.marketData.getHistoricalData, {
       portfolioId: portfolioId,
     }) || [];
+  
+  // Get user's preferred currency and FX rate for conversion
+  const userCurrency = userPreferences?.currency || "USD";
+  const fxRate = useQuery(api.fx.getLatestFxRate, {
+    baseCurrency: "USD",
+    targetCurrency: userCurrency,
+  }) || 1;
+
+  // Helper function to convert USD values to user's currency
+  const convertValue = (usdValue: number) => {
+    return convertFromUSD(usdValue, userCurrency, fxRate);
+  };
 
   // Filter assets by type
   const stockAssets =
@@ -183,7 +199,7 @@ export default function PortfolioDetail({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${portfolio?.currentValue.toLocaleString()}
+                {formatCurrency(convertValue(portfolio?.currentValue || 0), userCurrency)}
               </div>
               <div
                 className={`text-sm flex items-center gap-2 mt-2 ${portfolio?.change || 0 >= 0 ? "text-primary" : "text-secondary"}`}
@@ -193,8 +209,8 @@ export default function PortfolioDetail({
                 ) : (
                   <TrendingDown className="h-4 w-4" />
                 )}
-                {portfolio?.change || 0 >= 0 ? "+" : ""}$
-                {Math.abs(portfolio?.change || 0).toLocaleString()} (
+                {portfolio?.change || 0 >= 0 ? "+" : ""}
+                {formatCurrency(Math.abs(convertValue(portfolio?.change || 0)), userCurrency)} (
                 {portfolio?.change || 0 >= 0 ? "+" : ""}
                 {portfolio?.changePercent.toFixed(2)}%)
               </div>
@@ -320,6 +336,8 @@ export default function PortfolioDetail({
                 assets={stockAssets}
                 onEdit={handleEditAsset}
                 onDelete={handleDeleteAsset}
+                userCurrency={userCurrency}
+                fxRate={fxRate}
               />
               <AssetSection
                 key={`crypto-${cryptoAssets.length}-${portfolio?._id}`}
@@ -327,6 +345,8 @@ export default function PortfolioDetail({
                 assets={cryptoAssets}
                 onEdit={handleEditAsset}
                 onDelete={handleDeleteAsset}
+                userCurrency={userCurrency}
+                fxRate={fxRate}
               />
               <AssetSection
                 key={`property-${propertyAssets.length}-${portfolio?._id}`}
@@ -334,6 +354,8 @@ export default function PortfolioDetail({
                 assets={propertyAssets}
                 onEdit={handleEditAsset}
                 onDelete={handleDeleteAsset}
+                userCurrency={userCurrency}
+                fxRate={fxRate}
               />
               <AssetSection
                 key={`commodity-${commodityAssets.length}-${portfolio?._id}`}
@@ -341,6 +363,8 @@ export default function PortfolioDetail({
                 assets={commodityAssets}
                 onEdit={handleEditAsset}
                 onDelete={handleDeleteAsset}
+                userCurrency={userCurrency}
+                fxRate={fxRate}
               />
               <AssetSection
                 key={`bonds-${bondAssets.length}-${portfolio?._id}`}
@@ -348,6 +372,8 @@ export default function PortfolioDetail({
                 assets={bondAssets}
                 onEdit={handleEditAsset}
                 onDelete={handleDeleteAsset}
+                userCurrency={userCurrency}
+                fxRate={fxRate}
               />
               <AssetSection
                 key={`cash-${cashAssets.length}-${portfolio?._id}`}
@@ -355,6 +381,8 @@ export default function PortfolioDetail({
                 assets={cashAssets}
                 onEdit={handleEditAsset}
                 onDelete={handleDeleteAsset}
+                userCurrency={userCurrency}
+                fxRate={fxRate}
               />
               <AssetSection
                 key={`other-${otherAssets.length}-${portfolio?._id}`}
@@ -362,6 +390,8 @@ export default function PortfolioDetail({
                 assets={otherAssets}
                 onEdit={handleEditAsset}
                 onDelete={handleDeleteAsset}
+                userCurrency={userCurrency}
+                fxRate={fxRate}
               />
             </>
           ) : (

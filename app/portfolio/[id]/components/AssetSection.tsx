@@ -9,11 +9,15 @@ export function AssetSection({
   assets,
   onEdit,
   onDelete,
+  userCurrency = "USD",
+  fxRate = 1,
 }: {
   title: string;
   assets: Asset[];
   onEdit: (asset: Asset) => void;
   onDelete: (id: string) => void;
+  userCurrency?: string;
+  fxRate?: number;
 }) {
   if (assets.length === 0) {
     return null;
@@ -78,6 +82,8 @@ export function AssetSection({
             asset={asset}
             onEdit={onEdit}
             onDelete={onDelete}
+            userCurrency={userCurrency}
+            fxRate={fxRate}
           />
         ))}
       </CardContent>

@@ -145,4 +145,12 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("byPortfolio", ["portfolioId"]),
+  // currency exchange rates
+  currencyRates: defineTable({
+    baseCurrency: v.string(), // Base currency (USD)
+    targetCurrency: v.string(), // Target currency (EUR, GBP, etc.)
+    rate: v.number(), // Exchange rate from base to target
+    date: v.string(), // Date in YYYY-MM-DD format
+    updatedAt: v.number(), // Timestamp when rate was last updated
+  }).index("byCurrency", ["baseCurrency", "targetCurrency", "date"]),
 });

@@ -27,3 +27,10 @@ crons.interval(
   { minutes: 60 },
   api.marketData.updateBenchmarkData,
 );
+
+// Update FX rates daily
+crons.interval(
+  "update fx rates",
+  { hours: 24 },
+  api.fx.updateFxRates,
+);

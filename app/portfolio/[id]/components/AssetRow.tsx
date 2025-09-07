@@ -17,19 +17,29 @@ import {
 import { Asset } from "./types";
 import { getAssetConfig } from "./AssetRowConfig";
 import { TransactionDialog } from "./dialogs/TransactionDialog";
+import { formatCurrency, convertFromUSD } from "@/lib/currency";
 
 export function AssetRow({
   asset,
   onEdit,
   onDelete,
+  userCurrency = "USD",
+  fxRate = 1,
 }: {
   asset: Asset;
   onEdit: (asset: Asset) => void;
   onDelete: (id: string) => void;
+  userCurrency?: string;
+  fxRate?: number;
 }) {
   const isPositive = asset.change >= 0;
   const config = getAssetConfig(asset.type);
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+
+  // Helper function to convert USD values to user's currency
+  const convertValue = (usdValue: number) => {
+    return convertFromUSD(usdValue, userCurrency, fxRate);
+  };
 
   const getAssetLink = (asset: Asset) => {
     if (asset.type === "crypto" && asset.symbol) {
@@ -75,10 +85,7 @@ export function AssetRow({
         {config.value && (
           <div className="text-right min-w-[100px]">
             <div className="font-semibold">
-              {asset.type === "cash" && asset.currency
-                ? `${asset.currency} `
-                : "$"}
-              {asset.currentValue.toLocaleString()}
+              {formatCurrency(convertValue(asset.currentValue), userCurrency)}
             </div>
             {config.quantity ? (
               <div className="text-sm text-muted-foreground">
@@ -94,14 +101,14 @@ export function AssetRow({
 
         {config.avgBuyPrice && (
           <div className="text-right min-w-[100px]">
-            <div className="font-medium">${asset.avgBuyPrice.toFixed(2)}</div>
+            <div className="font-medium">{formatCurrency(convertValue(asset.avgBuyPrice), userCurrency)}</div>
             <div className="text-sm text-muted-foreground">Avg Buy</div>
           </div>
         )}
 
         {config.currentPrice && (
           <div className="text-right min-w-[100px]">
-            <div className="font-medium">${asset.currentPrice.toFixed(2)}</div>
+            <div className="font-medium">{formatCurrency(convertValue(asset.currentPrice), userCurrency)}</div>
             <div className="text-sm text-muted-foreground">Current</div>
           </div>
         )}
@@ -118,7 +125,7 @@ export function AssetRow({
             <div
               className={`font-medium ${isPositive ? "text-primary" : "text-secondary"}`}
             >
-              {isPositive ? "+" : ""}${Math.abs(asset.change).toLocaleString()}
+              {isPositive ? "+" : ""}{formatCurrency(Math.abs(convertValue(asset.change)), userCurrency)}
             </div>
             <div
               className={`text-sm ${isPositive ? "text-primary" : "text-secondary"}`}
