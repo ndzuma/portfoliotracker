@@ -33,7 +33,7 @@ interface PortfolioAnalyticsProps {
 
 export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
   // Check if feature is enabled
-  if (!isFeatureEnabled('portfolioAnalytics')) {
+  if (!isFeatureEnabled("portfolioAnalytics")) {
     return null;
   }
 
@@ -47,7 +47,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
     return (
       <div className="space-y-6 mb-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-foreground">Portfolio Analytics</h2>
+          <h2 className="text-2xl font-semibold text-foreground">
+            Portfolio Analytics
+          </h2>
           <Button
             variant="ghost"
             size="sm"
@@ -67,7 +69,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
             )}
           </Button>
         </div>
-        
+
         {isExpanded && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="animate-pulse">
@@ -104,25 +106,27 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
   }
 
   const formatPercentage = (value: number) => {
+    if (!value) return "0.00%";
     return `${(value * 100).toFixed(2)}%`;
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(value);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const formatNumber = (value: number, decimals: number = 2) => {
+    if (!value) return "0";
     return value.toFixed(decimals);
   };
 
@@ -138,9 +142,12 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
     <div className="space-y-6 mb-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-semibold text-foreground">Portfolio Analytics</h2>
+          <h2 className="text-2xl font-semibold text-foreground">
+            Portfolio Analytics
+          </h2>
           <Badge variant="outline" className="text-xs">
-            Data as of {new Date(analytics.metadata.calculatedAt).toLocaleDateString()}
+            Data as of{" "}
+            {new Date(analytics.metadata.calculatedAt).toLocaleDateString()}
           </Badge>
         </div>
         <Button
@@ -171,7 +178,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <TrendingUp className="h-5 w-5 text-primary" />
               Performance Metrics
             </h3>
-            
+
             {/* Main Performance Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
@@ -200,7 +207,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {formatPercentage(analytics.performanceMetrics.annualizedReturn)}
+                    {formatPercentage(
+                      analytics.performanceMetrics.annualizedReturn,
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Compound annual growth
@@ -217,7 +226,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {formatPercentage(analytics.performanceMetrics.timeWeightedReturn)}
+                    {formatPercentage(
+                      analytics.performanceMetrics.timeWeightedReturn,
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Cash flow adjusted
@@ -236,9 +247,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   <div className="text-2xl font-bold">
                     {formatPercentage(analytics.performanceMetrics.ytdReturn)}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Year to date
-                  </p>
+                  <p className="text-xs text-muted-foreground">Year to date</p>
                 </CardContent>
               </Card>
             </div>
@@ -256,7 +265,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   <div>
                     <p className="text-sm font-medium">1 Year</p>
                     <p className="text-2xl font-bold">
-                      {formatPercentage(analytics.performanceMetrics.rollingReturns["1Y"])}
+                      {formatPercentage(
+                        analytics.performanceMetrics.rollingReturns["1Y"],
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Trailing 12 months
@@ -265,7 +276,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   <div>
                     <p className="text-sm font-medium">3 Years</p>
                     <p className="text-2xl font-bold">
-                      {formatPercentage(analytics.performanceMetrics.rollingReturns["3Y"])}
+                      {formatPercentage(
+                        analytics.performanceMetrics.rollingReturns["3Y"],
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Annualized 3-year
@@ -274,7 +287,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   <div>
                     <p className="text-sm font-medium">5 Years</p>
                     <p className="text-2xl font-bold">
-                      {formatPercentage(analytics.performanceMetrics.rollingReturns["5Y"])}
+                      {formatPercentage(
+                        analytics.performanceMetrics.rollingReturns["5Y"],
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Annualized 5-year
@@ -300,10 +315,22 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                       <p className="text-sm font-medium">Best Month</p>
                     </div>
                     <p className="text-xl font-bold text-green-600">
-                      +{formatPercentage(analytics.performanceMetrics.bestWorstPeriods.bestMonth.return)}
+                      +
+                      {formatPercentage(
+                        analytics.performanceMetrics.bestWorstPeriods.bestMonth
+                          .return,
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(analytics.performanceMetrics.bestWorstPeriods.bestMonth.startDate)} - {formatDate(analytics.performanceMetrics.bestWorstPeriods.bestMonth.endDate)}
+                      {formatDate(
+                        analytics.performanceMetrics.bestWorstPeriods.bestMonth
+                          .startDate,
+                      )}{" "}
+                      -{" "}
+                      {formatDate(
+                        analytics.performanceMetrics.bestWorstPeriods.bestMonth
+                          .endDate,
+                      )}
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -312,10 +339,21 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                       <p className="text-sm font-medium">Worst Month</p>
                     </div>
                     <p className="text-xl font-bold text-red-600">
-                      {formatPercentage(analytics.performanceMetrics.bestWorstPeriods.worstMonth.return)}
+                      {formatPercentage(
+                        analytics.performanceMetrics.bestWorstPeriods.worstMonth
+                          .return,
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(analytics.performanceMetrics.bestWorstPeriods.worstMonth.startDate)} - {formatDate(analytics.performanceMetrics.bestWorstPeriods.worstMonth.endDate)}
+                      {formatDate(
+                        analytics.performanceMetrics.bestWorstPeriods.worstMonth
+                          .startDate,
+                      )}{" "}
+                      -{" "}
+                      {formatDate(
+                        analytics.performanceMetrics.bestWorstPeriods.worstMonth
+                          .endDate,
+                      )}
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -324,10 +362,22 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                       <p className="text-sm font-medium">Best Year</p>
                     </div>
                     <p className="text-xl font-bold text-green-600">
-                      +{formatPercentage(analytics.performanceMetrics.bestWorstPeriods.bestYear.return)}
+                      +
+                      {formatPercentage(
+                        analytics.performanceMetrics.bestWorstPeriods.bestYear
+                          .return,
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(analytics.performanceMetrics.bestWorstPeriods.bestYear.startDate)} - {formatDate(analytics.performanceMetrics.bestWorstPeriods.bestYear.endDate)}
+                      {formatDate(
+                        analytics.performanceMetrics.bestWorstPeriods.bestYear
+                          .startDate,
+                      )}{" "}
+                      -{" "}
+                      {formatDate(
+                        analytics.performanceMetrics.bestWorstPeriods.bestYear
+                          .endDate,
+                      )}
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -336,10 +386,21 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                       <p className="text-sm font-medium">Worst Year</p>
                     </div>
                     <p className="text-xl font-bold text-red-600">
-                      {formatPercentage(analytics.performanceMetrics.bestWorstPeriods.worstYear.return)}
+                      {formatPercentage(
+                        analytics.performanceMetrics.bestWorstPeriods.worstYear
+                          .return,
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(analytics.performanceMetrics.bestWorstPeriods.worstYear.startDate)} - {formatDate(analytics.performanceMetrics.bestWorstPeriods.worstYear.endDate)}
+                      {formatDate(
+                        analytics.performanceMetrics.bestWorstPeriods.worstYear
+                          .startDate,
+                      )}{" "}
+                      -{" "}
+                      {formatDate(
+                        analytics.performanceMetrics.bestWorstPeriods.worstYear
+                          .endDate,
+                      )}
                     </p>
                   </div>
                 </div>
@@ -355,7 +416,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Shield className="h-5 w-5 text-primary" />
               Risk Analysis
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="pb-2">
@@ -369,8 +430,8 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                     <div className="text-2xl font-bold">
                       {formatPercentage(analytics.riskMetrics.volatility)}
                     </div>
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className={`text-xs text-white ${riskLevel.color}`}
                     >
                       {riskLevel.level}
@@ -447,7 +508,10 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   <div>
                     <p className="text-sm font-medium">Daily VaR</p>
                     <p className="text-2xl font-bold text-orange-600">
-                      -{formatPercentage(analytics.riskMetrics.valueAtRisk.daily)}
+                      -
+                      {formatPercentage(
+                        analytics.riskMetrics.valueAtRisk.daily,
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Expected daily loss (95% confidence)
@@ -456,7 +520,10 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   <div>
                     <p className="text-sm font-medium">Monthly VaR</p>
                     <p className="text-2xl font-bold text-orange-600">
-                      -{formatPercentage(analytics.riskMetrics.valueAtRisk.monthly)}
+                      -
+                      {formatPercentage(
+                        analytics.riskMetrics.valueAtRisk.monthly,
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Expected monthly loss (95% confidence)
@@ -475,7 +542,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <BarChart3 className="h-5 w-5 text-primary" />
               Benchmark Comparison (vs SPY)
             </h3>
-            
+
             {/* Alpha, Beta, Correlation */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
@@ -551,11 +618,15 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Tracking Error</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Tracking Error
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {formatPercentage(analytics.benchmarkComparisons.trackingError)}
+                    {formatPercentage(
+                      analytics.benchmarkComparisons.trackingError,
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Standard deviation of excess returns
@@ -565,12 +636,18 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Cumulative Outperformance</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Cumulative Outperformance
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {analytics.benchmarkComparisons.cumulativeOutperformance > 0 ? '+' : ''}
-                    {formatPercentage(analytics.benchmarkComparisons.cumulativeOutperformance)}
+                    {analytics.benchmarkComparisons.cumulativeOutperformance > 0
+                      ? "+"
+                      : ""}
+                    {formatPercentage(
+                      analytics.benchmarkComparisons.cumulativeOutperformance,
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Total excess return vs SPY
@@ -595,7 +672,10 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                       Up Market Capture
                     </p>
                     <p className="text-2xl font-bold text-green-600">
-                      {formatPercentage(analytics.benchmarkComparisons.marketCapture.upCapture / 100)}
+                      {formatPercentage(
+                        analytics.benchmarkComparisons.marketCapture.upCapture /
+                          100,
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Performance in rising markets
@@ -607,7 +687,10 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                       Down Market Capture
                     </p>
                     <p className="text-2xl font-bold text-red-600">
-                      {formatPercentage(analytics.benchmarkComparisons.marketCapture.downCapture / 100)}
+                      {formatPercentage(
+                        analytics.benchmarkComparisons.marketCapture
+                          .downCapture / 100,
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Performance in falling markets
@@ -617,7 +700,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               </CardContent>
             </Card>
 
-            {/* Yearly Comparison Table 
+            {/* Yearly Comparison Table
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -673,26 +756,33 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <PieChart className="h-5 w-5 text-primary" />
               Asset Allocation
             </h3>
-            
+
             <Card>
-              <CardContent >
+              <CardContent>
                 <div className="space-y-3">
-                  {analytics.assetAllocation.byType.map((allocation: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ 
-                            backgroundColor: `hsl(${(index * 360) / analytics.assetAllocation.byType.length}, 70%, 50%)` 
-                          }}
-                        />
-                        <span className="text-sm font-medium capitalize">{allocation.type}</span>
+                  {analytics.assetAllocation.byType.map(
+                    (allocation: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{
+                              backgroundColor: `hsl(${(index * 360) / analytics.assetAllocation.byType.length}, 70%, 50%)`,
+                            }}
+                          />
+                          <span className="text-sm font-medium capitalize">
+                            {allocation.type}
+                          </span>
+                        </div>
+                        <span className="text-sm font-bold">
+                          {allocation.percentage.toFixed(1)}%
+                        </span>
                       </div>
-                      <span className="text-sm font-bold">
-                        {allocation.percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                  ))}
+                    ),
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -706,11 +796,13 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Hash className="h-5 w-5 text-primary" />
               Analysis Metadata
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Data Points</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Data Points
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
@@ -724,7 +816,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Date Range</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Date Range
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm font-bold">
@@ -741,7 +835,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Asset Count</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Asset Count
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
@@ -755,7 +851,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Last Updated
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm font-bold">
