@@ -2,6 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useParams } from "next/navigation";
@@ -75,9 +82,51 @@ export default function PortfolioDetail({
     portfolioId: portfolioId,
   });
   const deleteAsset = useMutation(api.assets.deleteAsset);
+  const [chartDateRange, setChartDateRange] = useState("1Y"); // 1M, 3M, 6M, 1Y, 2Y, 5Y, ALL
+
+  const getDateRange = (range: string) => {
+    const today = new Date();
+    const startDate = new Date();
+
+    switch (range) {
+      case "1M":
+        startDate.setMonth(today.getMonth() - 1);
+        break;
+      case "3M":
+        startDate.setMonth(today.getMonth() - 3);
+        break;
+      case "6M":
+        startDate.setMonth(today.getMonth() - 6);
+        break;
+      case "1Y":
+        startDate.setFullYear(today.getFullYear() - 1);
+        break;
+      case "2Y":
+        startDate.setFullYear(today.getFullYear() - 2);
+        break;
+      case "5Y":
+        startDate.setFullYear(today.getFullYear() - 5);
+        break;
+      case "ALL":
+      default:
+        startDate.setFullYear(today.getFullYear() - 10); // Default to 10 years for "ALL"
+        break;
+    }
+
+    return {
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: today.toISOString().split("T")[0],
+    };
+  };
+
+  const { startDate, endDate } = getDateRange(chartDateRange);
+
   const chartData =
     useQuery(api.marketData.getHistoricalData, {
       portfolioId: portfolioId,
+      isForChart: true,
+      startDate,
+      endDate,
     }) || [];
 
   // Filter assets by type
@@ -245,13 +294,43 @@ export default function PortfolioDetail({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <PorfolioPerformanceChart data={chartData} />
+          <div className="md:col-span-2">
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Portfolio Performance
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Select
+                    value={chartDateRange}
+                    onValueChange={setChartDateRange}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1M">1M</SelectItem>
+                      <SelectItem value="3M">3M</SelectItem>
+                      <SelectItem value="6M">6M</SelectItem>
+                      <SelectItem value="1Y">1Y</SelectItem>
+                      <SelectItem value="2Y">2Y</SelectItem>
+                      <SelectItem value="5Y">5Y</SelectItem>
+                      <SelectItem value="ALL">ALL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <PorfolioPerformanceChart data={chartData} />
+            </Card>
+          </div>
           <AssetAllocationPie
             value={portfolio?.currentValue || 0}
             assets={portfolio?.assets || []}
           />
         </div>
-        
+
         <Separator className="mb-6" />
 
         <PortfolioAnalytics portfolioId={portfolioId} />

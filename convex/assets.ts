@@ -55,6 +55,12 @@ export const createAsset = mutation({
       await ctx.scheduler.runAfter(120000, api.marketData.updateHistoricalData);
     }
 
+    // Trigger portfolio snapshot update when asset is added
+    await ctx.scheduler.runAfter(0, internal.marketData.triggerSnapshotUpdate, {
+      portfolioId: args.portfolioId,
+      reason: "asset_added",
+    });
+
     return assetId;
   },
 });
@@ -189,6 +195,12 @@ export const addTransaction = mutation({
       price: args.price,
       fees: args.fees || 0,
       notes: args.notes,
+    });
+
+    // Trigger portfolio snapshot update when transaction is added
+    await ctx.scheduler.runAfter(0, internal.marketData.triggerSnapshotUpdate, {
+      portfolioId: asset.portfolioId,
+      reason: "transaction_added",
     });
 
     return transactionId;

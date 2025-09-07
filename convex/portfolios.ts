@@ -363,8 +363,12 @@ export const getPortfolioAnalytics = query({
     }
 
     const startDate = new Date("2015-01-01");
+    const endDate = new Date();
     let historicalData = await ctx.runQuery(api.marketData.getHistoricalData, {
       portfolioId: args.portfolioId,
+      isForChart: false, // Analytics can use snapshots for efficiency
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDate.toISOString().split("T")[0],
     });
 
     if (!historicalData || historicalData.length === 0) {
