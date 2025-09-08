@@ -51,9 +51,6 @@ export const updateHistoricalData = action({
           volume: Number(record.volume),
         });
       }
-
-      // Add a short delay between requests to avoid rate limits
-      await new Promise((resolve) => setTimeout(resolve, 200));
     }
 
     // Trigger snapshot updates for all portfolios that had historical data updated
