@@ -19,6 +19,7 @@ import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { dark } from '@clerk/themes'
 import { isFeatureEnabled } from "@/lib/featureFlags";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const getNavigation = () => {
   const baseNavigation = [
@@ -65,18 +66,21 @@ export function Sidebar() {
                 className="object-contain"
               />
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCollapsed(!collapsed)}
-              className="h-8 w-8 p-0 text-primary hover:text-primary/80"
-            >
-              {collapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCollapsed(!collapsed)}
+                className="h-8 w-8 p-0 text-primary hover:text-primary/80"
+              >
+                {collapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 

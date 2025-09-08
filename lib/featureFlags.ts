@@ -34,9 +34,7 @@ export const featureFlags: FeatureFlags = {
   apiKeyManagement:
     devModeOverride ||
     process.env.NEXT_PUBLIC_ENABLE_API_KEY_MANAGEMENT === "true",
-  appearanceToggle:
-    devModeOverride ||
-    process.env.NEXT_PUBLIC_ENABLE_APPEARANCE_TOGGLE === "true",
+  appearanceToggle: true, // Always enable appearance toggle for light/dark mode switching
   portfolioAnalytics:
     devModeOverride ||
     process.env.NEXT_PUBLIC_ENABLE_PORTFOLIO_ANALYTICS === "true",
