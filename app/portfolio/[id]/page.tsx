@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -300,7 +306,9 @@ export default function PortfolioDetail({
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <CardTitle>Historical Performance</CardTitle>
-                  <CardDescription>Portfolio performance over time</CardDescription>
+                  <CardDescription>
+                    Portfolio performance over time
+                  </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <Select
@@ -332,14 +340,16 @@ export default function PortfolioDetail({
           />
         </div>
 
-        <Separator className="mb-6" />
+        <Separator className="mb-0" />
 
         <PortfolioAnalytics portfolioId={portfolioId} />
 
-        <Separator className="mb-6" />
+        <Separator className="mb-0" />
 
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-6">
+          <div
+            className={`flex items-center justify-between mb-6 pt-6 ${!isBunkerCollapsed ? "sticky top-0 bg-background z-10 pb-6 border-b" : ""}`}
+          >
             <h2 className="text-2xl font-semibold text-foreground">Vault</h2>
             <Button
               variant="ghost"
@@ -347,22 +357,22 @@ export default function PortfolioDetail({
               onClick={() => setIsBunkerCollapsed(!isBunkerCollapsed)}
               className="flex items-center gap-2"
             >
-              {isBunkerCollapsed ? (
-                <>
-                  <ChevronDown className="h-4 w-4" />
-                  <span>Expand</span>
-                </>
-              ) : (
+              {!isBunkerCollapsed ? (
                 <>
                   <ChevronUp className="h-4 w-4" />
                   <span>Collapse</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  <span>Expand</span>
                 </>
               )}
             </Button>
           </div>
 
           {!isBunkerCollapsed && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
               {/* Goal Tracker Card - spans 2 rows */}
               <GoalTrackerCard
                 portfolioId={portfolioId}

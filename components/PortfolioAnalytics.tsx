@@ -139,8 +139,10 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
   const riskLevel = getRiskLevel(analytics.riskMetrics.volatility);
 
   return (
-    <div className="space-y-6 mb-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-0 mb-6">
+      <div
+        className={`flex items-center justify-between pt-6 ${isExpanded ? "sticky top-0 bg-background z-10 pb-6 border-b" : ""}`}
+      >
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-semibold text-foreground">
             Portfolio Analytics
@@ -171,7 +173,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
       </div>
 
       {isExpanded && (
-        <div className="space-y-8">
+        <div className="space-y-8 pt-4">
           {/* Performance Metrics Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
