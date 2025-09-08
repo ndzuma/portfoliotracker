@@ -132,22 +132,42 @@ export function PortfolioSidebar({ ...props }: React.ComponentProps<typeof Sideb
         <SidebarMenu>
           <SidebarMenuItem>
             <div className="flex items-center gap-3 p-2">
-              <UserButton
-                appearance={{ 
-                  elements: { userButtonAvatarBox: "w-10 h-10" }, 
-                  baseTheme: dark 
-                }}
-                afterSignOutUrl={signedOutUrl}
-              />
-              {!isCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {user?.fullName}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {user?.emailAddresses[0]?.emailAddress}
-                  </p>
-                </div>
+              {user ? (
+                <>
+                  <UserButton
+                    appearance={{ 
+                      elements: { userButtonAvatarBox: "w-10 h-10" }, 
+                      baseTheme: dark 
+                    }}
+                    afterSignOutUrl={signedOutUrl}
+                  />
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {user.fullName}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user.emailAddresses[0]?.emailAddress}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium">U</span>
+                  </div>
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        Demo User
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        demo@example.com
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </SidebarMenuItem>
