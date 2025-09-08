@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -27,6 +27,7 @@ import {
   TrendingDown,
   ChevronDown,
   ChevronUp,
+  Filter,
 } from "lucide-react";
 import Link from "next/link";
 import { AssetSection } from "./components/AssetSection";
@@ -297,27 +298,27 @@ export default function PortfolioDetail({
           <div className="md:col-span-2">
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Portfolio Performance
-                </CardTitle>
+                <div>
+                  <CardTitle>Historical Performance</CardTitle>
+                  <CardDescription>Portfolio performance over time</CardDescription>
+                </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   <Select
                     value={chartDateRange}
                     onValueChange={setChartDateRange}
                   >
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-36">
+                      <Filter className="mr-2 h-4 w-4" />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1M">1M</SelectItem>
-                      <SelectItem value="3M">3M</SelectItem>
-                      <SelectItem value="6M">6M</SelectItem>
-                      <SelectItem value="1Y">1Y</SelectItem>
-                      <SelectItem value="2Y">2Y</SelectItem>
-                      <SelectItem value="5Y">5Y</SelectItem>
-                      <SelectItem value="ALL">ALL</SelectItem>
+                      <SelectItem value="1M">1 Mmonth</SelectItem>
+                      <SelectItem value="3M">3 Months</SelectItem>
+                      <SelectItem value="6M">6 Months</SelectItem>
+                      <SelectItem value="1Y">1 Year</SelectItem>
+                      <SelectItem value="2Y">2 Years</SelectItem>
+                      <SelectItem value="5Y">5 Years</SelectItem>
+                      <SelectItem value="ALL">All Time</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
