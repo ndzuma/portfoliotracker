@@ -4,7 +4,9 @@ export async function GET() {
   try {
     const marketDataServiceUrl = process.env.MARKET_DATA_SERVICE_URL;
     if (!marketDataServiceUrl) {
-      throw new Error("MARKET_DATA_SERVICE_URL environment variable is not set");
+      throw new Error(
+        "MARKET_DATA_SERVICE_URL environment variable is not set",
+      );
     }
 
     // Fetch from your market data service
@@ -17,6 +19,9 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching market news:", error);
-    return NextResponse.json({ error: "Failed to fetch market news" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch market news" },
+      { status: 500 },
+    );
   }
 }
