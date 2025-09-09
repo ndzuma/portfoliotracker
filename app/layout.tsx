@@ -9,6 +9,7 @@ import { ConvexClientProvider } from "./ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { AuthenticatedWrapper } from "./auth-wrapper";
+import { PostHogProvider } from "./PostHogProvider";
 
 export const metadata: Metadata = {
   title: "PulsePortfolio App - Manage Your Investments",
@@ -45,16 +46,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <ThemeProvider defaultTheme="system" storageKey="portfolio-theme">
-          <ClerkProvider>
-            <ConvexClientProvider>
-              <Suspense fallback={<div>Loading...</div>}>
-                <AuthenticatedWrapper>{children}</AuthenticatedWrapper>
-              </Suspense>
-              <Toaster position="top-right" richColors />
-            </ConvexClientProvider>
-          </ClerkProvider>
-        </ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider defaultTheme="system" storageKey="portfolio-theme">
+            <ClerkProvider>
+              <ConvexClientProvider>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <AuthenticatedWrapper>{children}</AuthenticatedWrapper>
+                </Suspense>
+                <Toaster position="top-right" richColors />
+              </ConvexClientProvider>
+            </ClerkProvider>
+          </ThemeProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
