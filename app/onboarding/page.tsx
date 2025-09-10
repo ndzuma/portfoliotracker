@@ -44,6 +44,7 @@ export default function OnboardingPage() {
     } else if (isLoaded && user && existingUser !== undefined) {
       // User exists but is viewing onboarding page
       setIsProcessing(false);
+      router.push("/");
     } else if (isLoaded && !user) {
       // No user logged in, redirect to login
       router.push("/");
