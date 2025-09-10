@@ -13,6 +13,8 @@ export function AuthenticatedWrapper({
 }) {
   const pathname = usePathname();
   const isOnboardingPage = pathname === "/onboarding";
+  const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+  
   return (
     <>
       <Authenticated>
@@ -26,7 +28,11 @@ export function AuthenticatedWrapper({
         )}
       </Authenticated>
       <Unauthenticated>
-        <RedirectToSignIn />
+        {isAuthPage ? (
+          children
+        ) : (
+          <RedirectToSignIn redirectUrl="/sign-in" />
+        )}
       </Unauthenticated>
     </>
   );
