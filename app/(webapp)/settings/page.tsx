@@ -34,7 +34,7 @@ import {
   Server,
   Key,
 } from "lucide-react";
-import { api } from "../../convex/_generated/api";
+import { api } from "../../../convex/_generated/api";
 import { useQuery, useMutation } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import { isFeatureEnabled } from "@/lib/featureFlags";
