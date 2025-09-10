@@ -51,8 +51,8 @@ export default function RootLayout({
             <ClerkProvider
               signInUrl="/sign-in"
               signUpUrl="/sign-up"
-              afterSignInUrl="/dashboard"
-              afterSignUpUrl="/onboarding"
+              signInForceRedirectUrl="/"
+              signUpForceRedirectUrl="/onboarding"
             >
               <ConvexClientProvider>
                 <Suspense fallback={<div>Loading...</div>}>

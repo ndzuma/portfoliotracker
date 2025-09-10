@@ -139,7 +139,7 @@ export default function NewsPage() {
                 .map((_, i) => (
                   <div key={i} className="h-full">
                     <div className="relative h-40 bg-muted">
-                      <Skeleton className="h-full w-full" />
+                      <Skeleton className="h-full w-full bg-grey" />
                       <div className="absolute top-2 left-2">
                         <Skeleton className="h-5 w-16" />
                       </div>
