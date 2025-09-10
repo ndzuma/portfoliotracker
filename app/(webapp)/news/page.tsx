@@ -137,22 +137,22 @@ export default function NewsPage() {
             ? Array(9)
                 .fill(0)
                 .map((_, i) => (
-                  <div key={i} className="h-full">
+                  <div key={i} className="h-full radius-lg">
                     <div className="relative h-40 bg-muted">
-                      <Skeleton className="h-full w-full bg-grey" />
+                      <Skeleton className="h-full w-full bg-neutral-800" />
                       <div className="absolute top-2 left-2">
-                        <Skeleton className="h-5 w-16" />
+                        <Skeleton className="h-5 w-16 bg-black" />
                       </div>
                       <div className="absolute top-2 right-2">
-                        <Skeleton className="h-5 w-20" />
+                        <Skeleton className="h-5 w-20 bg-black" />
                       </div>
                     </div>
-                    <div className="p-4 space-y-3">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-6 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-2/3" />
-                      <Skeleton className="h-8 w-full mt-4" />
+                    <div className="p-4 space-y-3 bg-muted">
+                      <Skeleton className="h-4 w-24 bg-neutral-800" />
+                      <Skeleton className="h-6 w-full bg-neutral-800" />
+                      <Skeleton className="h-4 w-full bg-neutral-800" />
+                      <Skeleton className="h-4 w-2/3 bg-neutral-800" />
+                      <Skeleton className="h-8 w-full mt-4 bg-neutral-800" />
                     </div>
                   </div>
                 ))
