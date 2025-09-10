@@ -1,42 +1,50 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { SignIn, useUser } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
-import { redirect, RedirectType } from 'next/navigation'
+import { redirect, RedirectType } from "next/navigation";
 
 export default function SignInPage() {
   const { isSignedIn } = useUser();
-  
-  if (isSignedIn) { 
+
+  if (isSignedIn) {
     // Redirect to dashboard
-    redirect('/', RedirectType.push)
+    redirect("/", RedirectType.push);
   }
-    
+
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left side - Sign In Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 col-span-1">
+    <div className="min-h-screen grid relative">
+      {/* Moving Gradient Background */}
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(-45deg, #292929, #1f1f1f, #141414, #0a0a0a, #000000)",
+          backgroundSize: "400% 400%",
+          animation: "gradient 15s ease infinite",
+        }}
+      ></div>
+      <style>{`
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
           <SignIn
             appearance={{
               baseTheme: dark,
+              layout: {
+                logoImageUrl:
+                  "https://5qpxxrwjkp.ufs.sh/f/NnmmcSZaZgmni3c1PnL6dvzNamEMhwL3OBGIDZKUbAnWSVJl",
+                logoLinkUrl: "https://www.pulsefolio.net",
+                privacyPageUrl: "https://www.pulsefolio.net/privacy",
+                termsPageUrl: "https://www.pulsefolio.net/terms",
+              },
             }}
-          />
-        </div>
-      </div>
-
-      {/* Right side - Branding */}
-      <div className="hidden lg:flex lg:flex-1 rounded-3xl m-5 ml-0 bg-gradient-to-br from-[#18181A]/50 via-[#B836A6]/50 to-[#E7315C]/50 relative overflow-hidden col-span-1">
-        <div className="flex flex-col min-w-full items-center justify-center p-15 relative z-10">
-          <Image
-            src="https://5qpxxrwjkp.ufs.sh/f/NnmmcSZaZgmng7fiun8iuWN7UPHl8L9vcdoetQMkOmjhIT2K"
-            alt="PulsePortfolio"
-            quality={100}
-            width={800}
-            height={800}
-            className="rounded-lg"
           />
         </div>
       </div>
