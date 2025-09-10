@@ -48,7 +48,12 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <PostHogProvider>
           <ThemeProvider defaultTheme="system" storageKey="portfolio-theme">
-            <ClerkProvider>
+            <ClerkProvider
+              signInUrl="/sign-in"
+              signUpUrl="/sign-up"
+              signInForceRedirectUrl="/"
+              signUpForceRedirectUrl="/onboarding"
+            >
               <ConvexClientProvider>
                 <Suspense fallback={<div>Loading...</div>}>
                   <AuthenticatedWrapper>{children}</AuthenticatedWrapper>

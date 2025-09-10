@@ -12,11 +12,13 @@ export function AuthenticatedWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isOnboardingPage = pathname === "/onboarding";
+  const isOnboardingOrAuthPage = pathname.startsWith("/onboarding") || pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+  const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+  
   return (
     <>
       <Authenticated>
-        {isOnboardingPage ? (
+        {isOnboardingOrAuthPage ? (
           <main className="h-screen bg-background">{children}</main>
         ) : (
           <div className="flex h-screen bg-background">
@@ -26,7 +28,11 @@ export function AuthenticatedWrapper({
         )}
       </Authenticated>
       <Unauthenticated>
-        <RedirectToSignIn />
+        {isAuthPage ? (
+          children
+        ) : (
+          <RedirectToSignIn redirectUrl="/sign-in" />
+        )}
       </Unauthenticated>
     </>
   );

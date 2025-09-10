@@ -50,8 +50,8 @@ import {
 import { AddAssetDialog } from "./components/dialogs/AddAssetDialog";
 import { EditPortfolioDialog } from "./components/dialogs/EditPortfolioDialog";
 import { EditAssetDialog } from "./components/dialogs/EditAssetDialog";
-import { Id } from "../../../convex/_generated/dataModel";
-import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { PortfolioAnalytics } from "@/components/PortfolioAnalytics";
 
