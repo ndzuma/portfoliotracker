@@ -841,7 +841,7 @@ export const triggerSnapshotUpdate = internalAction({
 export const updateAllPortfolioSnapshots = action({
   handler: async (ctx) => {
     // Get all portfolios
-    const portfolios = await ctx.db.query("portfolios").collect();
+    const portfolios = await ctx.runQuery(internal.marketData.getAllPortfolios);
 
     if (portfolios.length === 0) {
       console.log("No portfolios found for snapshot update");
@@ -874,6 +874,13 @@ export const updateAllPortfolioSnapshots = action({
     console.log(
       `Periodic snapshot update scheduled for ${portfolios.length} portfolios`,
     );
+  },
+});
+
+export const getAllPortfolios = internalQuery({
+  handler: async (ctx) => {
+    const portfolios = await ctx.db.query("portfolios").collect();
+    return portfolios;
   },
 });
 
