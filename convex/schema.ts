@@ -102,6 +102,13 @@ export default defineSchema({
     isMarketOpen: v.boolean(),
     updatedAt: v.number(),
   }).index("byTicker", ["ticker"]),
+  marketNewsSummary: defineTable({
+    analysis: v.string(),
+    modelUsed: v.string(),
+    tokensUsed: v.number(),
+    processingTimeMs: v.number(),
+    timestamp: v.number(),
+  }).index("byTimestamp", ["timestamp"]),
   // documents for user-uploaded files
   userDocuments: defineTable({
     storageId: v.union(v.string(), v.id("_storage")),

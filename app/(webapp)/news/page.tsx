@@ -46,6 +46,7 @@ export default function NewsPage() {
   const [filter, setFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
+  const aiSummaryData = useQuery(api.ai.getAiNewsSummary) || {};
   const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
 
   useEffect(() => {
@@ -126,7 +127,7 @@ export default function NewsPage() {
         {/* AI Summary and Market Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2">
-            <AISummaryCard />
+            <AISummaryCard data={aiSummaryData} />
           </div>
           <MarketOverviewCard data={benchmarkData} />
         </div>

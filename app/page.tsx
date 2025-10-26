@@ -36,6 +36,7 @@ import { ChartRadialStacked } from "@/components/allocationRadial";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
+import { parseMarkdown, cleanMarkdownWrapper } from "@/lib/markdown-parser";
 
 interface Portfolio {
   _id: string;
@@ -93,14 +94,15 @@ function BenchmarkCard({ benchmark }: { benchmark }) {
   );
 }
 
-function MarketNewsCard({
-  title,
-  content,
-}: {
-  title: string;
-  content: string;
-}) {
+interface AISummaryData {
+  analysis: string;
+  timestamp: string;
+}
+
+function MarketNewsCard({ data }: { data: AISummaryData }) {
   const [expanded, setExpanded] = useState(false);
+  
+  const cleanAnalysis = cleanMarkdownWrapper(data.analysis);
 
   return (
     <>
@@ -108,7 +110,7 @@ function MarketNewsCard({
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-medium text-foreground">{title}</h3>
+            <h3 className="text-lg font-medium text-foreground">Market Intelligence</h3>
           </div>
           <p className="text-sm font-medium mb-2 text-primary">
             Daily Market Insight
@@ -122,7 +124,7 @@ function MarketNewsCard({
                 "linear-gradient(to bottom, black 60%, transparent 100%)",
             }}
           >
-            <p>{content}</p>
+            <p>{parseMarkdown(cleanAnalysis)}</p>
           </div>
           <Button
             variant="ghost"
@@ -136,12 +138,14 @@ function MarketNewsCard({
       </Card>
 
       <Dialog open={expanded} onOpenChange={setExpanded}>
-        <DialogContent>
+        <DialogContent className="max-h-[80vh] max-w-4xl md:min-w-xl lg:min-w-4xl">
           <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle>Market Intelligence</DialogTitle>
             <p className="text-primary mt-2">Daily Market Insight</p>
           </DialogHeader>
-          <div className="mt-4 text-muted-foreground">{content}</div>
+          <div className="mt-4 overflow-auto max-h-[60vh]">
+            {parseMarkdown(cleanAnalysis)}
+          </div>
           <div className="mt-6 pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground italic">
               <span className="font-semibold">AI Risk Warning:</span> This
@@ -254,6 +258,7 @@ export default function PortfoliosDashboard() {
   const usersName = user?.fullName;
   const userPortfolios =
     useQuery(api.portfolios.getUserPorfolios, { userId }) || [];
+  const aiSummaryData = useQuery(api.ai.getAiNewsSummary) || {};
   const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
   const editPortfolio = useMutation(api.portfolios.updatePortfolio);
@@ -497,8 +502,7 @@ export default function PortfoliosDashboard() {
             )}
           </div>
           <MarketNewsCard
-            title="AI Market Summary"
-            content="Stocks rallied today as investors reacted positively to economic data indicating a steady recovery. The S&P 500 closed up 1.2%, led by gains in the technology and consumer discretionary sectors. Trading volumes were higher than average, suggesting strong conviction in this upward movement. Key resistance levels were broken, potentially indicating further upside in the coming sessions."
+            data= {aiSummaryData}
           />
         </div>
 
