@@ -1,8 +1,43 @@
 "use client";
 
-import { GoalTrackerCard, DocumentStorageCard, ArticleSaverCard } from "@/app/(webapp)/portfolio/[id]/components/bunker";
-import { Target, FileText, BookOpen } from "lucide-react";
+import { useState, useRef, FormEvent, ChangeEvent, useEffect } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { toast } from "sonner";
+import {
+  Target,
+  FileText,
+  BookOpen,
+  Plus,
+  ExternalLink,
+  Trash2,
+  Pencil,
+  Save,
+  X,
+  Upload,
+  Loader2,
+  MoreHorizontal,
+  Link as LinkIcon,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress/index";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
+/* ---------- TYPES ---------- */
 interface V2VaultProps {
   portfolioId: string;
   portfolioValue: number;
@@ -10,54 +45,340 @@ interface V2VaultProps {
   userId?: string;
 }
 
-export function V2Vault({ portfolioId, portfolioValue, annualReturn, userId }: V2VaultProps) {
+/* ========================================================================== */
+/*  GOAL TRACKER                                                               */
+/* ========================================================================== */
+function GoalTracker({
+  portfolioId,
+  portfolioValue,
+  annualReturn,
+}: {
+  portfolioId: string;
+  portfolioValue: number;
+  annualReturn: number;
+}) {
+  const [editOpen, setEditOpen] = useState(false);
+  const goals = useQuery(api.goals.getGoalsByPortfolio, {
+    portfolioId: portfolioId as Id<"portfolios">,
+  });
+  const upsertGoals = useMutation(api.goals.upsertGoals);
+
+  const defaults = { targetValue: 100000, targetReturn: 8, targetContribution: 500 };
+  const g = goals || defaults;
+
+  const [form, setForm] = useState(g);
+  useEffect(() => {
+    if (goals) setForm(goals);
+  }, [goals]);
+
+  const pctValue = Math.min(Math.round((portfolioValue / g.targetValue) * 100), 100);
+  const pctReturn = Math.min(Math.round((annualReturn / g.targetReturn) * 100), 100);
+
+  const handleSave = async () => {
+    try {
+      await upsertGoals({
+        portfolioId: portfolioId as Id<"portfolios">,
+        targetValue: form.targetValue,
+        targetReturn: form.targetReturn,
+        targetContribution: form.targetContribution,
+      });
+      setEditOpen(false);
+      toast.success("Goals updated");
+    } catch { toast.error("Failed to save goals"); }
+  };
+
   return (
-    <div className="flex flex-col gap-8">
-      {/* Section header */}
-      <div>
-        <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-1">Portfolio Vault</p>
-        <p className="text-sm text-zinc-600">Goals, saved articles, and documents for this portfolio.</p>
+    <>
+      <div className="flex flex-col gap-5">
+        {/* Value progress */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-zinc-300">Portfolio Value</span>
+            <span className="text-xs text-zinc-500">
+              ${portfolioValue.toLocaleString()} / ${g.targetValue.toLocaleString()}
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+            <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pctValue}%` }} />
+          </div>
+          <p className="text-[11px] text-zinc-600 mt-1">{pctValue}% of goal</p>
+        </div>
+
+        {/* Return progress */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-zinc-300">Annual Return</span>
+            <span className="text-xs text-zinc-500">
+              {annualReturn.toFixed(1)}% / {g.targetReturn}%
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+            <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${pctReturn}%` }} />
+          </div>
+          <p className="text-[11px] text-zinc-600 mt-1">{pctReturn}% of target</p>
+        </div>
+
+        <button
+          onClick={() => setEditOpen(true)}
+          className="self-start text-xs text-zinc-500 hover:text-white transition-colors mt-1"
+        >
+          Edit goals
+        </button>
       </div>
 
-      {/* Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Goal Tracker */}
-        <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-3 bg-white/[0.02] border-b border-white/[0.04]">
-            <Target className="h-3.5 w-3.5 text-zinc-500" />
-            <h3 className="text-sm font-semibold text-white">Goal Tracker</h3>
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[400px] bg-zinc-950 border-white/[0.08]">
+          <DialogHeader>
+            <DialogTitle className="text-white">Edit Goals</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-zinc-400">Target Value ($)</Label>
+              <Input type="number" value={form.targetValue} onChange={(e) => setForm({ ...form, targetValue: parseInt(e.target.value) || 0 })} className="bg-zinc-900 border-white/[0.06] text-white h-9" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-zinc-400">Target Return (%)</Label>
+              <Input type="number" step="0.1" value={form.targetReturn} onChange={(e) => setForm({ ...form, targetReturn: parseFloat(e.target.value) || 0 })} className="bg-zinc-900 border-white/[0.06] text-white h-9" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-zinc-400">Monthly Contribution ($)</Label>
+              <Input type="number" value={form.targetContribution} onChange={(e) => setForm({ ...form, targetContribution: parseInt(e.target.value) || 0 })} className="bg-zinc-900 border-white/[0.06] text-white h-9" />
+            </div>
           </div>
-          <div className="p-5">
-            <GoalTrackerCard
-              portfolioId={portfolioId}
-              portfolioValue={portfolioValue}
-              annualReturn={annualReturn}
-              monthlyContribution={0}
-            />
-          </div>
-        </div>
+          <DialogFooter>
+            <button onClick={() => setEditOpen(false)} className="px-3 py-1.5 text-sm text-zinc-500 hover:text-white transition-colors">Cancel</button>
+            <button onClick={handleSave} className="px-4 py-1.5 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors">Save</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
-        {/* Articles */}
-        <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-3 bg-white/[0.02] border-b border-white/[0.04]">
-            <BookOpen className="h-3.5 w-3.5 text-zinc-500" />
-            <h3 className="text-sm font-semibold text-white">Saved Articles</h3>
-          </div>
-          <div className="p-5">
-            <ArticleSaverCard userId={userId} portfolioId={portfolioId} />
-          </div>
-        </div>
+/* ========================================================================== */
+/*  ARTICLES                                                                   */
+/* ========================================================================== */
+function ArticlesList({ userId, portfolioId }: { userId: string; portfolioId: string }) {
+  const [addOpen, setAddOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
 
-        {/* Documents */}
-        <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-3 bg-white/[0.02] border-b border-white/[0.04]">
-            <FileText className="h-3.5 w-3.5 text-zinc-500" />
-            <h3 className="text-sm font-semibold text-white">Documents</h3>
+  const articles = useQuery(api.articles.getArticles, { userId, portfolioId }) || [];
+  const addArticle = useMutation(api.articles.saveArticle);
+  const deleteArticle = useMutation(api.articles.deleteArticle);
+
+  const handleAdd = async () => {
+    if (!title.trim() || !url.trim()) return;
+    try {
+      await addArticle({ userId: userId as Id<"users">, portfolioId: portfolioId as Id<"portfolios">, title, url });
+      setTitle(""); setUrl(""); setAddOpen(false);
+      toast.success("Article saved");
+    } catch { toast.error("Failed to save"); }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteArticle({ articleId: id as Id<"userArticles">, userId: userId as Id<"users"> });
+      toast.success("Deleted");
+    } catch { toast.error("Failed"); }
+  };
+
+  return (
+    <>
+      <div className="flex flex-col gap-2">
+        {articles.length === 0 ? (
+          <p className="text-sm text-zinc-600 py-3">No saved articles yet.</p>
+        ) : (
+          articles.map((a) => (
+            <div key={a._id} className="group flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-white/[0.02] transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <LinkIcon className="h-3.5 w-3.5 text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-zinc-300 truncate">{a.title}</p>
+                <p className="text-[11px] text-zinc-600 truncate">{new URL(a.url).hostname}</p>
+              </div>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <a href={a.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+                <button onClick={() => handleDelete(a._id)} className="p-1.5 rounded-md text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+        <button onClick={() => setAddOpen(true)} className="flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mt-1 self-start">
+          <Plus className="h-3 w-3" /> Add article
+        </button>
+      </div>
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="sm:max-w-[400px] bg-zinc-950 border-white/[0.08]">
+          <DialogHeader><DialogTitle className="text-white">Save Article</DialogTitle></DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-zinc-400">Title</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Article title" className="bg-zinc-900 border-white/[0.06] text-white h-9" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-zinc-400">URL</Label>
+              <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className="bg-zinc-900 border-white/[0.06] text-white h-9" />
+            </div>
           </div>
-          <div className="p-5">
-            <DocumentStorageCard userId={userId} portfolioId={portfolioId} />
+          <DialogFooter>
+            <button onClick={() => setAddOpen(false)} className="px-3 py-1.5 text-sm text-zinc-500 hover:text-white transition-colors">Cancel</button>
+            <button onClick={handleAdd} disabled={!title.trim() || !url.trim()} className="px-4 py-1.5 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40">Save</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/* ========================================================================== */
+/*  DOCUMENTS                                                                  */
+/* ========================================================================== */
+function DocumentsList({ userId, portfolioId }: { userId: string; portfolioId: string }) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const docs = useQuery(api.documents.getDocuments, { userId, portfolioId }) || [];
+  const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
+  const uploadDoc = useMutation(api.documents.uploadDocument);
+  const updateName = useMutation(api.documents.updateFileName);
+  const deleteDoc = useMutation(api.documents.deleteDocument);
+
+  const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const postUrl = await generateUploadUrl();
+      const result = await fetch(postUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file });
+      const { storageId } = await result.json();
+      await uploadDoc({ storageId, userId: userId as Id<"users">, portfolioId: portfolioId as Id<"portfolios">, fileName: file.name });
+      toast.success("Uploaded");
+    } catch { toast.error("Upload failed"); }
+    finally { setIsUploading(false); if (fileRef.current) fileRef.current.value = ""; }
+  };
+
+  const handleRename = async (id: string) => {
+    if (!newName.trim()) return;
+    try {
+      await updateName({ documentId: id as Id<"userDocuments">, userId: userId as Id<"users">, fileName: newName });
+      setEditingId(null); setNewName("");
+      toast.success("Renamed");
+    } catch { toast.error("Failed"); }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteDoc({ documentId: id as Id<"userDocuments">, userId: userId as Id<"users"> });
+      toast.success("Deleted");
+    } catch { toast.error("Failed"); }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      {docs.length === 0 ? (
+        <p className="text-sm text-zinc-600 py-3">No documents uploaded yet.</p>
+      ) : (
+        docs.map((doc) => (
+          <div key={doc._id} className="group flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-white/[0.02] transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+              <FileText className="h-3.5 w-3.5 text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              {editingId === doc._id ? (
+                <div className="flex items-center gap-2">
+                  <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus className="text-sm bg-zinc-900 border border-white/[0.06] rounded px-2 py-0.5 text-white w-full focus:outline-none focus:border-white/[0.12]" />
+                  <button onClick={() => handleRename(doc._id)} className="p-1 text-emerald-500 hover:text-emerald-400"><Save className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => { setEditingId(null); setNewName(""); }} className="p-1 text-zinc-500 hover:text-white"><X className="h-3.5 w-3.5" /></button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-zinc-300 truncate">{doc.fileName}</p>
+                  <p className="text-[11px] text-zinc-600">{(doc.size / 1024).toFixed(1)} KB</p>
+                </>
+              )}
+            </div>
+            {editingId !== doc._id && (
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors">
+                      <MoreHorizontal className="h-3.5 w-3.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-zinc-950 border-white/[0.08]">
+                    <DropdownMenuItem onClick={() => { setEditingId(doc._id); setNewName(doc.fileName); }} className="text-zinc-300 focus:text-white focus:bg-white/[0.06]">
+                      <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDelete(doc._id)} className="text-red-400 focus:text-red-300 focus:bg-red-500/10">
+                      <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
           </div>
+        ))
+      )}
+      <input ref={fileRef} type="file" onChange={handleUpload} className="hidden" />
+      <button onClick={() => fileRef.current?.click()} disabled={isUploading} className="flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mt-1 self-start disabled:opacity-40">
+        {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+        {isUploading ? "Uploading..." : "Upload file"}
+      </button>
+    </div>
+  );
+}
+
+/* ========================================================================== */
+/*  VAULT CONTAINER                                                            */
+/* ========================================================================== */
+export function V2Vault({ portfolioId, portfolioValue, annualReturn, userId }: V2VaultProps) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* Goals */}
+      <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
+        <div className="flex items-center gap-2 mb-5">
+          <Target className="h-3.5 w-3.5 text-emerald-500" />
+          <h3 className="text-sm font-semibold text-white">Goals</h3>
         </div>
+        <GoalTracker portfolioId={portfolioId} portfolioValue={portfolioValue} annualReturn={annualReturn} />
+      </div>
+
+      {/* Articles */}
+      <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
+        <div className="flex items-center gap-2 mb-5">
+          <BookOpen className="h-3.5 w-3.5 text-blue-400" />
+          <h3 className="text-sm font-semibold text-white">Research</h3>
+        </div>
+        {userId ? (
+          <ArticlesList userId={userId} portfolioId={portfolioId} />
+        ) : (
+          <p className="text-sm text-zinc-600">Loading...</p>
+        )}
+      </div>
+
+      {/* Documents */}
+      <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
+        <div className="flex items-center gap-2 mb-5">
+          <FileText className="h-3.5 w-3.5 text-amber-400" />
+          <h3 className="text-sm font-semibold text-white">Documents</h3>
+        </div>
+        {userId ? (
+          <DocumentsList userId={userId} portfolioId={portfolioId} />
+        ) : (
+          <p className="text-sm text-zinc-600">Loading...</p>
+        )}
       </div>
     </div>
   );

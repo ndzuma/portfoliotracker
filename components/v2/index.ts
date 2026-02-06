@@ -10,3 +10,8 @@ export { V2PerformanceChart } from "./v2-performance-chart";
 export { V2Holdings } from "./v2-holdings";
 export { V2Analytics } from "./v2-analytics";
 export { V2Vault } from "./v2-vault";
+export { V2AddAssetDialog } from "./v2-add-asset-dialog";
+export { V2EditAssetDialog } from "./v2-edit-asset-dialog";
+export { V2CreatePortfolioDialog } from "./v2-create-portfolio-dialog";
+export { V2EditPortfolioDialog } from "./v2-edit-portfolio-dialog";
+export { V2TransactionDialog } from "./v2-transaction-dialog";

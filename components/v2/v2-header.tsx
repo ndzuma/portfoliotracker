@@ -44,7 +44,7 @@ export function V2Header() {
         {/* Logo + Nav */}
         <div className="flex items-center gap-8">
           <Link href="/v2" className="flex items-center gap-2.5 shrink-0">
-            <span className="text-base font-semibold text-white tracking-tight">Meridian</span>
+            <span className="text-base font-semibold text-white tracking-tight">PulsePortfolio</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-0.5">

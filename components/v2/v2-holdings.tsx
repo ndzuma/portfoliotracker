@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TransactionDialog } from "@/app/(webapp)/portfolio/[id]/components/dialogs/TransactionDialog";
+import { V2TransactionDialog } from "@/components/v2/v2-transaction-dialog";
 import type { Asset } from "@/app/(webapp)/portfolio/[id]/components/types";
 
 interface V2HoldingsProps {
@@ -145,7 +145,7 @@ function HoldingRow({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (a: Ass
         </DropdownMenu>
       </div>
 
-      <TransactionDialog
+      <V2TransactionDialog
         isOpen={txOpen}
         onOpenChange={setTxOpen}
         assetId={asset._id}

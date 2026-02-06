@@ -14,8 +14,9 @@ import { V2AICard } from "@/components/v2/v2-ai-card";
 import { V2Holdings } from "@/components/v2/v2-holdings";
 import { V2Analytics } from "@/components/v2/v2-analytics";
 import { V2Vault } from "@/components/v2/v2-vault";
-import { AddAssetDialog } from "@/app/(webapp)/portfolio/[id]/components/dialogs/AddAssetDialog";
-import { EditAssetDialog } from "@/app/(webapp)/portfolio/[id]/components/dialogs/EditAssetDialog";
+import { V2AddAssetDialog } from "@/components/v2/v2-add-asset-dialog";
+import { V2EditAssetDialog } from "@/components/v2/v2-edit-asset-dialog";
+import { V2EditPortfolioDialog } from "@/components/v2/v2-edit-portfolio-dialog";
 import { cleanMarkdownWrapper } from "@/lib/markdown-parser";
 import { Id } from "@/convex/_generated/dataModel";
 import type { Asset } from "@/app/(webapp)/portfolio/[id]/components/types";
@@ -102,11 +103,19 @@ export default function V2PortfolioDetail() {
     <div className="min-h-screen" style={{ background: "#09090b" }}>
       <V2Header />
 
-      {/* Back */}
-      <div className="max-w-[1600px] mx-auto px-8 pt-6">
+      {/* Back + Edit */}
+      <div className="max-w-[1600px] mx-auto px-8 pt-6 flex items-center justify-between">
         <Link href="/v2" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors">
           <ArrowLeft className="h-3.5 w-3.5" />Back to Portfolios
         </Link>
+        {portfolio && convexUser && (
+          <V2EditPortfolioDialog
+            portfolioId={portfolioId}
+            userId={convexUser._id}
+            initialName={portfolio.name}
+            initialDescription={portfolio.description}
+          />
+        )}
       </div>
 
       {/* Hero: 60% Portfolio Value + 40% Performance Chart */}
@@ -203,7 +212,7 @@ export default function V2PortfolioDetail() {
         {/* Add Asset Button */}
         {activeTab === "holdings" && (
           <div className="flex justify-end mb-6">
-            <AddAssetDialog portfolioId={portfolioId} />
+            <V2AddAssetDialog portfolioId={portfolioId} />
           </div>
         )}
 
@@ -228,7 +237,7 @@ export default function V2PortfolioDetail() {
       </section>
 
       {/* Edit Dialog */}
-      <EditAssetDialog
+      <V2EditAssetDialog
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         asset={editingAsset}
