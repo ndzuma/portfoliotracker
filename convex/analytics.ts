@@ -164,7 +164,8 @@ export function aggregateReturns(
   for (let i = 0; i < returns.length; i += periods) {
     const chunk = returns.slice(i, i + periods);
     if (chunk.length === 0) continue;
-    const totalReturn = chunk.reduce((sum, r) => sum + r.returnValue, 0);
+    const totalReturn =
+      chunk.reduce((acc, r) => acc * (1 + r.returnValue), 1) - 1;
     aggregated.push({
       date: chunk[chunk.length - 1].date,
       returnValue: totalReturn,
@@ -325,16 +326,25 @@ export function calculateSharpeRatio(
   return stdDev === 0 ? 0 : (excessReturn / stdDev) * Math.sqrt(periodsPerYear);
 }
 
-export function calculateDownsideDeviation(returns: ReturnDataPoint[]): number {
+export function calculateDownsideDeviation(
+  returns: ReturnDataPoint[],
+  threshold = 0,
+  dataSource: DataSourceType = "daily",
+): number {
   const n = returns.length;
   if (n === 0) return 0;
-  const mean = returns.reduce((sum, r) => sum + r.returnValue, 0) / n;
-  const downsideReturns = returns
-    .map((r) => (r.returnValue < mean ? r.returnValue - mean : 0))
+
+  const downside = returns
+    .map((r) => Math.min(0, r.returnValue - threshold)) // <= 0
     .filter((r) => r < 0);
-  const downsideVariance =
-    downsideReturns.reduce((sum, r) => sum + r ** 2, 0) / n;
-  return Math.sqrt(downsideVariance) * Math.sqrt(252); // Annualized downside deviation
+
+  if (downside.length === 0) return 0;
+
+  const variance =
+    downside.reduce((sum, r) => sum + r ** 2, 0) / downside.length;
+
+  const periodsPerYear = dataSource === "weekly" ? 52 : 252;
+  return Math.sqrt(variance) * Math.sqrt(periodsPerYear);
 }
 
 export function getRiskFreeRate(): number {
@@ -474,24 +484,18 @@ export function calculateTimeWeightedReturn(
 
 export function calculateAnnualizedReturn(
   historicalData: PriceDataPoint[],
-  dataSource: DataSourceType = "daily",
 ): number {
   if (historicalData.length < 2) return 0;
   const startValue = historicalData[0].value;
   const endValue = historicalData[historicalData.length - 1].value;
+  if (startValue <= 0 || endValue <= 0) return 0;
+
   const startDate = new Date(historicalData[0].date);
   const endDate = new Date(historicalData[historicalData.length - 1].date);
+  const years =
+    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
 
-  // Calculate time period based on data frequency
-  const timeDiff = endDate.getTime() - startDate.getTime();
-  const periodsPerYear = dataSource === "weekly" ? 52 : 252;
-  const totalPeriods =
-    (timeDiff / (1000 * 60 * 60 * 24)) *
-    (periodsPerYear / (dataSource === "weekly" ? 7 : 365.25));
-
-  return totalPeriods > 0
-    ? Math.pow(endValue / startValue, 1 / totalPeriods) - 1
-    : 0;
+  return years > 0 ? Math.pow(endValue / startValue, 1 / years) - 1 : 0;
 }
 
 export function calculateRollingReturns(
@@ -511,7 +515,10 @@ export function calculateRollingReturns(
     if (n > periodPoints) {
       const startValue = historicalData[n - periodPoints - 1].value;
       const endValue = historicalData[n - 1].value;
-      rollingReturns[`${period}Y`] = (endValue - startValue) / startValue;
+      const totalReturn = endValue / startValue;
+      // Annualize the rolling return
+      rollingReturns[`${period}Y`] =
+        totalReturn > 0 ? Math.pow(totalReturn, 1 / period) - 1 : 0;
     } else {
       rollingReturns[`${period}Y`] = 0; // Not enough data
     }
@@ -525,6 +532,11 @@ export function calculateMonthlyReturns(
 ): Array<{ month: string; return: number }> {
   if (historicalData.length === 0) return [];
 
+  // Sort data by date to ensure proper ordering
+  const sortedData = [...historicalData].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
+
   if (dataSource === "weekly") {
     // For weekly data, group by month (approximately 4 weeks per month)
     const monthlyReturns: Record<
@@ -532,7 +544,7 @@ export function calculateMonthlyReturns(
       { startValue: number; endValue: number }
     > = {};
 
-    for (const data of historicalData) {
+    for (const data of sortedData) {
       const date = new Date(data.date);
       const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
 
@@ -557,7 +569,7 @@ export function calculateMonthlyReturns(
       { startValue: number; endValue: number }
     > = {};
 
-    for (const data of historicalData) {
+    for (const data of sortedData) {
       const date = new Date(data.date);
       const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
 
@@ -580,14 +592,24 @@ export function calculateMonthlyReturns(
 
 export function calculateYTDReturn(historicalData: PriceDataPoint[]): number {
   if (historicalData.length < 2) return 0;
+
+  // Sort data by date to ensure proper ordering
+  const sortedData = [...historicalData].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
+
   const currentYear = new Date().getFullYear();
-  const startOfYearData = historicalData.find((d) => {
+
+  // Find earliest data point in current year
+  const startOfYearData = sortedData.find((d) => {
     const date = new Date(d.date);
-    return date.getFullYear() === currentYear && date.getMonth() === 0; // January of current year
+    return date.getFullYear() === currentYear;
   });
+
   if (!startOfYearData) return 0;
+
   const startValue = startOfYearData.value;
-  const endValue = historicalData[historicalData.length - 1].value;
+  const endValue = sortedData[sortedData.length - 1].value;
   return (endValue - startValue) / startValue;
 }
 
@@ -597,7 +619,8 @@ export function findBestPeriod(returns: ReturnDataPoint[], periods: number) {
   let bestReturn = -Infinity;
 
   if (returns.length <= periods) {
-    const totalReturn = returns.reduce((sum, r) => sum + r.returnValue, 0);
+    const totalReturn =
+      returns.reduce((acc, r) => acc * (1 + r.returnValue), 1) - 1;
     return {
       startDate: returns[0].date,
       endDate: returns[returns.length - 1].date,
@@ -607,10 +630,8 @@ export function findBestPeriod(returns: ReturnDataPoint[], periods: number) {
 
   for (let i = 0; i <= returns.length - periods; i++) {
     const periodReturns = returns.slice(i, i + periods);
-    const totalReturn = periodReturns.reduce(
-      (sum, r) => sum + r.returnValue,
-      0,
-    );
+    const totalReturn =
+      periodReturns.reduce((acc, r) => acc * (1 + r.returnValue), 1) - 1;
     if (totalReturn > bestReturn) {
       bestReturn = totalReturn;
       bestPeriod = {
@@ -620,7 +641,7 @@ export function findBestPeriod(returns: ReturnDataPoint[], periods: number) {
       };
     }
   }
-  return bestPeriod ?? 0;
+  return bestPeriod;
 }
 
 export function findWorstPeriod(returns: ReturnDataPoint[], periods: number) {
@@ -629,7 +650,8 @@ export function findWorstPeriod(returns: ReturnDataPoint[], periods: number) {
   let worstReturn = Infinity;
 
   if (returns.length <= periods) {
-    const totalReturn = returns.reduce((sum, r) => sum + r.returnValue, 0);
+    const totalReturn =
+      returns.reduce((acc, r) => acc * (1 + r.returnValue), 1) - 1;
     return {
       startDate: returns[0].date,
       endDate: returns[returns.length - 1].date,
@@ -639,10 +661,8 @@ export function findWorstPeriod(returns: ReturnDataPoint[], periods: number) {
 
   for (let i = 0; i <= returns.length - periods; i++) {
     const periodReturns = returns.slice(i, i + periods);
-    const totalReturn = periodReturns.reduce(
-      (sum, r) => sum + r.returnValue,
-      0,
-    );
+    const totalReturn =
+      periodReturns.reduce((acc, r) => acc * (1 + r.returnValue), 1) - 1;
     if (totalReturn < worstReturn) {
       worstReturn = totalReturn;
       worstPeriod = {
@@ -652,7 +672,7 @@ export function findWorstPeriod(returns: ReturnDataPoint[], periods: number) {
       };
     }
   }
-  return worstPeriod ?? 0;
+  return worstPeriod;
 }
 
 export function calculateAlpha(
@@ -716,13 +736,11 @@ export function calculateUpMarketCapture(
   if (returns.length === 0 || benchmarkReturns.length === 0) return 0;
   let upMarketReturns = 0;
   let portfolioUpReturns = 0;
-  let count = 0;
 
   for (let i = 0; i < Math.min(returns.length, benchmarkReturns.length); i++) {
     if (benchmarkReturns[i].returnValue > 0) {
       upMarketReturns += benchmarkReturns[i].returnValue;
       portfolioUpReturns += returns[i].returnValue;
-      count++;
     }
   }
 
@@ -738,13 +756,11 @@ export function calculateDownMarketCapture(
   if (returns.length === 0 || benchmarkReturns.length === 0) return 0;
   let downMarketReturns = 0;
   let portfolioDownReturns = 0;
-  let count = 0;
 
   for (let i = 0; i < Math.min(returns.length, benchmarkReturns.length); i++) {
     if (benchmarkReturns[i].returnValue < 0) {
       downMarketReturns += benchmarkReturns[i].returnValue;
       portfolioDownReturns += returns[i].returnValue;
-      count++;
     }
   }
 
@@ -815,6 +831,14 @@ export function calculateYearlyComparison(
 }> {
   if (historicalData.length === 0 || benchmarkData.length === 0) return [];
 
+  // Sort data by date to ensure proper ordering
+  const sortedHistoricalData = [...historicalData].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
+  const sortedBenchmarkData = [...benchmarkData].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
+
   if (dataSource === "weekly") {
     // For weekly data, group by year (approximately 52 weeks per year)
     const portfolioByYear: Record<
@@ -826,7 +850,7 @@ export function calculateYearlyComparison(
       { startValue: number; endValue: number }
     > = {};
 
-    for (const data of historicalData) {
+    for (const data of sortedHistoricalData) {
       const date = new Date(data.date);
       const year = date.getFullYear().toString();
 
@@ -840,7 +864,7 @@ export function calculateYearlyComparison(
       }
     }
 
-    for (const data of benchmarkData) {
+    for (const data of sortedBenchmarkData) {
       const date = new Date(data.date);
       const year = date.getFullYear().toString();
 
@@ -883,7 +907,7 @@ export function calculateYearlyComparison(
       { startValue: number; endValue: number }
     > = {};
 
-    for (const data of historicalData) {
+    for (const data of sortedHistoricalData) {
       const date = new Date(data.date);
       const year = date.getFullYear().toString();
 
@@ -897,7 +921,7 @@ export function calculateYearlyComparison(
       }
     }
 
-    for (const data of benchmarkData) {
+    for (const data of sortedBenchmarkData) {
       const date = new Date(data.date);
       const year = date.getFullYear().toString();
 
@@ -1013,7 +1037,7 @@ export function calculateRiskMetrics(
       ), // 4 weeks for monthly with weekly data
     },
     sharpeRatio: calculateSharpeRatio(returns, getRiskFreeRate(), dataSource),
-    downsideDeviation: calculateDownsideDeviation(returns),
+    downsideDeviation: calculateDownsideDeviation(returns, 0, dataSource),
     assetDiversification: calculateAssetDiversification(assets),
   };
 }
@@ -1032,7 +1056,7 @@ export function calculatePerformanceMetrics(
       historicalData,
       transactions,
     ),
-    annualizedReturn: calculateAnnualizedReturn(historicalData, dataSource),
+    annualizedReturn: calculateAnnualizedReturn(historicalData),
     monthlyReturns: calculateMonthlyReturns(historicalData, dataSource),
     ytdReturn: calculateYTDReturn(historicalData),
     rollingReturns: calculateRollingReturns(historicalData, dataSource),

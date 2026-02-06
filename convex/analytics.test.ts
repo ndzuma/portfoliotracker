@@ -212,8 +212,8 @@ describe("Data Processing & Utility Functions", () => {
     const aggregated = aggregateReturns(sampleReturnData, 2);
 
     expect(aggregated).toHaveLength(2);
-    expect(aggregated[0].returnValue).toBeCloseTo(0.0214, 3); // 0.05 + (-0.0286)
-    expect(aggregated[1].returnValue).toBeCloseTo(0.0773, 3); // 0.0588 + 0.0185
+    expect(aggregated[0].returnValue).toBeCloseTo(0.01997, 4); // (1.05 × 0.9714) - 1
+    expect(aggregated[1].returnValue).toBeCloseTo(0.0783878, 4); // (1.0588 × 1.0185) - 1
   });
 
   test("roundToDay should round timestamp to midnight", async () => {
@@ -310,7 +310,11 @@ describe("Risk Metrics Functions", () => {
 
   test("calculateDownsideDeviation should measure downside risk", async () => {
     const t = convexTest(schema);
-    const downsideDeviation = calculateDownsideDeviation(sampleReturnData);
+    const downsideDeviation = calculateDownsideDeviation(
+      sampleReturnData,
+      0,
+      "daily",
+    );
     expect(downsideDeviation).toBeGreaterThanOrEqual(0);
   });
 
