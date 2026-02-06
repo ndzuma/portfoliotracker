@@ -14,16 +14,21 @@ export default function RedesignLayout({
     { id: "2", label: "Bento Grid" },
     { id: "3", label: "Finance Terminal" },
     { id: "4", label: "Card Deck" },
+    { id: "5", label: "Ticker Bar" },
+    { id: "6", label: "Stock Cards" },
+    { id: "7", label: "Bold Type" },
+    { id: "8", label: "Value Breakdown" },
+    { id: "9", label: "Data Grid" },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-card/80 backdrop-blur-md border-b border-border px-4 py-2">
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center gap-2 bg-card/80 backdrop-blur-md border-b border-border px-4 py-2 overflow-x-auto">
         <span className="text-xs font-medium text-muted-foreground mr-3 uppercase tracking-wider">
           Redesign Preview
         </span>
         {variants.map((v) => {
-          const isActive = pathname === `/redesign/${v.id}`;
+          const isActive = pathname === `/redesign/${v.id}` || pathname.startsWith(`/redesign/${v.id}/`);
           return (
             <Link
               key={v.id}
