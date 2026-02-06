@@ -19,6 +19,11 @@ export default function RedesignLayout({
     { id: "7", label: "Bold Type" },
     { id: "8", label: "Value Breakdown" },
     { id: "9", label: "Data Grid" },
+    { id: "10", label: "Cinematic" },
+    { id: "11", label: "Split Panel" },
+    { id: "12", label: "Magazine" },
+    { id: "13", label: "Spotlight" },
+    { id: "14", label: "Terminal Pro" },
   ];
 
   return (
