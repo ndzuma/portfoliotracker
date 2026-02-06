@@ -12,7 +12,8 @@ export function AuthenticatedWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isOnboardingOrAuthPage = pathname.startsWith("/onboarding") || pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+  const isRedesignPage = pathname.startsWith("/redesign");
+  const isOnboardingOrAuthPage = pathname.startsWith("/onboarding") || pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up") || isRedesignPage;
   const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
   
   return (
