@@ -8,7 +8,6 @@ import {
   ChevronRight, Activity,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
 /* ─── Mock Data ─── */
@@ -181,7 +180,7 @@ export default function Redesign11() {
         {/* Activity Feed */}
         <div className="px-8 py-6">
           <p className="text-xs text-zinc-600 font-semibold uppercase tracking-[0.15em] mb-4">Activity Feed</p>
-          <ScrollArea className="h-[280px]">
+          <div className="h-[280px] overflow-y-auto">
             <div className="flex flex-col gap-3">
               {ACTIVITY.map((a, i) => {
                 const dotColor = a.type === "gain" ? "bg-emerald-500" : a.type === "alert" ? "bg-amber-500" : a.type === "ai" ? "bg-blue-500" : a.type === "dividend" ? "bg-purple-500" : "bg-zinc-600";
@@ -198,7 +197,7 @@ export default function Redesign11() {
                 );
               })}
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </div>
     </div>
