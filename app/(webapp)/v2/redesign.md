@@ -1,205 +1,96 @@
 # V2 Redesign Documentation
 
 ## Overview
-The V2 redesign is a comprehensive reimagining of the portfolio tracker interface, combining the best elements from Redesign 10 (Cinematic) and Redesign 7 (Bold Typography with Tabs). This version connects to live Convex data and provides a production-ready user interface.
-
-## Design Philosophy
-
-### Key Inspirations
-- **Redesign 10**: Clean cinematic layout, ticker strip, oversized numbers, sparklines
-- **Redesign 7**: Bold typography hero, tabbed navigation, minimal floating header
-
-### Core Design Principles
-1. **Data-First**: Prioritize displaying portfolio data clearly and actionably
-2. **Progressive Disclosure**: Use tabs to organize content without overwhelming users
-3. **Visual Hierarchy**: Large, bold numbers for key metrics; subtle text for supporting info
-4. **Responsive Layout**: Grid-based design that adapts to all screen sizes
-5. **Live Data**: Real-time connection to Convex database with optimistic updates
+The V2 redesign combines elements from Redesign 10 (Cinematic layout, ticker strip, oversized numbers) and Redesign 7 (bold typography, tab navigation). All components are purpose-built for V2 -- no pre-existing custom components are reused. Connected to live Convex data.
 
 ## Layout Structure
 
 ### Main Dashboard (`/v2`)
 ```
-┌─────────────────────────────────────────────────────────┐
-│ [Nav: Logo | Search | Notifications | Profile]          │
-├─────────────────────────────────────────────────────────┤
-│ [Hero Section]                                          │
-│ ┌───────────── 60% ─────────────┬──── 40% ────┐       │
-│ │ Net Worth (Large Display)      │ AI Intelligence│     │
-│ │ Change (+ Trend Indicator)     │ Card with Glow│     │
-│ └────────────────────────────────┴────────────────┘     │
-├─────────────────────────────────────────────────────────┤
-│ [Benchmark Ticker Strip]                                │
-│ │ S&P 500 | NASDAQ | DOW | Russell | VIX                │
-├─────────────────────────────────────────────────────────┤
-│ [Tab Navigation]                                        │
-│ │ Portfolios | Markets | [Future Tabs]                 │
-├─────────────────────────────────────────────────────────┤
-│ [Tab Content Area]                                      │
-│ • Portfolios Tab: Grid of portfolio cards + allocation │
-│ • Markets Tab: Benchmark data visualization            │
-└─────────────────────────────────────────────────────────┘
+[Header: Meridian logo | Nav links | Search | Notifications | Avatar]
+[Hero 60/40: Net Worth + change | divider | AI Market Intelligence (expandable)]
+[Benchmark Ticker Strip with sparklines]
+[Tabs: Portfolios | Markets]
+[Content: Portfolio grid + allocation bar OR Market benchmark cards]
 ```
 
-### Portfolio Detail Page (`/v2/portfolio/[id]`)
+### Portfolio Detail (`/v2/portfolio/[id]`)
 ```
-┌─────────────────────────────────────────────────────────┐
-│ [Back Button] Portfolio Name & Description              │
-├─────────────────────────────────────────────────────────┤
-│ [Header Section - 60/40 Split]                          │
-│ ┌───────────── 60% ─────────────┬──── 40% ────┐       │
-│ │ • Total Value                  │ Performance  │       │
-│ │ • Change (Today)               │ Chart with   │       │
-│ │ • Total Assets                 │ Tooltip      │       │
-│ └────────────────────────────────┴────────────────┘     │
-├─────────────────────────────────────────────────────────┤
-│ [Stats Row]                                             │
-│ │ Cost Basis | Unrealized Gain | Allocation           │
-├─────────────────────────────────────────────────────────┤
-│ [AI Summary Card]                                       │
-├─────────────────────────────────────────────────────────┤
-│ [Tab Navigation]                                        │
-│ │ Holdings | Portfolio Analytics | Vault               │
-├─────────────────────────────────────────────────────────┤
-│ [Tab Content Area]                                      │
-│ • Holdings: Asset table grouped by type                │
-│ • Portfolio Analytics: Performance metrics + charts    │
-│ • Vault: Goals, documents, articles                    │
-└─────────────────────────────────────────────────────────┘
+[Header]
+[Back link]
+[Hero 60/40: Portfolio name + value | divider | Performance chart with date range]
+[Stats: Holdings count | Top Holding | YTD Return | Volatility]
+[AI Summary (expandable)]
+[Tabs: Holdings | Portfolio Analytics | Vault]
+[Content: V2 Holdings table | V2 Analytics grid | V2 Vault cards]
 ```
 
-## Components Architecture
+### News (`/v2/news`)
+```
+[Header]
+[Ticker Strip]
+[Title + AI Summary card (side by side)]
+[Filter dropdown]
+[News card grid with images]
+[Pagination]
+```
 
-### Reusable V2 Components (`/components/v2/`)
-- **`v2-header.tsx`**: Top navigation bar with search, notifications, user profile
-- **`v2-hero-split.tsx`**: 60/40 split hero section (Net Worth + AI or Stats + Chart)
-- **`v2-ticker.tsx`**: Horizontal scrolling benchmark ticker with sparklines
-- **`v2-tabs.tsx`**: Tab navigation system with active indicator
-- **`v2-portfolio-card.tsx`**: Individual portfolio card for grid display
-- **`v2-allocation-bar.tsx`**: Segmented horizontal bar chart for allocations
-- **`v2-ai-card.tsx`**: AI intelligence card with gradient glow effect
-- **`v2-performance-chart.tsx`**: Portfolio performance chart with tooltips (no axis labels)
-- **`v2-stats-row.tsx`**: Row of key metric cards
-- **`v2-asset-table.tsx`**: Holdings table grouped by asset type
+### Settings (`/v2/settings`)
+```
+[Header]
+[Title + Save button]
+[Setting sections: Appearance | Language | Currency | Export | BYOAI]
+```
 
-## Data Flow
+## V2 Components (`/components/v2/`)
 
-### Convex Queries Used
-1. **`api.users.getUserByClerkId`**: Get current user data
-2. **`api.portfolios.getUserPorfolios`**: Fetch all user portfolios
-3. **`api.portfolios.getPortfolioById`**: Fetch single portfolio details
-4. **`api.marketData.getBenchmarkData`**: Fetch benchmark indices
-5. **`api.marketData.getHistoricalData`**: Fetch historical performance data
-6. **`api.ai.getAiNewsSummary`**: Fetch AI-generated market intelligence
-7. **`api.ai.getAiPortfolioSummary`**: Fetch AI portfolio analysis
+| Component | File | Purpose |
+|-----------|------|---------|
+| V2Header | `v2-header.tsx` | Top navbar with pathname-based active detection |
+| V2HeroSplit | `v2-hero-split.tsx` | 60/40 flex split with divider line |
+| NetWorthHero | `v2-hero-split.tsx` | Large number display with change indicator |
+| V2Ticker | `v2-ticker.tsx` | Horizontal scrolling benchmark strip with SVG sparklines |
+| V2Tabs | `v2-tabs.tsx` | Underlined tab navigation |
+| V2AICard | `v2-ai-card.tsx` | Clean AI text with expand/collapse, no background box |
+| V2PortfolioCard | `v2-portfolio-card.tsx` | Portfolio card with value, change badge, link |
+| V2AllocationBar | `v2-allocation-bar.tsx` | Segmented bar with legend |
+| V2PerformanceChart | `v2-performance-chart.tsx` | Area chart, no axis labels, tooltip only |
+| V2StatsRow | `v2-stats-row.tsx` | Generic stat card grid |
+| V2Holdings | `v2-holdings.tsx` | Grouped asset table with type icons, hover actions |
+| V2Analytics | `v2-analytics.tsx` | Full analytics in stat-block grid layout |
+| V2Vault | `v2-vault.tsx` | Goals, articles, documents in V2-styled wrappers |
 
-### Mutations Used
-1. **`api.portfolios.createPortfolio`**: Create new portfolio
-2. **`api.portfolios.updatePortfolio`**: Edit portfolio metadata
-3. **`api.portfolios.deletePortfolio`**: Delete portfolio
-4. **`api.assets.createAsset`**: Add asset to portfolio
-5. **`api.assets.updateAsset`**: Edit asset details
-6. **`api.assets.deleteAsset`**: Remove asset from portfolio
+## Pages
 
-## Feature Breakdown
+| Route | Status |
+|-------|--------|
+| `/v2` | Done |
+| `/v2/portfolio/[id]` | Done |
+| `/v2/news` | Done |
+| `/v2/settings` | Done |
+| `/v2/watchlist` | Planned |
+| `/v2/research` | Planned |
+| `/v2/earnings` | Planned |
 
-### Main Dashboard Features
-- [x] Live net worth calculation across all portfolios
-- [x] Today's change with trend indicator
-- [x] Real-time benchmark ticker strip with sparklines
-- [x] Tab-based content organization
-- [x] Portfolio grid with hover effects and live data
-- [x] Asset allocation visualization (on Portfolios tab)
-- [x] AI market intelligence card
-- [x] Create/edit/delete portfolio modals
+## Future: Missing Settings
+- Notification preferences (email, push, in-app)
+- Two-factor authentication
+- Portfolio sharing permissions
+- Benchmark comparison preferences
+- Display density (compact/comfortable)
+- Widget customization
+- Integration with brokerage APIs
 
-### Portfolio Detail Features
-- [x] 60/40 split header (Stats + Performance Chart)
-- [x] Performance chart with date range selector and tooltips
-- [x] Stats row: Cost Basis, Unrealized Gain, Allocation
-- [x] AI portfolio summary card
-- [x] Tab navigation: Holdings, Analytics, Vault
-- [x] Holdings table grouped by asset type
-- [x] Portfolio Analytics with detailed metrics
-- [x] Vault: Goals, Documents, Articles
-- [x] Add/edit/delete assets
+## Future: Pages to Redesign
+- Watchlist: real-time quote tracking with alerts
+- Research: saved research notes and articles
+- Earnings: calendar view with upcoming earnings dates
+- Settings: the above missing features
 
-## Design Tokens & Theme
-
-### Color Palette
-- **Background**: `oklch(0.12)` - Near black
-- **Card**: `oklch(0.15)` - Slightly lighter black
-- **Primary**: `oklch(0.75 0.08 85)` - Gold/beige
-- **Secondary**: Red for losses
-- **Muted**: `oklch(0.18)` - Dark gray
-- **Border**: `oklch(0.25)` - Light border
-
-### Typography
-- **Headings**: Geist Sans, bold, large scale (3xl-6xl for hero)
-- **Body**: Geist Sans, regular/medium
-- **Monospace**: Geist Mono (for numbers, tickers)
-
-### Spacing & Layout
-- **Max Width**: 1600px container
-- **Padding**: 8 (32px) on desktop, 6 (24px) on mobile
-- **Gap**: 6 (24px) between cards
-- **Border Radius**: 2xl (16px) for cards, xl (12px) for smaller components
-
-## Future Roadmap
-
-### Planned Pages
-- [ ] `/v2/news` - Redesigned news feed with AI summaries
-- [ ] `/v2/watchlist` - Stock watchlist with real-time quotes
-- [ ] `/v2/research` - Research hub with saved articles
-- [ ] `/v2/earnings` - Earnings calendar and reports
-- [ ] `/v2/settings` - User settings and preferences
-
-### Missing Settings Features
-- [ ] Theme customization (dark/light mode toggle)
-- [ ] Currency preferences (USD, EUR, GBP, etc.)
-- [ ] Notification preferences (email, push, in-app)
-- [ ] Data export (CSV, PDF reports)
-- [ ] Two-factor authentication setup
-- [ ] API key management
-- [ ] Portfolio sharing permissions
-- [ ] Benchmark comparison preferences
-- [ ] Display preferences (compact/comfortable view)
-- [ ] Language selection
-
-### Feature Enhancements
-- [ ] Portfolio comparison view (side-by-side)
-- [ ] Advanced filtering and sorting on holdings
-- [ ] Drag-and-drop portfolio reordering
-- [ ] Customizable dashboard widgets
-- [ ] Real-time collaboration (share portfolios with team)
-- [ ] Mobile-optimized responsive design
-- [ ] PWA support for offline access
-- [ ] Export portfolio as shareable link
-- [ ] Integration with brokerage APIs (auto-sync)
-- [ ] Tax loss harvesting recommendations
-
-## Technical Notes
-
-### Performance Optimizations
-- React Query caching via Convex subscriptions
-- Optimistic UI updates for mutations
-- Lazy loading for charts and heavy components
-- Virtualized lists for large holdings tables
-
-### Accessibility
-- ARIA labels for all interactive elements
-- Keyboard navigation support
-- Focus management in modals and tabs
-- Proper semantic HTML structure
-
-### Browser Support
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-
----
-
-**Last Updated**: January 2025  
-**Version**: 2.0.0  
-**Status**: In Development
+## Technical
+- Auth wrapper excludes `/v2` routes from showing the old sidebar
+- Header uses `usePathname()` for active nav state (no prop needed)
+- AI card uses refs to measure content height and shows expand/collapse
+- Holdings are grouped by asset type with hover-reveal action menus
+- Analytics renders as a grid of stat blocks (not the old expand/collapse pattern)
+- All buttons use native HTML with Tailwind, not shadcn Button (for consistent V2 styling)

@@ -13,7 +13,8 @@ export function AuthenticatedWrapper({
 }) {
   const pathname = usePathname();
   const isRedesignPage = pathname.startsWith("/redesign");
-  const isOnboardingOrAuthPage = pathname.startsWith("/onboarding") || pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up") || isRedesignPage;
+  const isV2Page = pathname.startsWith("/v2");
+  const isOnboardingOrAuthPage = pathname.startsWith("/onboarding") || pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up") || isRedesignPage || isV2Page;
   const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
   
   return (

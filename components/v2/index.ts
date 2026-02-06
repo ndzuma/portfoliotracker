@@ -7,3 +7,6 @@ export { V2PortfolioCard } from "./v2-portfolio-card";
 export { V2AllocationBar } from "./v2-allocation-bar";
 export { V2StatsRow } from "./v2-stats-row";
 export { V2PerformanceChart } from "./v2-performance-chart";
+export { V2Holdings } from "./v2-holdings";
+export { V2Analytics } from "./v2-analytics";
+export { V2Vault } from "./v2-vault";
