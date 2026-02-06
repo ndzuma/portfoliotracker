@@ -13,13 +13,13 @@ import {
   type PriceDataPoint,
   type BenchmarkData,
 } from "./analytics";
-import { modules } from "./test-setup";
+
 import schema from "./schema";
 
 describe("Analytics Integration with Convex", () => {
   describe("Analytics with Mock Database Data", () => {
     test("should calculate analytics for portfolio with database integration", async () => {
-      const t = convexTest(schema, modules);
+      const t = convexTest(schema);
 
       // Create test data in the mock database
       const userId = await t.run(async (ctx) => {
@@ -81,7 +81,13 @@ describe("Analytics Integration with Convex", () => {
 
       // Create historical market data
       await t.run(async (ctx) => {
-        const dates = ["2023-01-01", "2023-01-02", "2023-01-03", "2023-01-04", "2023-01-05"];
+        const dates = [
+          "2023-01-01",
+          "2023-01-02",
+          "2023-01-03",
+          "2023-01-04",
+          "2023-01-05",
+        ];
         const prices = [382, 388, 395, 390, 398];
 
         for (let i = 0; i < dates.length; i++) {
@@ -147,13 +153,13 @@ describe("Analytics Integration with Convex", () => {
       ];
 
       const transactions: Transaction[] = assets.flatMap(
-        (asset) => asset.transactions || []
+        (asset) => asset.transactions || [],
       );
 
       // Test analytics calculations
       const returns = calculateReturns(historicalData);
       const benchmarkReturns = calculateReturns(
-        benchmarkData.map((d) => ({ date: d.date, value: d.close }))
+        benchmarkData.map((d) => ({ date: d.date, value: d.close })),
       );
 
       // Test risk metrics
@@ -162,7 +168,7 @@ describe("Analytics Integration with Convex", () => {
         historicalData,
         benchmarkReturns,
         assets,
-        "daily"
+        "daily",
       );
 
       expect(riskMetrics).toBeDefined();
@@ -178,7 +184,7 @@ describe("Analytics Integration with Convex", () => {
         transactions,
         benchmarkReturns,
         "daily",
-        riskMetrics.beta
+        riskMetrics.beta,
       );
 
       expect(performanceMetrics).toBeDefined();
@@ -193,7 +199,7 @@ describe("Analytics Integration with Convex", () => {
         historicalData,
         benchmarkReturns,
         benchmarkData,
-        "daily"
+        "daily",
       );
 
       expect(benchmarkComparisons).toBeDefined();
@@ -211,7 +217,7 @@ describe("Analytics Integration with Convex", () => {
       // Verify asset allocation percentages sum to 100%
       const totalPercentage = assetAllocation.byType.reduce(
         (sum, allocation) => sum + allocation.percentage,
-        0
+        0,
       );
       expect(totalPercentage).toBeCloseTo(100, 1);
     });
@@ -219,7 +225,7 @@ describe("Analytics Integration with Convex", () => {
 
   describe("Analytics Function Error Handling", () => {
     test("should handle portfolio with no assets gracefully", async () => {
-      const t = convexTest(schema, modules);
+      const t = convexTest(schema);
 
       const emptyAssets: Asset[] = [];
       const emptyHistoricalData: PriceDataPoint[] = [];
@@ -233,7 +239,7 @@ describe("Analytics Integration with Convex", () => {
         emptyHistoricalData,
         emptyReturns,
         emptyAssets,
-        "daily"
+        "daily",
       );
 
       expect(riskMetrics.volatility).toBe(0);
@@ -247,7 +253,7 @@ describe("Analytics Integration with Convex", () => {
         emptyTransactions,
         emptyReturns,
         "daily",
-        0
+        0,
       );
 
       expect(performanceMetrics.totalReturn).toBe(0);
@@ -259,7 +265,7 @@ describe("Analytics Integration with Convex", () => {
     });
 
     test("should handle assets without transactions", async () => {
-      const t = convexTest(schema, modules);
+      const t = convexTest(schema);
 
       const assetsWithoutTransactions: Asset[] = [
         {
@@ -274,7 +280,9 @@ describe("Analytics Integration with Convex", () => {
         },
       ];
 
-      const assetAllocation = calculateAssetAllocation(assetsWithoutTransactions);
+      const assetAllocation = calculateAssetAllocation(
+        assetsWithoutTransactions,
+      );
 
       expect(assetAllocation.byType).toHaveLength(1);
       expect(assetAllocation.byType[0].type).toBe("stock");
@@ -284,7 +292,7 @@ describe("Analytics Integration with Convex", () => {
 
   describe("Data Source Variations", () => {
     test("should handle weekly data source correctly", async () => {
-      const t = convexTest(schema, modules);
+      const t = convexTest(schema);
 
       const weeklyData: PriceDataPoint[] = [
         { date: "2023-01-01", value: 1000 },
@@ -305,8 +313,11 @@ describe("Analytics Integration with Convex", () => {
 
   describe("Authentication Context", () => {
     test("should work with authenticated user context", async () => {
-      const t = convexTest(schema, modules);
-      const asUser = t.withIdentity({ name: "Test User", email: "test@example.com" });
+      const t = convexTest(schema);
+      const asUser = t.withIdentity({
+        name: "Test User",
+        email: "test@example.com",
+      });
 
       // This would be useful when testing functions that require authentication
       // For pure analytics functions, authentication isn't needed, but this shows the pattern
@@ -320,7 +331,7 @@ describe("Analytics Integration with Convex", () => {
 
   describe("Real-world Scenarios", () => {
     test("should handle mixed asset types with varying transaction patterns", async () => {
-      const t = convexTest(schema, modules);
+      const t = convexTest(schema);
 
       const mixedAssets: Asset[] = [
         {
@@ -399,27 +410,33 @@ describe("Analytics Integration with Convex", () => {
       const assetAllocation = calculateAssetAllocation(mixedAssets);
 
       expect(assetAllocation.byType).toHaveLength(3); // stock, bond, crypto
-      expect(assetAllocation.byType.find(a => a.type === "stock")).toBeDefined();
-      expect(assetAllocation.byType.find(a => a.type === "bond")).toBeDefined();
-      expect(assetAllocation.byType.find(a => a.type === "crypto")).toBeDefined();
+      expect(
+        assetAllocation.byType.find((a) => a.type === "stock"),
+      ).toBeDefined();
+      expect(
+        assetAllocation.byType.find((a) => a.type === "bond"),
+      ).toBeDefined();
+      expect(
+        assetAllocation.byType.find((a) => a.type === "crypto"),
+      ).toBeDefined();
 
       // Test that percentages are reasonable (should sum to ~100%)
       const totalPercentage = assetAllocation.byType.reduce(
         (sum, allocation) => sum + allocation.percentage,
-        0
+        0,
       );
       expect(totalPercentage).toBeCloseTo(100, 1);
     });
 
     test("should handle portfolio with significant volatility", async () => {
-      const t = convexTest(schema, modules);
+      const t = convexTest(schema);
 
       const volatileData: PriceDataPoint[] = [
         { date: "2023-01-01", value: 10000 },
         { date: "2023-01-02", value: 12000 }, // +20%
-        { date: "2023-01-03", value: 9500 },  // -20.8%
+        { date: "2023-01-03", value: 9500 }, // -20.8%
         { date: "2023-01-04", value: 11500 }, // +21%
-        { date: "2023-01-05", value: 8000 },  // -30.4%
+        { date: "2023-01-05", value: 8000 }, // -30.4%
         { date: "2023-01-06", value: 10500 }, // +31.25%
       ];
 
@@ -430,7 +447,7 @@ describe("Analytics Integration with Convex", () => {
         volatileData,
         returns, // Using same returns as benchmark for simplicity
         [],
-        "daily"
+        "daily",
       );
 
       expect(riskMetrics.volatility).toBeGreaterThan(0);

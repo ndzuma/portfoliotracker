@@ -45,7 +45,7 @@ import {
   type Asset,
   type BenchmarkData,
 } from "./analytics";
-import { modules } from "./test-setup";
+
 import schema from "./schema";
 
 // Test data fixtures
@@ -179,7 +179,7 @@ const sampleTransactions: Transaction[] = [
 
 describe("Data Processing & Utility Functions", () => {
   test("calculateReturns should convert price data to returns correctly", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const returns = calculateReturns(samplePriceData);
 
     expect(returns).toHaveLength(4);
@@ -190,25 +190,25 @@ describe("Data Processing & Utility Functions", () => {
   });
 
   test("calculateReturns should handle empty array", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const returns = calculateReturns([]);
     expect(returns).toHaveLength(0);
   });
 
   test("getEarliestDate should find the earliest date", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const earliest = getEarliestDate(samplePriceData);
     expect(earliest).toEqual(new Date("2023-01-01"));
   });
 
   test("getEarliestDate should return null for empty array", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const earliest = getEarliestDate([]);
     expect(earliest).toBeNull();
   });
 
   test("aggregateReturns should aggregate returns over periods", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const aggregated = aggregateReturns(sampleReturnData, 2);
 
     expect(aggregated).toHaveLength(2);
@@ -217,7 +217,7 @@ describe("Data Processing & Utility Functions", () => {
   });
 
   test("roundToDay should round timestamp to midnight", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const timestamp = Date.parse("2023-01-01T15:30:45.123Z");
     const rounded = roundToDay(timestamp);
     const expected = Date.parse("2023-01-01T00:00:00.000Z");
@@ -225,13 +225,13 @@ describe("Data Processing & Utility Functions", () => {
   });
 
   test("calculateSimpleReturn should calculate basic return", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const simpleReturn = calculateSimpleReturn(samplePriceData);
     expect(simpleReturn).toBeCloseTo(0.1); // (1100-1000)/1000
   });
 
   test("calculateSimpleReturn should handle insufficient data", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     expect(calculateSimpleReturn([])).toBe(0);
     expect(calculateSimpleReturn([{ date: "2023-01-01", value: 1000 }])).toBe(
       0,
@@ -241,20 +241,20 @@ describe("Data Processing & Utility Functions", () => {
 
 describe("Risk Metrics Functions", () => {
   test("calculateVolatility should calculate annualized volatility", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const volatility = calculateVolatility(sampleReturnData, "daily");
     expect(volatility).toBeGreaterThan(0);
     expect(volatility).toBeLessThan(1); // Should be reasonable for daily data
   });
 
   test("calculateVolatility should handle empty returns", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const volatility = calculateVolatility([], "daily");
     expect(volatility).toBe(0);
   });
 
   test("calculateMaxDrawdown should find maximum drawdown", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const drawdownData: PriceDataPoint[] = [
       { date: "2023-01-01", value: 1000 },
       { date: "2023-01-02", value: 1200 }, // Peak
@@ -267,7 +267,7 @@ describe("Risk Metrics Functions", () => {
   });
 
   test("calculateBeta should calculate beta coefficient", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const portfolioReturns = sampleReturnData;
     const benchmarkReturns = sampleReturnData.map((r) => ({
       ...r,
@@ -279,13 +279,13 @@ describe("Risk Metrics Functions", () => {
   });
 
   test("calculateBeta should handle empty data", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const beta = calculateBeta([], sampleReturnData);
     expect(beta).toBe(0);
   });
 
   test("calculateVaR should calculate Value at Risk", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const negativeReturns: ReturnDataPoint[] = [
       { date: "2023-01-01", returnValue: -0.05 },
       { date: "2023-01-02", returnValue: -0.02 },
@@ -298,7 +298,7 @@ describe("Risk Metrics Functions", () => {
   });
 
   test("calculateSharpeRatio should calculate risk-adjusted return", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const riskFreeRate = 0.02 / 252; // Daily risk-free rate
     const sharpe = calculateSharpeRatio(
       sampleReturnData,
@@ -309,13 +309,13 @@ describe("Risk Metrics Functions", () => {
   });
 
   test("calculateDownsideDeviation should measure downside risk", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const downsideDeviation = calculateDownsideDeviation(sampleReturnData);
     expect(downsideDeviation).toBeGreaterThanOrEqual(0);
   });
 
   test("getRiskFreeRate should return a reasonable rate", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const riskFreeRate = getRiskFreeRate();
     expect(riskFreeRate).toBeGreaterThan(0);
     expect(riskFreeRate).toBeLessThan(1);
@@ -324,13 +324,13 @@ describe("Risk Metrics Functions", () => {
 
 describe("Performance Metrics Functions", () => {
   test("calculateTotalReturn should calculate total return correctly", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const totalReturn = calculateTotalReturn(samplePriceData);
     expect(totalReturn).toBeCloseTo(0.1); // (1100-1000)/1000
   });
 
   test("calculateAnnualizedReturn should annualize returns", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const annualizedReturn = calculateAnnualizedReturn(
       samplePriceData,
       "daily",
@@ -340,7 +340,7 @@ describe("Performance Metrics Functions", () => {
   });
 
   test("calculateTimeWeightedReturn should handle transactions", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const twr = calculateTimeWeightedReturn(
       samplePriceData,
       sampleTransactions,
@@ -349,14 +349,14 @@ describe("Performance Metrics Functions", () => {
   });
 
   test("calculateTimeWeightedReturn should fall back to simple return with no transactions", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const twr = calculateTimeWeightedReturn(samplePriceData, []);
     const simpleReturn = calculateSimpleReturn(samplePriceData);
     expect(twr).toBeCloseTo(simpleReturn);
   });
 
   test("calculateRollingReturns should calculate multiple period returns", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const longData: PriceDataPoint[] = Array.from({ length: 300 }, (_, i) => ({
       date: new Date(2023, 0, i + 1).toISOString().split("T")[0],
       value: 1000 * (1 + Math.random() * 0.002 - 0.001), // Random walk
@@ -628,7 +628,7 @@ describe("High-Level Orchestration Functions", () => {
 
 describe("Edge Cases and Error Handling", () => {
   test("functions should handle empty data gracefully", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     expect(calculateReturns([])).toEqual([]);
     expect(calculateVolatility([], "daily")).toBe(0);
     expect(calculateTotalReturn([])).toBe(0);
@@ -637,14 +637,14 @@ describe("Edge Cases and Error Handling", () => {
   });
 
   test("functions should handle single data point", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const singlePoint = [{ date: "2023-01-01", value: 1000 }];
     expect(calculateReturns(singlePoint)).toEqual([]);
     expect(calculateSimpleReturn(singlePoint)).toBe(0);
   });
 
   test("functions should handle zero values", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const zeroData: PriceDataPoint[] = [
       { date: "2023-01-01", value: 0 },
       { date: "2023-01-02", value: 100 },
@@ -656,7 +656,7 @@ describe("Edge Cases and Error Handling", () => {
   });
 
   test("weekly data source should use appropriate scaling", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const weeklyVolatility = calculateVolatility(sampleReturnData, "weekly");
     const dailyVolatility = calculateVolatility(sampleReturnData, "daily");
 
@@ -667,7 +667,7 @@ describe("Edge Cases and Error Handling", () => {
 
 describe("Integration Tests", () => {
   test("end-to-end analytics calculation should work", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     // Simulate a complete analytics calculation
     const historicalData = samplePriceData;
     const transactions = sampleTransactions;

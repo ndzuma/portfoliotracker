@@ -8,12 +8,12 @@ import {
   getEarliestDate,
   type PriceDataPoint,
 } from "./analytics";
-import { modules } from "./test-setup";
+
 import schema from "./schema";
 
 describe("Simple Analytics Tests", () => {
   test("calculateReturns works with basic data", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const priceData: PriceDataPoint[] = [
       { date: "2023-01-01", value: 1000 },
       { date: "2023-01-02", value: 1100 },
@@ -28,7 +28,7 @@ describe("Simple Analytics Tests", () => {
   });
 
   test("calculateTotalReturn calculates correctly", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const priceData: PriceDataPoint[] = [
       { date: "2023-01-01", value: 1000 },
       { date: "2023-01-05", value: 1200 },
@@ -39,13 +39,13 @@ describe("Simple Analytics Tests", () => {
   });
 
   test("calculateVolatility handles empty data", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const volatility = calculateVolatility([], "daily");
     expect(volatility).toBe(0);
   });
 
   test("getEarliestDate finds earliest date", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const priceData: PriceDataPoint[] = [
       { date: "2023-01-05", value: 1000 },
       { date: "2023-01-01", value: 1100 },
@@ -57,7 +57,7 @@ describe("Simple Analytics Tests", () => {
   });
 
   test("getEarliestDate handles empty array", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(schema);
     const earliest = getEarliestDate([]);
     expect(earliest).toBeNull();
   });

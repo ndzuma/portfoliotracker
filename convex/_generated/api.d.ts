@@ -22,7 +22,6 @@ import type * as documents from "../documents.js";
 import type * as goals from "../goals.js";
 import type * as marketData from "../marketData.js";
 import type * as portfolios from "../portfolios.js";
-import type * as test_setup from "../test-setup.js";
 import type * as transactions from "../transactions.js";
 import type * as users from "../users.js";
 
@@ -44,7 +43,6 @@ declare const fullApi: ApiFromModules<{
   goals: typeof goals;
   marketData: typeof marketData;
   portfolios: typeof portfolios;
-  "test-setup": typeof test_setup;
   transactions: typeof transactions;
   users: typeof users;
 }>;
