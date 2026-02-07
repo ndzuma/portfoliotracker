@@ -48,6 +48,9 @@ export default function V2Dashboard() {
     (aiSummaryData as any)?.analysis || "Analyzing market conditions...",
   );
 
+  const aiHeadline = (aiSummaryData as any)?.headline;
+  const aiTimestamp = (aiSummaryData as any)?.timestamp;
+
   const isPositive = totalChange >= 0;
 
   return (
@@ -70,7 +73,13 @@ export default function V2Dashboard() {
               portfolioCount={userPortfolios.length}
             />
           }
-          rightContent={<V2AICard analysis={cleanAnalysis} />}
+          rightContent={
+            <V2AICard
+              headline={aiHeadline}
+              analysis={cleanAnalysis}
+              timestamp={aiTimestamp}
+            />
+          }
         />
 
         {/* Ticker Strip */}
@@ -93,7 +102,10 @@ export default function V2Dashboard() {
               </div>
               {/* Show traditional button after 4 portfolios */}
               {userPortfolios.length >= 4 && (
-                <V2CreatePortfolioDialog userId={userId} triggerLabel="Add Portfolio" />
+                <V2CreatePortfolioDialog
+                  userId={userId}
+                  triggerLabel="Add Portfolio"
+                />
               )}
             </div>
 

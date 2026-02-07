@@ -28,6 +28,20 @@ export default defineSchema({
     description: v.optional(v.string()),
     includeInNetworth: v.optional(v.boolean()),
     allowSubscriptions: v.optional(v.boolean()),
+    riskTolerance: v.optional(
+      v.union(
+        v.literal("Conservative"),
+        v.literal("Moderate"),
+        v.literal("Aggressive"),
+      ),
+    ),
+    timeHorizon: v.optional(
+      v.union(
+        v.literal("Short-term (< 3 years)"),
+        v.literal("Medium-term (3-10 years)"),
+        v.literal("Long-term (10+ years)"),
+      ),
+    ),
   }).index("byUser", ["userId"]),
   assets: defineTable({
     portfolioId: v.id("portfolios"),
@@ -59,9 +73,22 @@ export default defineSchema({
     portfolioId: v.id("portfolios"),
     date: v.number(),
     totalValue: v.number(),
-    aiHeadline: v.optional(v.string()),
-    aiSummary: v.optional(v.string()),
   }).index("byPortfolio", ["portfolioId", "date"]),
+  // portfolio AI summaries
+  portfolioAiSummary: defineTable({
+    portfolioId: v.id("portfolios"),
+    analysis: v.string(),
+    headline: v.optional(v.string()),
+    modelUsed: v.string(),
+    headlineModelUsed: v.optional(v.string()),
+    tokensUsed: v.number(),
+    headlineTokensUsed: v.optional(v.number()),
+    processingTimeMs: v.number(),
+    headlineGenerationTimeMs: v.optional(v.number()),
+    timestamp: v.number(),
+    taskType: v.optional(v.string()),
+    apiVersion: v.optional(v.string()),
+  }).index("byPortfolio", ["portfolioId", "timestamp"]),
   assetSnapshots: defineTable({
     assetId: v.id("assets"),
     date: v.number(),
@@ -106,6 +133,7 @@ export default defineSchema({
   }).index("byTicker", ["ticker"]),
   marketNewsSummary: defineTable({
     analysis: v.string(),
+    headline: v.optional(v.string()),
     modelUsed: v.string(),
     tokensUsed: v.number(),
     processingTimeMs: v.number(),

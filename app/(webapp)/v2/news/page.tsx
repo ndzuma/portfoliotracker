@@ -44,11 +44,16 @@ export default function V2NewsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = filter === "all" ? newsData : newsData.filter((n) => n.category === filter);
+  const filtered =
+    filter === "all" ? newsData : newsData.filter((n) => n.category === filter);
   const totalPages = Math.ceil(filtered.length / perPage);
   const current = filtered.slice((page - 1) * perPage, page * perPage);
   const categories = ["all", ...new Set(newsData.map((n) => n.category))];
-  const cleanAnalysis = cleanMarkdownWrapper(aiSummaryData?.analysis || "Analyzing...");
+  const cleanAnalysis = cleanMarkdownWrapper(
+    aiSummaryData?.analysis || "Analyzing...",
+  );
+  const aiHeadline = aiSummaryData?.headline;
+  const aiTimestamp = aiSummaryData?.timestamp;
 
   return (
     <div className="min-h-screen" style={{ background: "#09090b" }}>
@@ -59,11 +64,20 @@ export default function V2NewsPage() {
         {/* Hero */}
         <div className="flex flex-col lg:flex-row gap-6 mb-10">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">News & Insights</h1>
-            <p className="text-sm text-zinc-600">Latest market news and AI-powered analysis.</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
+              News & Insights
+            </h1>
+            <p className="text-sm text-zinc-600">
+              Latest market news and AI-powered analysis.
+            </p>
           </div>
           <div className="lg:w-[400px] rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
-            <V2AICard analysis={cleanAnalysis} maxHeight={100} />
+            <V2AICard
+              headline={aiHeadline}
+              analysis={cleanAnalysis}
+              timestamp={aiTimestamp}
+              maxDisplayLength={100}
+            />
           </div>
         </div>
 
@@ -78,11 +92,17 @@ export default function V2NewsPage() {
                 <ChevronDown className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-zinc-950 border-white/[0.06]">
+            <DropdownMenuContent
+              align="end"
+              className="bg-zinc-950 border-white/[0.06]"
+            >
               {categories.map((c) => (
                 <DropdownMenuItem
                   key={c}
-                  onClick={() => { setFilter(c); setPage(1); }}
+                  onClick={() => {
+                    setFilter(c);
+                    setPage(1);
+                  }}
                   className="capitalize text-zinc-300 focus:text-white focus:bg-white/[0.06]"
                 >
                   {c === "all" ? "All Categories" : c}
@@ -96,7 +116,10 @@ export default function V2NewsPage() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden animate-pulse">
+              <div
+                key={i}
+                className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden animate-pulse"
+              >
                 <div className="h-40 bg-white/[0.04]" />
                 <div className="p-5 flex flex-col gap-2">
                   <div className="h-3 bg-white/[0.04] rounded w-20" />
@@ -118,7 +141,11 @@ export default function V2NewsPage() {
               >
                 {item.image && (
                   <div className="relative h-40 overflow-hidden">
-                    <img src={item.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img
+                      src={item.image}
+                      alt=""
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent opacity-60" />
                     <span className="absolute top-3 left-3 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white backdrop-blur-sm">
                       {item.category}
@@ -126,11 +153,16 @@ export default function V2NewsPage() {
                   </div>
                 )}
                 <div className="p-5">
-                  <p className="text-xs text-zinc-600 mb-2">{item.source} &middot; {new Date(item.datetime * 1000).toLocaleDateString()}</p>
+                  <p className="text-xs text-zinc-600 mb-2">
+                    {item.source} &middot;{" "}
+                    {new Date(item.datetime * 1000).toLocaleDateString()}
+                  </p>
                   <h3 className="text-sm font-semibold text-white leading-snug mb-2 line-clamp-2 group-hover:text-zinc-200 transition-colors">
                     {item.headline}
                   </h3>
-                  <p className="text-xs text-zinc-600 line-clamp-2">{item.summary}</p>
+                  <p className="text-xs text-zinc-600 line-clamp-2">
+                    {item.summary}
+                  </p>
                   <div className="flex items-center gap-1 mt-3 text-[11px] text-zinc-600 group-hover:text-zinc-400 transition-colors">
                     Read <ExternalLink className="h-3 w-3" />
                   </div>
@@ -148,12 +180,20 @@ export default function V2NewsPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-10">
-            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map((p) => (
+            {Array.from(
+              { length: Math.min(totalPages, 7) },
+              (_, i) => i + 1,
+            ).map((p) => (
               <button
                 key={p}
-                onClick={() => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                onClick={() => {
+                  setPage(p);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
                 className={`w-8 h-8 rounded-md text-xs font-medium transition-colors ${
-                  page === p ? "bg-white text-black" : "text-zinc-500 hover:text-white hover:bg-white/[0.06]"
+                  page === p
+                    ? "bg-white text-black"
+                    : "text-zinc-500 hover:text-white hover:bg-white/[0.06]"
                 }`}
               >
                 {p}

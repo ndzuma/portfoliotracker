@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  ArrowDownRight,
+  Sparkles,
+} from "lucide-react";
 import { V2Header } from "@/components/v2/v2-header";
 import { V2HeroSplit } from "@/components/v2/v2-hero-split";
 import { V2Tabs } from "@/components/v2/v2-tabs";
@@ -30,11 +35,16 @@ export default function V2PortfolioDetail() {
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [chartDateRange, setChartDateRange] = useState("1Y");
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const generatePortfolioAI = useAction(api.ai.generateAiPortfolioSummary);
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: user?.id || "",
   });
   const canUserAccess = useQuery(api.portfolios.canUserAccessPortfolio, {
+    portfolioId,
+  });
+  const portfolioAI = useQuery(api.ai.getPortfolioAiSummary, {
     portfolioId,
   });
   const portfolio = useQuery(api.portfolios.getPortfolioById, { portfolioId });
@@ -112,8 +122,25 @@ export default function V2PortfolioDetail() {
   const dateRanges = ["1M", "3M", "6M", "1Y", "ALL"];
 
   const cleanAnalysis = cleanMarkdownWrapper(
-    portfolio?.aiSummary || "Analysis will appear once data is processed.",
+    portfolioAI?.analysis || "Analysis will appear once data is processed.",
   );
+
+  const aiHeadline = portfolioAI?.headline;
+  const portfolioTimestamp = portfolioAI?.timestamp;
+
+  const handleGenerateAI = async () => {
+    if (!portfolioId || isGeneratingAI) return;
+
+    try {
+      setIsGeneratingAI(true);
+      const result = await generatePortfolioAI({ portfolioId });
+      console.log("AI generation completed:", result);
+    } catch (error) {
+      console.error("Failed to generate AI analysis:", error);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   if (canUserAccess === false) {
     return (
@@ -298,7 +325,15 @@ export default function V2PortfolioDetail() {
         {/* AI Summary */}
         <section className="max-w-[1600px] mx-auto px-8 pb-6">
           <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
-            <V2AICard analysis={cleanAnalysis} maxHeight={80} />
+            <V2AICard
+              headline={aiHeadline}
+              analysis={cleanAnalysis}
+              timestamp={portfolioTimestamp}
+              maxDisplayLength={80}
+              onRefresh={handleGenerateAI}
+              isRefreshing={isGeneratingAI}
+              showRefresh={true}
+            />
           </div>
         </section>
 
