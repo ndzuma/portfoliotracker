@@ -31,8 +31,6 @@ export const createUser = mutation({
       currency: "USD",
       theme: "dark",
       language: "en",
-      uiVersion: "v1",
-      earlyAccess: false,
     });
 
     // Create a default portfolio
@@ -90,8 +88,6 @@ export const updateUserPreferences = mutation({
     openRouterApiKey: v.optional(v.string()),
     tunnelId: v.optional(v.string()),
     selfHostedUrl: v.optional(v.string()),
-    uiVersion: v.optional(v.union(v.literal("v1"), v.literal("v2"))),
-    earlyAccess: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     if (!args.userId) {
@@ -117,8 +113,6 @@ export const updateUserPreferences = mutation({
         openRouterApiKey: args.openRouterApiKey || "",
         tunnelId: args.tunnelId || "",
         selfHostedUrl: args.selfHostedUrl || "",
-        uiVersion: "v1",
-        earlyAccess: false,
       });
     } else {
       // Update existing preferences
@@ -142,12 +136,6 @@ export const updateUserPreferences = mutation({
           args.selfHostedUrl !== undefined
             ? args.selfHostedUrl
             : preferences.selfHostedUrl,
-        uiVersion:
-          args.uiVersion !== undefined ? args.uiVersion : preferences.uiVersion,
-        earlyAccess:
-          args.earlyAccess !== undefined
-            ? args.earlyAccess
-            : preferences.earlyAccess,
       });
       return preferences._id;
     }
@@ -270,110 +258,6 @@ export const extractAccountDataForExport = query({
   },
 });
 
-// Get user's UI version preference
-export const getUserUiVersion = query({
-  args: { userId: v.optional(v.union(v.id("users"), v.string())) },
-  handler: async (ctx, args) => {
-    if (!args.userId) {
-      return "v1"; // Default to v1 if no user
-    }
-
-    const user = await ctx.db.get(args.userId as Id<"users">);
-    if (!user) {
-      return "v1";
-    }
-
-    const preferences = await ctx.db
-      .query("userPreferences")
-      .withIndex("byUser", (q) => q.eq("userId", args.userId as Id<"users">))
-      .first();
-
-    return preferences?.uiVersion || "v1";
-  },
-});
-
-// Update user's UI version preference
-export const updateUserUiVersion = mutation({
-  args: {
-    userId: v.union(v.id("users"), v.string()),
-    uiVersion: v.union(v.literal("v1"), v.literal("v2")),
-  },
-  handler: async (ctx, args) => {
-    if (!args.userId) {
-      throw new Error("User ID is required");
-    }
-
-    const user = await ctx.db.get(args.userId as Id<"users">);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const preferences = await ctx.db
-      .query("userPreferences")
-      .withIndex("byUser", (q) => q.eq("userId", args.userId as Id<"users">))
-      .first();
-
-    if (!preferences) {
-      // Create new preferences with UI version
-      return await ctx.db.insert("userPreferences", {
-        userId: args.userId as Id<"users">,
-        currency: "USD",
-        theme: "dark",
-        language: "en",
-        uiVersion: args.uiVersion,
-        earlyAccess: false,
-      });
-    } else {
-      // Update existing preferences
-      await ctx.db.patch(preferences._id, {
-        uiVersion: args.uiVersion,
-      });
-      return preferences._id;
-    }
-  },
-});
-
-// Update user's early access status
-export const updateUserEarlyAccess = mutation({
-  args: {
-    userId: v.union(v.id("users"), v.string()),
-    earlyAccess: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    if (!args.userId) {
-      throw new Error("User ID is required");
-    }
-
-    const user = await ctx.db.get(args.userId as Id<"users">);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const preferences = await ctx.db
-      .query("userPreferences")
-      .withIndex("byUser", (q) => q.eq("userId", args.userId as Id<"users">))
-      .first();
-
-    if (!preferences) {
-      // Create new preferences with early access
-      return await ctx.db.insert("userPreferences", {
-        userId: args.userId as Id<"users">,
-        currency: "USD",
-        theme: "dark",
-        language: "en",
-        uiVersion: "v1",
-        earlyAccess: args.earlyAccess,
-      });
-    } else {
-      // Update existing preferences
-      await ctx.db.patch(preferences._id, {
-        earlyAccess: args.earlyAccess,
-      });
-      return preferences._id;
-    }
-  },
-});
-
 // Check if a user is an admin
 export const isUserAdmin = query({
   args: { clerkId: v.string() },
@@ -459,30 +343,5 @@ export const getAllUsersWithAdminStatus = query({
       clerkId: user.clerkId,
       isAdmin: user.isAdmin ?? false,
     }));
-  },
-});
-
-// Migration function to populate existing users with v1 and earlyAccess: false
-export const populateExistingUsersWithDefaults = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const allPreferences = await ctx.db.query("userPreferences").collect();
-
-    let updatedCount = 0;
-    for (const preferences of allPreferences) {
-      const needsUpdate =
-        preferences.uiVersion === undefined ||
-        preferences.earlyAccess === undefined;
-
-      if (needsUpdate) {
-        await ctx.db.patch(preferences._id, {
-          uiVersion: preferences.uiVersion || "v1",
-          earlyAccess: preferences.earlyAccess ?? false,
-        });
-        updatedCount++;
-      }
-    }
-
-    return { message: `Updated ${updatedCount} user preferences` };
   },
 });

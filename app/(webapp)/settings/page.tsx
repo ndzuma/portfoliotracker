@@ -120,8 +120,7 @@ export default function V2SettingsPage() {
     userId ? { userId } : "skip",
   );
   const updatePreferences = useMutation(api.users.updateUserPreferences);
-  const updateUiVersion = useMutation(api.users.updateUserUiVersion);
-  const updateEarlyAccess = useMutation(api.users.updateUserEarlyAccess);
+
   const accountData = useQuery(
     api.users.extractAccountDataForExport,
     userId ? { userId } : "skip",
@@ -134,8 +133,7 @@ export default function V2SettingsPage() {
   const [openRouterApiKey, setOpenRouterApiKey] = useState("");
   const [tunnelId, setTunnelId] = useState("");
   const [selfHostedUrl, setSelfHostedUrl] = useState("");
-  const [uiVersion, setUiVersion] = useState("v1");
-  const [earlyAccess, setEarlyAccess] = useState(false);
+
   const [isExporting, setIsExporting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -148,8 +146,6 @@ export default function V2SettingsPage() {
       setOpenRouterApiKey(userPreferences.openRouterApiKey || "");
       setTunnelId(userPreferences.tunnelId || "");
       setSelfHostedUrl(userPreferences.selfHostedUrl || "");
-      setUiVersion(userPreferences.uiVersion || "v1");
-      setEarlyAccess(userPreferences.earlyAccess || false);
     }
   }, [userPreferences, userId]);
 
@@ -174,39 +170,6 @@ export default function V2SettingsPage() {
       setHasChanges(false);
     } catch (e: any) {
       toast.error(e.message || "Failed to save");
-    }
-  };
-
-  const handleUiVersionChange = async (newVersion: "v1" | "v2") => {
-    try {
-      if (userId) {
-        await updateUiVersion({ userId, uiVersion: newVersion });
-        setUiVersion(newVersion);
-        toast.success(`UI updated to ${newVersion}`);
-
-        // Redirect to appropriate version
-        if (newVersion === "v1") {
-          window.location.href = "/settings";
-        } else {
-          window.location.href = "/settings";
-        }
-      }
-    } catch (e: any) {
-      toast.error(e.message || "Failed to update UI version");
-    }
-  };
-
-  const handleEarlyAccessToggle = async (enabled: boolean) => {
-    try {
-      if (userId) {
-        await updateEarlyAccess({ userId, earlyAccess: enabled });
-        setEarlyAccess(enabled);
-        toast.success(
-          enabled ? "Early access enabled" : "Early access disabled",
-        );
-      }
-    } catch (e: any) {
-      toast.error(e.message || "Failed to update early access");
     }
   };
 
@@ -480,59 +443,6 @@ export default function V2SettingsPage() {
               </div>
             </Section>
           )}
-
-          {/* Early Access Features */}
-          <Section icon={Zap} title="Early Access Features">
-            <div className="flex flex-col gap-5">
-              <SettingRow
-                label="Early Access Program"
-                description="Get access to experimental features and new UI designs"
-              >
-                <Toggle
-                  checked={earlyAccess}
-                  onChange={handleEarlyAccessToggle}
-                />
-              </SettingRow>
-
-              {earlyAccess && (
-                <div className="rounded-lg border border-white/[0.06] p-4 bg-zinc-900/50">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="h-3 w-3 text-emerald-500" />
-                    <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
-                      UI Version
-                    </span>
-                  </div>
-                  <SettingRow
-                    label="Interface Version"
-                    description="Choose between classic (v1) and modern (v2) interface"
-                  >
-                    <Select
-                      value={uiVersion}
-                      onValueChange={handleUiVersionChange}
-                    >
-                      <SelectTrigger className="w-[140px] bg-zinc-900 border-white/[0.06] text-white h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-950 border-white/[0.08]">
-                        <SelectItem
-                          value="v1"
-                          className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
-                        >
-                          v1 (Classic)
-                        </SelectItem>
-                        <SelectItem
-                          value="v2"
-                          className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
-                        >
-                          v2 (Modern)
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </SettingRow>
-                </div>
-              )}
-            </div>
-          </Section>
 
           <button
             onClick={handleSave}

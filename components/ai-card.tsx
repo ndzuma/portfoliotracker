@@ -4,8 +4,8 @@ import { useState } from "react";
 import { V2AISummaryPopup } from "./ai-summary-popup";
 
 interface V2AICardProps {
-  headline?: JSX.Element[] | null;
-  analysis: JSX.Element[] | null;
+  headline?: string | null;
+  analysis: string | null;
   timestamp?: string;
   maxDisplayLength?: number;
   onRefresh?: () => void;
@@ -93,14 +93,8 @@ export function V2AICard({
       <V2AISummaryPopup
         open={popupOpen}
         onOpenChange={setPopupOpen}
-        headline={
-          typeof headline === "string"
-            ? headline
-            : typeof analysis === "string"
-              ? analysis
-              : ""
-        }
-        analysis={typeof analysis === "string" ? analysis : ""}
+        headline={headline}
+        analysis={analysis}
         timestamp={timestamp}
       />
     </>
