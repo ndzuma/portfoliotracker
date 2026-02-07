@@ -18,7 +18,7 @@ export default clerkMiddleware(async (auth, request) => {
       const { user } = await auth();
 
       if (!user?.publicMetadata?.admin) {
-        return new NextResponse(null, { status: 404 });
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
       }
     } catch (error) {
       return new NextResponse(null, { status: 404 });
