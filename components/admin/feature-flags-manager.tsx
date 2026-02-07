@@ -484,7 +484,7 @@ export function FeatureFlagsManager() {
     setIsEditDialogOpen(true);
   };
 
-  const enabledFlags = flags?.filter((flag) => flag.enabled).length ?? 0;
+  const enabledFlags = flags?.filter((flag: any) => flag.enabled).length ?? 0;
   const totalFlags = flags?.length ?? 0;
 
   return (
@@ -552,7 +552,7 @@ export function FeatureFlagsManager() {
           </div>
         )}
 
-        {flags?.map((flag) => (
+        {flags?.map((flag: any) => (
           <FlagRow
             key={flag._id}
             flag={flag}

@@ -14,7 +14,7 @@ export const getFlag = query({
       .query("flags")
       .withIndex("by_key", (q) => q.eq("key", key))
       .first();
-  
+
     if (!flag || !flag.enabled) return false;
 
     // Check if flag is enabled for current environment
@@ -36,8 +36,13 @@ export const getAllFlags = query({
       throw new Error("Unauthorized: Must be authenticated");
     }
 
-    // Check if user is admin via Clerk metadata
-    if (!identity.publicMetadata?.admin) {
+    // Get user from Convex database
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), identity.subject))
+      .first();
+
+    if (!user?.isAdmin) {
       throw new Error("Unauthorized: Admin access required");
     }
 
@@ -52,7 +57,7 @@ export const createFlag = mutation({
     enabled: v.boolean(),
     description: v.string(),
     targeting: v.optional(v.array(v.string())),
-    environments: v.array(v.string()),
+    environments: v.array(v.union(v.literal("dev"), v.literal("prod"))),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -60,8 +65,13 @@ export const createFlag = mutation({
       throw new Error("Unauthorized: Must be authenticated");
     }
 
-    // Check if user is admin via Clerk metadata
-    if (!identity.publicMetadata?.admin) {
+    // Get user from Convex database
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), identity.subject))
+      .first();
+
+    if (!user?.isAdmin) {
       throw new Error("Unauthorized: Admin access required");
     }
 
@@ -100,8 +110,13 @@ export const updateFlag = mutation({
       throw new Error("Unauthorized: Must be authenticated");
     }
 
-    // Check if user is admin via Clerk metadata
-    if (!identity.publicMetadata?.admin) {
+    // Get user from Convex database
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), identity.subject))
+      .first();
+
+    if (!user?.isAdmin) {
       throw new Error("Unauthorized: Admin access required");
     }
 
@@ -125,8 +140,13 @@ export const deleteFlag = mutation({
       throw new Error("Unauthorized: Must be authenticated");
     }
 
-    // Check if user is admin via Clerk metadata
-    if (!identity.publicMetadata?.admin) {
+    // Get user from Convex database
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), identity.subject))
+      .first();
+
+    if (!user?.isAdmin) {
       throw new Error("Unauthorized: Admin access required");
     }
 

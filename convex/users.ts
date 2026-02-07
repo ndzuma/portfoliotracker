@@ -374,6 +374,94 @@ export const updateUserEarlyAccess = mutation({
   },
 });
 
+// Check if a user is an admin
+export const isUserAdmin = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), args.clerkId))
+      .first();
+
+    return user?.isAdmin ?? false;
+  },
+});
+
+// Set user admin status - admin only operation
+export const setUserAdminStatus = mutation({
+  args: {
+    clerkId: v.string(),
+    isAdmin: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    // Check if the current user is admin
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.tokenIdentifier) {
+      throw new Error("Unauthorized: Must be authenticated");
+    }
+
+    // Get current user from Convex database
+    const currentUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), identity.subject))
+      .first();
+
+    if (!currentUser?.isAdmin) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    // Find target user and update their admin status
+    const targetUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), args.clerkId))
+      .first();
+
+    if (!targetUser) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(targetUser._id, {
+      isAdmin: args.isAdmin,
+    });
+
+    return {
+      message: `User ${targetUser.name} admin status updated to ${args.isAdmin}`,
+      userId: targetUser._id,
+    };
+  },
+});
+
+// Get all users with their admin status - admin only
+export const getAllUsersWithAdminStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    // Check if the current user is admin
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.tokenIdentifier) {
+      throw new Error("Unauthorized: Must be authenticated");
+    }
+
+    // Get current user from Convex database
+    const currentUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), identity.subject))
+      .first();
+
+    if (!currentUser?.isAdmin) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    const users = await ctx.db.query("users").collect();
+    return users.map((user) => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      clerkId: user.clerkId,
+      isAdmin: user.isAdmin ?? false,
+    }));
+  },
+});
+
 // Migration function to populate existing users with v1 and earlyAccess: false
 export const populateExistingUsersWithDefaults = mutation({
   args: {},

@@ -1,12 +1,16 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "./convex/_generated/api";
 
 const isAdmin = createRouteMatcher(["/admin(.*)"]);
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export default clerkMiddleware(async (auth, request) => {
   // Check for admin routes
   if (isAdmin(request)) {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     // If not authenticated, let Clerk handle it
     if (!userId) {
@@ -14,10 +18,12 @@ export default clerkMiddleware(async (auth, request) => {
     }
 
     try {
-      // Get user info to check admin status
-      const { user } = await auth();
+      // Get user from Convex database to check admin status
+      const user = await convex.query(api.users.getUserByClerkId, {
+        clerkId: userId,
+      });
 
-      if (!user?.publicMetadata?.admin) {
+      if (!user?.isAdmin) {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
       }
     } catch (error) {
@@ -39,7 +45,7 @@ export default clerkMiddleware(async (auth, request) => {
 
   // Check for v2 route access
   if (request.nextUrl.pathname.startsWith("/v2")) {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     // If not authenticated, let Clerk handle it
     if (!userId) {

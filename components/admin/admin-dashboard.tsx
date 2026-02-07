@@ -49,7 +49,7 @@ function AdminCard({
 export function AdminDashboard() {
   const flags = useQuery(api.flags.getAllFlags);
   const flagCount = flags?.length ?? 0;
-  const enabledFlags = flags?.filter((flag) => flag.enabled).length ?? 0;
+  const enabledFlags = flags?.filter((flag: any) => flag.enabled).length ?? 0;
 
   return (
     <div className="max-w-[1200px] mx-auto px-8 py-10">
@@ -88,11 +88,15 @@ export function AdminDashboard() {
             <div className="text-xs text-zinc-400">Total Flags</div>
           </div>
           <div className="rounded-lg border border-white/[0.06] bg-zinc-950/60 p-4">
-            <div className="text-2xl font-bold text-green-400">{enabledFlags}</div>
+            <div className="text-2xl font-bold text-green-400">
+              {enabledFlags}
+            </div>
             <div className="text-xs text-zinc-400">Enabled</div>
           </div>
           <div className="rounded-lg border border-white/[0.06] bg-zinc-950/60 p-4">
-            <div className="text-2xl font-bold text-zinc-400">{flagCount - enabledFlags}</div>
+            <div className="text-2xl font-bold text-zinc-400">
+              {flagCount - enabledFlags}
+            </div>
             <div className="text-xs text-zinc-400">Disabled</div>
           </div>
         </div>
