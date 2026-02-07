@@ -4,16 +4,10 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress/index";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Target, Edit } from "lucide-react";
+import { Target, Edit, ArrowLeft, Check, Save } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
@@ -32,6 +26,7 @@ export function GoalTrackerCard({
   monthlyContribution = 0,
 }: GoalTrackerCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [step, setStep] = useState<"details" | "confirm">("details");
 
   // Fetch goals from Convex
   const goals = useQuery(api.goals.getGoalsByPortfolio, {
@@ -68,18 +63,27 @@ export function GoalTrackerCard({
     }
   }, [goals]);
 
+  const resetEditDialog = () => {
+    setGoalValues({
+      targetValue: currentGoals.targetValue,
+      targetReturn: currentGoals.targetReturn,
+      targetContribution: currentGoals.targetContribution,
+    });
+    setStep("details");
+  };
+
   // Calculate percentages
   const valuePercentage = Math.min(
     Math.round((portfolioValue / targetValue) * 100),
-    100
+    100,
   );
   const returnPercentage = Math.min(
     Math.round((annualReturn / targetReturn) * 100),
-    100
+    100,
   );
   const contributionPercentage = Math.min(
     Math.round((monthlyContribution / targetContribution) * 100),
-    100
+    100,
   );
 
   const handleSaveGoals = async () => {
@@ -91,10 +95,27 @@ export function GoalTrackerCard({
         targetContribution: goalValues.targetContribution,
       });
       setIsEditDialogOpen(false);
+      setStep("details");
     } catch (error) {
       console.error("Failed to save goals:", error);
     }
   };
+
+  const reset = () => {
+    setStep("details");
+    if (goals) {
+      setGoalValues({
+        targetValue: goals.targetValue,
+        targetReturn: goals.targetReturn,
+        targetContribution: goals.targetContribution,
+      });
+    }
+  };
+
+  const canProceed =
+    goalValues.targetValue > 0 &&
+    goalValues.targetReturn > 0 &&
+    goalValues.targetContribution > 0;
 
   return (
     <>
@@ -165,61 +186,179 @@ export function GoalTrackerCard({
         </CardContent>
       </Card>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Portfolio Goals</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="targetValue">Target Portfolio Value ($)</Label>
-              <Input
-                id="targetValue"
-                type="number"
-                value={goalValues.targetValue}
-                onChange={(e) =>
-                  setGoalValues({
-                    ...goalValues,
-                    targetValue: parseInt(e.target.value) || 0,
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="targetReturn">Target Annual Return (%)</Label>
-              <Input
-                id="targetReturn"
-                type="number"
-                step="0.1"
-                value={goalValues.targetReturn}
-                onChange={(e) =>
-                  setGoalValues({
-                    ...goalValues,
-                    targetReturn: parseFloat(e.target.value) || 0,
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="targetContribution">
-                Target Monthly Contribution ($)
-              </Label>
-              <Input
-                id="targetContribution"
-                type="number"
-                value={goalValues.targetContribution}
-                onChange={(e) =>
-                  setGoalValues({
-                    ...goalValues,
-                    targetContribution: parseInt(e.target.value) || 0,
-                  })
-                }
-              />
-            </div>
+      <Dialog
+        open={isEditDialogOpen}
+        onOpenChange={(v) => {
+          setIsEditDialogOpen(v);
+          if (!v) reset();
+        }}
+      >
+        <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
+          <DialogTitle className="sr-only">Edit Portfolio Goals</DialogTitle>
+          {/* Step indicator */}
+          <div className="flex items-center gap-0 border-b border-white/[0.06]">
+            {["Details", "Confirm"].map((s, i) => {
+              const stepMap = ["details", "confirm"];
+              const currentIdx = stepMap.indexOf(step);
+              const isActive = i === currentIdx;
+              const isDone = i < currentIdx;
+              return (
+                <div
+                  key={s}
+                  className={`flex-1 py-3 text-center text-[11px] font-medium uppercase tracking-wider transition-colors ${isActive ? "text-white bg-white/[0.04]" : isDone ? "text-zinc-500" : "text-zinc-700"}`}
+                >
+                  {s}
+                </div>
+              );
+            })}
           </div>
-          <DialogFooter>
-            <Button onClick={handleSaveGoals}>Save Goals</Button>
-          </DialogFooter>
+
+          <div className="px-6 pb-6 pt-4">
+            {/* STEP 1: Details */}
+            {step === "details" && (
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
+                      Target Portfolio Value ($)
+                    </Label>
+                    <Input
+                      type="number"
+                      value={goalValues.targetValue}
+                      onChange={(e) =>
+                        setGoalValues({
+                          ...goalValues,
+                          targetValue: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
+                      Target Annual Return (%)
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={goalValues.targetReturn}
+                      onChange={(e) =>
+                        setGoalValues({
+                          ...goalValues,
+                          targetReturn: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
+                      Target Monthly Contribution ($)
+                    </Label>
+                    <Input
+                      type="number"
+                      value={goalValues.targetContribution}
+                      onChange={(e) =>
+                        setGoalValues({
+                          ...goalValues,
+                          targetContribution: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+                  <button
+                    onClick={() => {
+                      setIsEditDialogOpen(false);
+                      reset();
+                    }}
+                    className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setStep("confirm")}
+                    disabled={!canProceed}
+                    className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Review Goals
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* STEP 2: Confirm */}
+            {step === "confirm" && (
+              <>
+                <div className="flex flex-col gap-4">
+                  <div className="text-center py-2">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                      <Check className="h-6 w-6 text-emerald-400" />
+                    </div>
+                    <h3 className="text-white text-lg font-semibold mb-1">
+                      Ready to Save Goals
+                    </h3>
+                    <p className="text-zinc-400 text-sm">
+                      Review your updated portfolio goals
+                    </p>
+                  </div>
+
+                  <div className="bg-zinc-900/50 rounded-lg p-4 border border-white/[0.06]">
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <Label className="text-xs text-zinc-500 uppercase tracking-wider">
+                          Target Portfolio Value
+                        </Label>
+                        <p className="text-white text-sm mt-1">
+                          ${goalValues.targetValue.toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-zinc-500 uppercase tracking-wider">
+                          Target Annual Return
+                        </Label>
+                        <p className="text-white text-sm mt-1">
+                          {goalValues.targetReturn}%
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-zinc-500 uppercase tracking-wider">
+                          Monthly Contribution
+                        </Label>
+                        <p className="text-white text-sm mt-1">
+                          ${goalValues.targetContribution.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+                  <button
+                    onClick={() => {
+                      setStep("details");
+                    }}
+                    className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Back
+                  </button>
+                  <button
+                    onClick={handleSaveGoals}
+                    disabled={!canProceed}
+                    className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    Save Goals
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>

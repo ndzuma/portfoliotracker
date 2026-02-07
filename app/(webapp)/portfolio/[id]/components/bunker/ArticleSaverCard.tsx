@@ -26,6 +26,11 @@ import {
   Pencil,
   Trash2,
   ExternalLink,
+  ArrowLeft,
+  Check,
+  FileText,
+  Newspaper,
+  TrendingUp,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
@@ -54,10 +59,15 @@ export function ArticleSaverCard({
 }: ArticleSaverCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [addStep, setAddStep] = useState<"type" | "details" | "confirm">(
+    "type",
+  );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editStep, setEditStep] = useState<"details" | "confirm">("details");
   const [currentArticle, setCurrentArticle] = useState<any>(null);
   const [newArticleTitle, setNewArticleTitle] = useState("");
   const [newArticleUrl, setNewArticleUrl] = useState("");
+  const [articleType, setArticleType] = useState("");
   const [editArticleUrl, setEditArticleUrl] = useState("");
   const [formError, setFormError] = useState("");
 
@@ -71,6 +81,30 @@ export function ArticleSaverCard({
   const deleteArticle = useMutation(api.articles.deleteArticle);
   const updateArticleUrl = useMutation(api.articles.editArticleUrl);
 
+  const ARTICLE_TYPES = [
+    {
+      id: "research",
+      label: "Research Paper",
+      icon: FileText,
+      color: "text-blue-400 bg-blue-500/10",
+      description: "In-depth analysis or studies",
+    },
+    {
+      id: "news",
+      label: "News Article",
+      icon: Newspaper,
+      color: "text-emerald-400 bg-emerald-500/10",
+      description: "Market news or company updates",
+    },
+    {
+      id: "analysis",
+      label: "Market Analysis",
+      icon: TrendingUp,
+      color: "text-amber-400 bg-amber-500/10",
+      description: "Financial reports or earnings",
+    },
+  ];
+
   const validateUrl = (url: string) => {
     try {
       new URL(url);
@@ -80,18 +114,24 @@ export function ArticleSaverCard({
     }
   };
 
+  const resetAddDialog = () => {
+    setAddStep("type");
+    setArticleType("");
+    setNewArticleTitle("");
+    setNewArticleUrl("");
+    setFormError("");
+  };
+
+  const resetEditDialog = () => {
+    setEditStep("details");
+    setCurrentArticle(null);
+    setEditArticleUrl("");
+    setFormError("");
+  };
+
   const handleAddArticle = async () => {
-    if (!newArticleTitle.trim()) {
-      setFormError("Title is required");
-      return;
-    }
-
-    if (!newArticleUrl.trim() || !validateUrl(newArticleUrl)) {
-      setFormError("Valid URL is required");
-      return;
-    }
-
     try {
+      const selectedType = ARTICLE_TYPES.find((t) => t.id === articleType);
       await addArticle({
         userId: userId as Id<"users">,
         portfolioId: portfolioId as Id<"portfolios">,
@@ -100,9 +140,7 @@ export function ArticleSaverCard({
       });
       toast.success("Article saved successfully");
       setIsAddDialogOpen(false);
-      setNewArticleTitle("");
-      setNewArticleUrl("");
-      setFormError("");
+      resetAddDialog();
     } catch (error) {
       console.error("Failed to save article:", error);
       toast.error("Failed to save article. Please try again.");
@@ -112,11 +150,6 @@ export function ArticleSaverCard({
   const handleEditArticle = async () => {
     if (!currentArticle) return;
 
-    if (!editArticleUrl.trim() || !validateUrl(editArticleUrl)) {
-      setFormError("Valid URL is required");
-      return;
-    }
-
     try {
       await updateArticleUrl({
         articleId: currentArticle._id as Id<"userArticles">,
@@ -125,9 +158,7 @@ export function ArticleSaverCard({
       });
       toast.success("Article updated successfully");
       setIsEditDialogOpen(false);
-      setCurrentArticle(null);
-      setEditArticleUrl("");
-      setFormError("");
+      resetEditDialog();
     } catch (error) {
       console.error("Failed to update article:", error);
       toast.error("Failed to update article. Please try again.");
@@ -153,6 +184,18 @@ export function ArticleSaverCard({
     setCurrentArticle(article);
     setEditArticleUrl(article.url);
     setIsEditDialogOpen(true);
+  };
+
+  const canProceedAdd = () => {
+    if (addStep === "type") return articleType;
+    if (addStep === "details")
+      return newArticleTitle.trim() && newArticleUrl.trim();
+    return true;
+  };
+
+  const canProceedEdit = () => {
+    if (editStep === "details") return editArticleUrl.trim();
+    return true;
   };
 
   return (
@@ -221,7 +264,7 @@ export function ArticleSaverCard({
                       </TableCell>
                     </TableRow>
                   ) : (
-                    articles.map((article) => (
+                    articles.map((article: any) => (
                       <TableRow key={article._id}>
                         <TableCell className="font-medium">
                           <div className="flex flex-col">
@@ -275,7 +318,7 @@ export function ArticleSaverCard({
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem
-                                  onClick={() => openEditDialog(article)}
+                                  onClick={() => openEditDialog(article as any)}
                                 >
                                   <Pencil className="h-4 w-4 mr-2" />
                                   Edit
@@ -313,114 +356,376 @@ export function ArticleSaverCard({
       </Dialog>
 
       {/* Add Article Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Article</DialogTitle>
-            <DialogDescription>
-              Save an article or research paper for future reference.
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog
+        open={isAddDialogOpen}
+        onOpenChange={(v) => {
+          setIsAddDialogOpen(v);
+          if (!v) resetAddDialog();
+        }}
+      >
+        <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
+          <DialogTitle className="sr-only">Add New Article</DialogTitle>
+          {/* Step indicator */}
+          <div className="flex items-center gap-0 border-b border-white/[0.06]">
+            {["Type", "Details", "Confirm"].map((s, i) => {
+              const stepMap = ["type", "details", "confirm"];
+              const currentIdx = stepMap.indexOf(addStep);
+              const isActive = i === currentIdx;
+              const isDone = i < currentIdx;
+              return (
+                <div
+                  key={s}
+                  className={`flex-1 py-3 text-center text-[11px] font-medium uppercase tracking-wider transition-colors ${isActive ? "text-white bg-white/[0.04]" : isDone ? "text-zinc-500" : "text-zinc-700"}`}
+                >
+                  {s}
+                </div>
+              );
+            })}
+          </div>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="article-title">Article Title</Label>
-              <Input
-                id="article-title"
-                placeholder="Enter article title"
-                value={newArticleTitle}
-                onChange={(e) => setNewArticleTitle(e.target.value)}
-              />
-            </div>
+          <div className="px-6 pb-6 pt-4">
+            {/* STEP 1: Type Selection */}
+            {addStep === "type" && (
+              <>
+                <div className="space-y-3">
+                  {ARTICLE_TYPES.map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => {
+                        setArticleType(type.id);
+                        setAddStep("details");
+                      }}
+                      className="w-full flex items-start gap-3 p-4 rounded-lg border border-white/[0.06] hover:border-white/[0.1] hover:bg-white/[0.02] transition-all text-left"
+                    >
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">
+                          {type.label}
+                        </p>
+                        <p className="text-xs text-zinc-400 mt-1">
+                          {type.description}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="article-url">Article URL</Label>
-              <Input
-                id="article-url"
-                placeholder="https://example.com/article"
-                value={newArticleUrl}
-                onChange={(e) => setNewArticleUrl(e.target.value)}
-              />
-            </div>
-
-            {formError && (
-              <p className="text-sm font-medium text-destructive">
-                {formError}
-              </p>
+                <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+                  <button
+                    onClick={() => {
+                      resetAddDialog();
+                      setIsAddDialogOpen(false);
+                    }}
+                    className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <div></div>
+                </div>
+              </>
             )}
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsAddDialogOpen(false);
-                  setNewArticleTitle("");
-                  setNewArticleUrl("");
-                  setFormError("");
-                }}
-              >
-                Cancel
-              </Button>
-              <Button type="button" onClick={handleAddArticle}>
-                Save Article
-              </Button>
-            </DialogFooter>
+            {/* STEP 2: Details */}
+            {addStep === "details" && (
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
+                      Article Title
+                    </Label>
+                    <Input
+                      value={newArticleTitle}
+                      onChange={(e) => setNewArticleTitle(e.target.value)}
+                      placeholder="Enter article title"
+                      className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
+                      Article URL
+                    </Label>
+                    <Input
+                      value={newArticleUrl}
+                      onChange={(e) => setNewArticleUrl(e.target.value)}
+                      placeholder="https://example.com/article"
+                      className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
+                    />
+                  </div>
+
+                  {formError && (
+                    <p className="text-sm font-medium text-destructive">
+                      {formError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+                  <button
+                    onClick={() => {
+                      resetAddDialog();
+                      setIsAddDialogOpen(false);
+                    }}
+                    className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setAddStep("type")}
+                      className="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={() => setAddStep("confirm")}
+                      disabled={
+                        !newArticleTitle.trim() || !newArticleUrl.trim()
+                      }
+                      className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Review Details
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* STEP 3: Confirm */}
+            {addStep === "confirm" && (
+              <>
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                    <h3 className="text-sm font-medium text-white mb-3">
+                      Article Details
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-zinc-400 uppercase tracking-wider font-medium mb-1">
+                          Type
+                        </p>
+                        <p className="text-sm text-zinc-300">
+                          {
+                            ARTICLE_TYPES.find((t) => t.id === articleType)
+                              ?.label
+                          }
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-zinc-400 uppercase tracking-wider font-medium mb-1">
+                          Title
+                        </p>
+                        <p className="text-sm text-zinc-300">
+                          {newArticleTitle}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-zinc-400 uppercase tracking-wider font-medium mb-1">
+                          URL
+                        </p>
+                        <p className="text-sm text-zinc-300 break-all">
+                          {newArticleUrl}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+                  <button
+                    onClick={() => {
+                      resetAddDialog();
+                      setIsAddDialogOpen(false);
+                    }}
+                    className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setAddStep("details")}
+                      className="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleAddArticle}
+                      className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors flex items-center gap-2"
+                    >
+                      Save Article
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Edit Article Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Article</DialogTitle>
-            <DialogDescription>Update article details.</DialogDescription>
-          </DialogHeader>
+      <Dialog
+        open={isEditDialogOpen}
+        onOpenChange={(v) => {
+          setIsEditDialogOpen(v);
+          if (!v) {
+            setCurrentArticle(null);
+            resetEditDialog();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
+          <DialogTitle className="sr-only">Edit Article</DialogTitle>
+          {/* Step indicator */}
+          <div className="flex items-center gap-0 border-b border-white/[0.06]">
+            {["Details", "Confirm"].map((s, i) => {
+              const stepMap = ["details", "confirm"];
+              const currentIdx = stepMap.indexOf(editStep);
+              const isActive = i === currentIdx;
+              const isDone = i < currentIdx;
+              return (
+                <div
+                  key={s}
+                  className={`flex-1 py-3 text-center text-[11px] font-medium uppercase tracking-wider transition-colors ${isActive ? "text-white bg-white/[0.04]" : isDone ? "text-zinc-500" : "text-zinc-700"}`}
+                >
+                  {s}
+                </div>
+              );
+            })}
+          </div>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-article-title">Article Title</Label>
-              <Input
-                id="edit-article-title"
-                value={currentArticle?.title || ""}
-                disabled
-              />
-            </div>
+          <div className="px-6 pb-6 pt-4">
+            {/* STEP 1: Details */}
+            {editStep === "details" && (
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
+                      Article Title
+                    </Label>
+                    <Input
+                      value={currentArticle?.title || ""}
+                      disabled
+                      className="bg-zinc-800 border-white/[0.06] text-zinc-400 h-10 text-sm"
+                    />
+                    <p className="text-xs text-zinc-600">
+                      Title cannot be changed
+                    </p>
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-article-url">Article URL</Label>
-              <Input
-                id="edit-article-url"
-                placeholder="https://example.com/article"
-                value={editArticleUrl}
-                onChange={(e) => setEditArticleUrl(e.target.value)}
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
+                      Article URL
+                    </Label>
+                    <Input
+                      value={editArticleUrl}
+                      onChange={(e) => setEditArticleUrl(e.target.value)}
+                      placeholder="https://example.com/article"
+                      className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
+                      autoFocus
+                    />
+                  </div>
 
-            {formError && (
-              <p className="text-sm font-medium text-destructive">
-                {formError}
-              </p>
+                  {formError && (
+                    <p className="text-sm font-medium text-destructive">
+                      {formError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+                  <button
+                    onClick={() => {
+                      setIsEditDialogOpen(false);
+                      setCurrentArticle(null);
+                      resetEditDialog();
+                    }}
+                    className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setEditStep("confirm")}
+                    disabled={!editArticleUrl.trim()}
+                    className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Review Changes
+                  </button>
+                </div>
+              </>
             )}
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsEditDialogOpen(false);
-                  setCurrentArticle(null);
-                  setEditArticleUrl("");
-                  setFormError("");
-                }}
-              >
-                Cancel
-              </Button>
-              <Button type="button" onClick={handleEditArticle}>
-                Update Article
-              </Button>
-            </DialogFooter>
+            {/* STEP 2: Confirm */}
+            {editStep === "confirm" && (
+              <>
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                    <h3 className="text-sm font-medium text-white mb-3">
+                      Updated Article Details
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-zinc-400 uppercase tracking-wider font-medium mb-1">
+                          Title
+                        </p>
+                        <p className="text-sm text-zinc-300">
+                          {currentArticle?.title}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-zinc-400 uppercase tracking-wider font-medium mb-1">
+                          URL
+                        </p>
+                        <div className="flex flex-col gap-1">
+                          {editArticleUrl !== currentArticle?.url &&
+                            currentArticle?.url && (
+                              <span className="text-xs text-zinc-500 line-through break-all">
+                                {currentArticle.url}
+                              </span>
+                            )}
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-zinc-300 break-all">
+                              {editArticleUrl}
+                            </span>
+                            {editArticleUrl !== currentArticle?.url && (
+                              <span className="text-xs text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                Updated
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+                  <button
+                    onClick={() => {
+                      setIsEditDialogOpen(false);
+                      setCurrentArticle(null);
+                      resetEditDialog();
+                    }}
+                    className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditStep("details")}
+                      className="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleEditArticle}
+                      className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors flex items-center gap-2"
+                    >
+                      Update Article
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>

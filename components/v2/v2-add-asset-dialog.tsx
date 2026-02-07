@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
@@ -167,6 +166,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
         }}
       >
         <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
+          <DialogTitle className="sr-only">Add Asset</DialogTitle>
           {/* Step indicator */}
           <div className="flex items-center gap-0 border-b border-white/[0.06]">
             {["Type", "Details", "Confirm"].map((s, i) => {

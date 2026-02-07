@@ -213,6 +213,9 @@ export function V2TransactionDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden max-h-[85vh] flex flex-col">
+        {step !== "list" && (
+          <DialogTitle className="sr-only">Add Transaction</DialogTitle>
+        )}
         {/* Step indicator for non-list views */}
         {step !== "list" && (
           <div className="flex items-center gap-0 border-b border-white/[0.06]">

@@ -75,6 +75,7 @@ export function V2EditAssetDialog({
       }}
     >
       <DialogContent className="sm:max-w-[460px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
+        <DialogTitle className="sr-only">Edit Asset</DialogTitle>
         {/* Step indicator */}
         <div className="flex items-center gap-0 border-b border-white/[0.06]">
           {["Details", "Confirm"].map((s, i) => {
