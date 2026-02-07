@@ -6,7 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { V2Header } from "@/components/v2/v2-header";
 import { V2AICard } from "@/components/v2/v2-ai-card";
 import { V2Ticker } from "@/components/v2/v2-ticker";
-import { cleanMarkdownWrapper } from "@/lib/markdown-parser";
+import { parseMarkdown } from "@/lib/markdown-parser";
 import { Filter, ChevronDown, ExternalLink, Newspaper } from "lucide-react";
 import {
   DropdownMenu,
@@ -49,10 +49,10 @@ export default function V2NewsPage() {
   const totalPages = Math.ceil(filtered.length / perPage);
   const current = filtered.slice((page - 1) * perPage, page * perPage);
   const categories = ["all", ...new Set(newsData.map((n) => n.category))];
-  const cleanAnalysis = cleanMarkdownWrapper(
+  const cleanAnalysis = parseMarkdown(
     aiSummaryData?.analysis || "Analyzing...",
   );
-  const aiHeadline = aiSummaryData?.headline;
+  const aiHeadline = parseMarkdown(aiSummaryData?.headline);
   const aiTimestamp = aiSummaryData?.timestamp;
 
   return (
