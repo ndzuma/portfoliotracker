@@ -31,27 +31,53 @@ export default function V2PortfolioDetail() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [chartDateRange, setChartDateRange] = useState("1Y");
 
-  const convexUser = useQuery(api.users.getUserByClerkId, { clerkId: user?.id || "" });
-  const canUserAccess = useQuery(api.portfolios.canUserAccessPortfolio, { portfolioId });
+  const convexUser = useQuery(api.users.getUserByClerkId, {
+    clerkId: user?.id || "",
+  });
+  const canUserAccess = useQuery(api.portfolios.canUserAccessPortfolio, {
+    portfolioId,
+  });
   const portfolio = useQuery(api.portfolios.getPortfolioById, { portfolioId });
-  const analytics = useQuery(api.portfolios.getPortfolioAnalytics, { portfolioId });
+  const analytics = useQuery(api.portfolios.getPortfolioAnalytics, {
+    portfolioId,
+  });
 
   const getDateRange = (range: string) => {
     const today = new Date();
     const start = new Date();
     switch (range) {
-      case "1M": start.setMonth(today.getMonth() - 1); break;
-      case "3M": start.setMonth(today.getMonth() - 3); break;
-      case "6M": start.setMonth(today.getMonth() - 6); break;
-      case "1Y": start.setFullYear(today.getFullYear() - 1); break;
-      case "ALL": start.setFullYear(today.getFullYear() - 10); break;
-      default: start.setFullYear(today.getFullYear() - 1);
+      case "1M":
+        start.setMonth(today.getMonth() - 1);
+        break;
+      case "3M":
+        start.setMonth(today.getMonth() - 3);
+        break;
+      case "6M":
+        start.setMonth(today.getMonth() - 6);
+        break;
+      case "1Y":
+        start.setFullYear(today.getFullYear() - 1);
+        break;
+      case "ALL":
+        start.setFullYear(today.getFullYear() - 10);
+        break;
+      default:
+        start.setFullYear(today.getFullYear() - 1);
     }
-    return { startDate: start.toISOString().split("T")[0], endDate: today.toISOString().split("T")[0] };
+    return {
+      startDate: start.toISOString().split("T")[0],
+      endDate: today.toISOString().split("T")[0],
+    };
   };
 
   const { startDate, endDate } = getDateRange(chartDateRange);
-  const chartData = useQuery(api.marketData.getHistoricalData, { portfolioId, isForChart: true, startDate, endDate }) || [];
+  const chartData =
+    useQuery(api.marketData.getHistoricalData, {
+      portfolioId,
+      isForChart: true,
+      startDate,
+      endDate,
+    }) || [];
 
   const deleteAsset = useMutation(api.assets.deleteAsset);
 
@@ -69,7 +95,11 @@ export default function V2PortfolioDetail() {
 
   // Compute stats
   const holdingsCount = portfolio?.assets?.length || 0;
-  const topHolding = portfolio?.assets?.reduce<Asset | null>((top, a) => (!top || a.currentValue > top.currentValue ? a : top), null);
+  const topHolding = portfolio?.assets?.reduce<Asset | null>(
+    (top: Asset | null, a: Asset) =>
+      !top || a.currentValue > top.currentValue ? a : top,
+    null,
+  );
   const ytdReturn = analytics?.performanceMetrics?.ytdReturn;
   const volatility = analytics?.riskMetrics?.volatility;
 
@@ -82,167 +112,238 @@ export default function V2PortfolioDetail() {
   const dateRanges = ["1M", "3M", "6M", "1Y", "ALL"];
 
   const cleanAnalysis = cleanMarkdownWrapper(
-    portfolio?.aiSummary || "Analysis will appear once data is processed."
+    portfolio?.aiSummary || "Analysis will appear once data is processed.",
   );
 
   if (canUserAccess === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#09090b" }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#09090b" }}
+      >
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-white mb-3">Access Denied</h1>
-          <p className="text-zinc-600 text-sm mb-6">You don't have permission to view this portfolio.</p>
-          <Link href="/v2" className="text-sm text-zinc-400 hover:text-white transition-colors">
-            <ArrowLeft className="h-4 w-4 inline mr-1" />Back
+          <h1 className="text-xl font-semibold text-white mb-3">
+            Access Denied
+          </h1>
+          <p className="text-zinc-600 text-sm mb-6">
+            You don't have permission to view this portfolio.
+          </p>
+          <Link
+            href="/v2"
+            className="text-sm text-zinc-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 inline mr-1" />
+            Back
           </Link>
         </div>
       </div>
     );
   }
 
+  const isPositive = (portfolio?.change || 0) >= 0;
+
   return (
-    <div className="min-h-screen" style={{ background: "#09090b" }}>
-      <V2Header />
+    <div className="min-h-screen relative" style={{ background: "#09090b" }}>
+      {isPositive ? (
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(34,197,94,0.06),transparent)]" />
+      ) : (
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(239,68,68,0.06),transparent)]" />
+      )}
+      <div className="relative">
+        <V2Header />
 
-      {/* Back + Edit */}
-      <div className="max-w-[1600px] mx-auto px-8 pt-6 flex items-center justify-between">
-        <Link href="/v2" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors">
-          <ArrowLeft className="h-3.5 w-3.5" />Back to Portfolios
-        </Link>
-        {portfolio && convexUser && (
-          <V2EditPortfolioDialog
-            portfolioId={portfolioId}
-            userId={convexUser._id}
-            initialName={portfolio.name}
-            initialDescription={portfolio.description}
-          />
-        )}
-      </div>
-
-      {/* Hero: 60% Portfolio Value + 40% Performance Chart */}
-      <V2HeroSplit
-        leftContent={
-          <div>
-            <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-1">
-              {portfolio?.name || "Loading..."}
-            </p>
-            {portfolio?.description && (
-              <p className="text-xs text-zinc-600 mb-4">{portfolio.description}</p>
+        {/* Back + Edit */}
+        <div className="max-w-[1600px] mx-auto px-8 pt-6">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/v2"
+              className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back to Portfolios
+            </Link>
+            {portfolio && convexUser && (
+              <>
+                <div className="w-px h-3 bg-white/[0.1]" />
+                <V2EditPortfolioDialog
+                  portfolioId={portfolioId}
+                  userId={convexUser._id}
+                  initialName={portfolio.name}
+                  initialDescription={portfolio.description}
+                />
+              </>
             )}
-            <div className="flex items-end gap-5 flex-wrap">
-              <h1 className="text-5xl lg:text-[68px] font-bold text-white tracking-tighter leading-none">
-                ${portfolio?.currentValue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}
-              </h1>
-              <div className={`flex items-center gap-1.5 pb-1.5 ${(portfolio?.change || 0) >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                {(portfolio?.change || 0) >= 0 ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
-                <span className="text-xl font-semibold">
-                  {(portfolio?.change || 0) >= 0 ? "+" : ""}
-                  {portfolio?.changePercent?.toFixed(2) || "0.00"}%
-                </span>
-              </div>
-            </div>
-            <p className="text-zinc-600 text-sm mt-3">
-              {(portfolio?.change || 0) >= 0 ? "+" : ""}${Math.abs(portfolio?.change || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} today
-            </p>
-          </div>
-        }
-        rightContent={
-          <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">Performance</p>
-              <div className="flex items-center gap-0.5">
-                {dateRanges.map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setChartDateRange(r)}
-                    className={`px-2 py-0.5 text-[10px] font-medium rounded transition-colors ${
-                      chartDateRange === r ? "bg-white/[0.08] text-white" : "text-zinc-600 hover:text-zinc-400"
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex-1 min-h-[180px]">
-              <V2PerformanceChart data={chartData} height={180} />
-            </div>
-          </div>
-        }
-      />
-
-      {/* Stats Row: Holdings, Top Holding, YTD Return, Volatility */}
-      <section className="max-w-[1600px] mx-auto px-8 py-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
-            <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">Holdings</p>
-            <p className="text-2xl font-bold text-white">{holdingsCount}</p>
-          </div>
-          <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
-            <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">Top Holding</p>
-            <p className="text-lg font-bold text-white truncate">{topHolding?.symbol || topHolding?.name || "--"}</p>
-            {topHolding && <p className="text-xs text-zinc-600">${topHolding.currentValue.toLocaleString()}</p>}
-          </div>
-          <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
-            <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">YTD Return</p>
-            <p className={`text-2xl font-bold ${ytdReturn !== undefined && ytdReturn >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-              {ytdReturn !== undefined ? `${(ytdReturn * 100).toFixed(2)}%` : "--"}
-            </p>
-          </div>
-          <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
-            <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">Volatility</p>
-            <p className="text-2xl font-bold text-white">
-              {volatility !== undefined ? `${(volatility * 100).toFixed(2)}%` : "--"}
-            </p>
           </div>
         </div>
-      </section>
 
-      {/* AI Summary */}
-      <section className="max-w-[1600px] mx-auto px-8 pb-6">
-        <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
-          <V2AICard analysis={cleanAnalysis} maxHeight={80} />
-        </div>
-      </section>
+        {/* Hero: 60% Portfolio Value + 40% Performance Chart */}
+        <V2HeroSplit
+          leftContent={
+            <div>
+              <div className="flex items-end gap-6 flex-wrap mb-3">
+                <h1 className="text-4xl lg:text-[56px] font-bold text-white tracking-tighter leading-none">
+                  {portfolio?.name || "Loading..."}
+                </h1>
+                <div
+                  className={`flex items-center gap-1.5 pb-2 ${(portfolio?.change || 0) >= 0 ? "text-emerald-500" : "text-red-500"}`}
+                >
+                  {(portfolio?.change || 0) >= 0 ? (
+                    <ArrowUpRight className="h-5 w-5" />
+                  ) : (
+                    <ArrowDownRight className="h-5 w-5" />
+                  )}
+                  <span className="text-xl font-semibold">
+                    {(portfolio?.change || 0) >= 0 ? "+" : ""}
+                    {portfolio?.changePercent?.toFixed(2) || "0.00"}%
+                  </span>
+                </div>
+              </div>
+              <p className="text-2xl lg:text-3xl text-zinc-400 mb-2">
+                $
+                {portfolio?.currentValue?.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }) || "0.00"}
+              </p>
+              {portfolio?.description && (
+                <p className="text-sm text-zinc-600 mb-3">
+                  {portfolio.description}
+                </p>
+              )}
+              <p className="text-zinc-600 text-sm">
+                {(portfolio?.change || 0) >= 0 ? "+" : ""}$
+                {Math.abs(portfolio?.change || 0).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}{" "}
+                today
+              </p>
+            </div>
+          }
+          rightContent={
+            <div className="h-full flex flex-col">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
+                  Performance
+                </p>
+                <div className="flex items-center gap-0.5">
+                  {dateRanges.map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setChartDateRange(r)}
+                      className={`px-2 py-0.5 text-[10px] font-medium rounded transition-colors ${
+                        chartDateRange === r
+                          ? "bg-white/[0.08] text-white"
+                          : "text-zinc-600 hover:text-zinc-400"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1 min-h-[180px]">
+                <V2PerformanceChart data={chartData} height={180} />
+              </div>
+            </div>
+          }
+        />
 
-      {/* Tabs */}
-      <V2Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {/* Tab Content */}
-      <section className="max-w-[1600px] mx-auto px-8 pb-16">
-        {/* Add Asset Button */}
-        {activeTab === "holdings" && (
-          <div className="flex justify-end mb-6">
-            <V2AddAssetDialog portfolioId={portfolioId} />
+        {/* Stats Row: Holdings, Top Holding, YTD Return, Volatility */}
+        <section className="max-w-[1600px] mx-auto px-8 py-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
+              <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">
+                Holdings
+              </p>
+              <p className="text-2xl font-bold text-white">{holdingsCount}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
+              <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">
+                Top Holding
+              </p>
+              <p className="text-lg font-bold text-white truncate">
+                {topHolding?.symbol || topHolding?.name || "--"}
+              </p>
+              {topHolding && (
+                <p className="text-xs text-zinc-600">
+                  ${topHolding.currentValue.toLocaleString()}
+                </p>
+              )}
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
+              <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">
+                YTD Return
+              </p>
+              <p
+                className={`text-2xl font-bold ${ytdReturn !== undefined && ytdReturn >= 0 ? "text-emerald-500" : "text-red-500"}`}
+              >
+                {ytdReturn !== undefined
+                  ? `${(ytdReturn * 100).toFixed(2)}%`
+                  : "--"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
+              <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">
+                Volatility
+              </p>
+              <p className="text-2xl font-bold text-white">
+                {volatility !== undefined
+                  ? `${(volatility * 100).toFixed(2)}%`
+                  : "--"}
+              </p>
+            </div>
           </div>
-        )}
+        </section>
 
-        {activeTab === "holdings" && (
-          <V2Holdings
-            assets={portfolio?.assets || []}
-            onEdit={handleEditAsset}
-            onDelete={handleDeleteAsset}
-          />
-        )}
+        {/* AI Summary */}
+        <section className="max-w-[1600px] mx-auto px-8 pb-6">
+          <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
+            <V2AICard analysis={cleanAnalysis} maxHeight={80} />
+          </div>
+        </section>
 
-        {activeTab === "analytics" && <V2Analytics portfolioId={portfolioId} />}
+        {/* Tabs */}
+        <V2Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {activeTab === "vault" && (
-          <V2Vault
-            portfolioId={portfolioId}
-            portfolioValue={portfolio?.currentValue || 0}
-            annualReturn={portfolio?.changePercent || 0}
-            userId={convexUser?._id}
-          />
-        )}
-      </section>
+        {/* Tab Content */}
+        <section className="max-w-[1600px] mx-auto px-8 pb-16">
+          {/* Add Asset Button */}
+          {activeTab === "holdings" && (
+            <div className="flex justify-end mb-6">
+              <V2AddAssetDialog portfolioId={portfolioId} />
+            </div>
+          )}
 
-      {/* Edit Dialog */}
-      <V2EditAssetDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        asset={editingAsset}
-        onAssetUpdated={() => setEditingAsset(null)}
-      />
+          {activeTab === "holdings" && (
+            <V2Holdings
+              assets={portfolio?.assets || []}
+              onEdit={handleEditAsset}
+              onDelete={handleDeleteAsset}
+            />
+          )}
+
+          {activeTab === "analytics" && (
+            <V2Analytics portfolioId={portfolioId} />
+          )}
+
+          {activeTab === "vault" && (
+            <V2Vault
+              portfolioId={portfolioId}
+              portfolioValue={portfolio?.currentValue || 0}
+              annualReturn={portfolio?.changePercent || 0}
+              userId={convexUser?._id}
+            />
+          )}
+        </section>
+
+        {/* Edit Dialog */}
+        <V2EditAssetDialog
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          asset={editingAsset}
+          onAssetUpdated={() => setEditingAsset(null)}
+        />
+      </div>
     </div>
   );
 }
