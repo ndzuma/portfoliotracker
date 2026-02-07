@@ -21,6 +21,18 @@ export default defineSchema({
     uiVersion: v.optional(v.union(v.literal("v1"), v.literal("v2"))),
     earlyAccess: v.optional(v.boolean()),
   }).index("byUser", ["userId"]),
+  // development related
+  flags: defineTable({
+    key: v.string(), // "new-portfolio-chart"
+    enabled: v.boolean(),
+    description: v.string(),
+    targeting: v.optional(
+      v.array(v.union(v.literal("all"), v.literal("beta"), v.string())),
+    ), // userIds/emails
+    environments: v.array(v.union(v.literal("dev"), v.literal("prod"))), // ["dev", "prod"]
+  })
+    .index("by_key", ["key"])
+    .index("by_env", ["environments"]),
   // portfolios, assets, transactions, and snapshots
   portfolios: defineTable({
     userId: v.id("users"),

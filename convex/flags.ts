@@ -1,0 +1,127 @@
+import { v } from "convex/values";
+import { api, internal } from "./_generated/api";
+import { query, action, mutation, internalMutation } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
+
+export const getFlag = query({
+  args: { key: v.string(), userId: v.optional(v.id("users")) },
+  handler: async (ctx, { key, userId }) => {
+    const flag = await ctx.db
+      .query("flags")
+      .withIndex("by_key", (q) => q.eq("key", key))
+      .first();
+    if (!flag || !flag.enabled) return false;
+
+    // Targeting logic
+    if (flag.targeting?.includes("beta") && !userId) return false;
+    if (userId && flag.targeting?.includes(userId)) return true;
+    return flag.targeting?.includes("all") ?? true;
+  },
+});
+
+// Get all flags - for admin interface
+export const getAllFlags = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.tokenIdentifier) {
+      throw new Error("Unauthorized: Must be authenticated");
+    }
+
+    // Check if user is admin via Clerk metadata
+    if (!identity.publicMetadata?.admin) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    return await ctx.db.query("flags").collect();
+  },
+});
+
+// Create a new feature flag - admin only
+export const createFlag = mutation({
+  args: {
+    key: v.string(),
+    enabled: v.boolean(),
+    description: v.string(),
+    targeting: v.optional(v.array(v.string())),
+    environments: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.tokenIdentifier) {
+      throw new Error("Unauthorized: Must be authenticated");
+    }
+
+    // Check if user is admin via Clerk metadata
+    if (!identity.publicMetadata?.admin) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    // Check if flag key already exists
+    const existingFlag = await ctx.db
+      .query("flags")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .first();
+
+    if (existingFlag) {
+      throw new Error(`Flag with key "${args.key}" already exists`);
+    }
+
+    return await ctx.db.insert("flags", {
+      key: args.key,
+      enabled: args.enabled,
+      description: args.description,
+      targeting: args.targeting || ["all"],
+      environments: args.environments,
+    });
+  },
+});
+
+// Update an existing feature flag - admin only
+export const updateFlag = mutation({
+  args: {
+    id: v.id("flags"),
+    enabled: v.optional(v.boolean()),
+    description: v.optional(v.string()),
+    targeting: v.optional(v.array(v.string())),
+    environments: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.tokenIdentifier) {
+      throw new Error("Unauthorized: Must be authenticated");
+    }
+
+    // Check if user is admin via Clerk metadata
+    if (!identity.publicMetadata?.admin) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    const updates: any = {};
+    if (args.enabled !== undefined) updates.enabled = args.enabled;
+    if (args.description !== undefined) updates.description = args.description;
+    if (args.targeting !== undefined) updates.targeting = args.targeting;
+    if (args.environments !== undefined)
+      updates.environments = args.environments;
+
+    return await ctx.db.patch(args.id, updates);
+  },
+});
+
+// Delete a feature flag - admin only
+export const deleteFlag = mutation({
+  args: { id: v.id("flags") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.tokenIdentifier) {
+      throw new Error("Unauthorized: Must be authenticated");
+    }
+
+    // Check if user is admin via Clerk metadata
+    if (!identity.publicMetadata?.admin) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    return await ctx.db.delete(args.id);
+  },
+});

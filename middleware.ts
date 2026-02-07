@@ -1,7 +1,29 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+const isAdmin = createRouteMatcher(["/admin(.*)"]);
+
 export default clerkMiddleware(async (auth, request) => {
+  // Check for admin routes
+  if (isAdmin(request)) {
+    const { userId } = auth();
+
+    // If not authenticated, let Clerk handle it
+    if (!userId) {
+      return;
+    }
+
+    try {
+      // Get user info to check admin status
+      const { user } = await auth();
+
+      if (!user?.publicMetadata?.admin) {
+        return new NextResponse(null, { status: 404 });
+      }
+    } catch (error) {
+      return new NextResponse(null, { status: 404 });
+    }
+  }
   // Allow access to demo routes without any Clerk intervention
   if (request.nextUrl.pathname.startsWith("/auth-demo")) {
     return;
