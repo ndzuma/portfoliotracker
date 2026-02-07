@@ -7,7 +7,7 @@ import { useUser } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { V2Header } from "@/components/v2/v2-header";
-import { isFeatureEnabled } from "@/lib/featureFlags";
+
 import {
   Globe,
   DollarSign,
@@ -21,6 +21,7 @@ import {
   Save,
   ChevronRight,
   Zap,
+  Bell,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,6 +99,16 @@ function Toggle({
 
 export default function V2SettingsPage() {
   const { user } = useUser();
+
+  // Get feature flags
+  const appearanceEnabled = useQuery(api.flags.getFlag, {
+    key: "appearance",
+    userEmail: user?.emailAddresses?.[0]?.emailAddress,
+  });
+  const byoaiEnabled = useQuery(api.flags.getFlag, {
+    key: "byoai",
+    userEmail: user?.emailAddresses?.[0]?.emailAddress,
+  });
   const { setTheme } = useTheme();
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
@@ -257,7 +268,7 @@ export default function V2SettingsPage() {
 
         <div className="flex flex-col gap-5">
           {/* Appearance */}
-          {isFeatureEnabled("appearanceToggle") && (
+          {appearanceEnabled && (
             <Section icon={Palette} title="Appearance">
               <SettingRow
                 label="Dark Mode"
@@ -366,7 +377,7 @@ export default function V2SettingsPage() {
           </Section>
 
           {/* BYOAI */}
-          {isFeatureEnabled("byoai") && (
+          {byoaiEnabled && (
             <Section icon={Sparkles} title="AI Provider">
               <div className="flex flex-col gap-5">
                 <SettingRow

@@ -4,17 +4,25 @@ import { query, action, mutation, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 export const getFlag = query({
-  args: { key: v.string(), userId: v.optional(v.id("users")) },
-  handler: async (ctx, { key, userId }) => {
+  args: { key: v.string(), userEmail: v.optional(v.string()) },
+  handler: async (ctx, { key, userEmail }) => {
+    // Environment detection - default to prod
+    const currentEnv =
+      process.env.NEXT_PUBLIC_NODE_ENV === "dev" ? "dev" : "prod";
+
     const flag = await ctx.db
       .query("flags")
       .withIndex("by_key", (q) => q.eq("key", key))
       .first();
+  
     if (!flag || !flag.enabled) return false;
 
+    // Check if flag is enabled for current environment
+    if (!flag.environments?.includes(currentEnv)) return false;
+
     // Targeting logic
-    if (flag.targeting?.includes("beta") && !userId) return false;
-    if (userId && flag.targeting?.includes(userId)) return true;
+    if (flag.targeting?.includes("beta") && !userEmail) return false;
+    if (userEmail && flag.targeting?.includes(userEmail)) return true;
     return flag.targeting?.includes("all") ?? true;
   },
 });

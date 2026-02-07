@@ -17,7 +17,7 @@ export function V2AllocationBar({ portfolios, totalValue }: V2AllocationBarProps
   if (portfolios.length === 0) return null;
 
   return (
-    <div className="max-w-[1600px] mx-auto px-8 pb-12">
+    <div className="max-w-[1600px] mx-auto pb-12">
       <h3 className="text-lg font-semibold text-white mb-5">Allocation</h3>
 
       {/* Bar */}

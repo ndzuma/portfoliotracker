@@ -15,24 +15,34 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { id: "overview", label: "Overview", href: "/v2", icon: LayoutDashboard },
   { id: "news", label: "News", href: "/v2/news", icon: Newspaper },
-  { id: "watchlist", label: "Watchlist", href: "/v2/watchlist", icon: Eye },
+  {
+    id: "watchlist",
+    label: "Watchlist",
+    href: "/v2/watchlist",
+    icon: Eye,
+    flagKey: "watchlist",
+  },
   {
     id: "research",
     label: "Research",
     href: "/v2/research",
     icon: FlaskConical,
+    flagKey: "research",
   },
   {
     id: "earnings",
     label: "Earnings",
     href: "/v2/earnings",
     icon: CalendarDays,
+    flagKey: "earnings",
   },
   { id: "settings", label: "Settings", href: "/v2/settings", icon: Settings },
 ];
@@ -40,6 +50,37 @@ const NAV_ITEMS = [
 export function V2Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { user } = useUser();
+
+  // Get feature flags
+  const watchlistEnabled = useQuery(api.flags.getFlag, {
+    key: "watchlist",
+    userEmail: user?.emailAddresses?.[0]?.emailAddress,
+  });
+  const researchEnabled = useQuery(api.flags.getFlag, {
+    key: "research",
+    userEmail: user?.emailAddresses?.[0]?.emailAddress,
+  });
+  const earningsEnabled = useQuery(api.flags.getFlag, {
+    key: "earnings",
+    userEmail: user?.emailAddresses?.[0]?.emailAddress,
+  });
+  const searchEnabled = useQuery(api.flags.getFlag, {
+    key: "search",
+    userEmail: user?.emailAddresses?.[0]?.emailAddress,
+  });
+  const notificationsEnabled = useQuery(api.flags.getFlag, {
+    key: "notifications",
+    userEmail: user?.emailAddresses?.[0]?.emailAddress,
+  });
+
+  // Filter navigation items based on feature flags
+  const NAV_ITEMS = BASE_NAV_ITEMS.filter((item) => {
+    if (item.flagKey === "watchlist") return watchlistEnabled;
+    if (item.flagKey === "research") return researchEnabled;
+    if (item.flagKey === "earnings") return earningsEnabled;
+    return true; // Always show items without flagKey
+  });
 
   const getActiveId = () => {
     if (pathname === "/v2") return "overview";
@@ -74,13 +115,17 @@ export function V2Header() {
 
             {/* Mobile Right Section */}
             <div className="flex items-center gap-1">
-              <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors">
-                <Search className="h-4 w-4" />
-              </button>
-              <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors relative">
-                <Bell className="h-4 w-4" />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              </button>
+              {searchEnabled && (
+                <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors">
+                  <Search className="h-4 w-4" />
+                </button>
+              )}
+              {notificationsEnabled && (
+                <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors relative">
+                  <Bell className="h-4 w-4" />
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                </button>
+              )}
               <div className="ml-1">
                 <UserButton
                   appearance={{
@@ -148,13 +193,17 @@ export function V2Header() {
 
             {/* Right Section */}
             <div className="flex items-center ml-auto px-4 py-3 gap-1">
-              <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors">
-                <Search className="h-3.5 w-3.5" />
-              </button>
-              <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors relative">
-                <Bell className="h-3.5 w-3.5" />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              </button>
+              {searchEnabled && (
+                <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors">
+                  <Search className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {notificationsEnabled && (
+                <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors relative">
+                  <Bell className="h-3.5 w-3.5" />
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                </button>
+              )}
               <div className="ml-2">
                 <UserButton
                   appearance={{
