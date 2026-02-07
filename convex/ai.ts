@@ -179,9 +179,6 @@ export const generateAiPortfolioSummary = action({
       },
     };
 
-    console.log("Generating AI portfolio summary for:", portfolio.name);
-    console.log("Portfolio data:", JSON.stringify(portfolioData, null, 2));
-
     // Call AI API
     const aiSummaryResponse = await fetch(`${aiServiceUrl}/api/v2/portfolio`, {
       method: "POST",
@@ -193,21 +190,12 @@ export const generateAiPortfolioSummary = action({
 
     if (!aiSummaryResponse.ok) {
       const errorText = await aiSummaryResponse.text();
-      console.error(
-        `AI Portfolio analysis failed: ${aiSummaryResponse.status} ${aiSummaryResponse.statusText}`,
-      );
-      console.error("Error response:", errorText);
       throw new Error(
         `Failed to generate AI portfolio summary: ${aiSummaryResponse.statusText}`,
       );
     }
 
     const aiSummary = await aiSummaryResponse.json();
-
-    console.log("=== AI PORTFOLIO ANALYSIS RESPONSE ===");
-    console.log("Full response:", JSON.stringify(aiSummary, null, 2));
-    console.log("Headline:", aiSummary.headline);
-    console.log("Analysis preview:", aiSummary.analysis?.slice(0, 200) + "...");
 
     // Store summary in dedicated portfolio AI table
     await ctx.runMutation(internal.ai.storePortfolioAiSummary, {
@@ -266,11 +254,6 @@ export const storePortfolioAiSummary = internalMutation({
       taskType: args.taskType,
       apiVersion: args.apiVersion,
     });
-
-    console.log(
-      "Stored AI summary in portfolioAiSummary table with timestamp:",
-      args.timestamp,
-    );
   },
 });
 
@@ -331,9 +314,6 @@ export const testAiConnection = action({
       },
     ];
 
-    console.log("Testing AI API with dummy news data...");
-    console.log("Dummy news articles:", JSON.stringify(dummyNews, null, 2));
-
     // Call AI API with dummy data
     const aiSummaryResponse = await fetch(`${aiServiceUrl}/api/v2/news`, {
       method: "POST",
@@ -345,25 +325,10 @@ export const testAiConnection = action({
 
     if (!aiSummaryResponse.ok) {
       const errorText = await aiSummaryResponse.text();
-      console.error(
-        `AI API test failed: ${aiSummaryResponse.status} ${aiSummaryResponse.statusText}`,
-      );
-      console.error("Error response:", errorText);
       throw new Error(`AI API test failed: ${aiSummaryResponse.statusText}`);
     }
 
     const aiSummary = await aiSummaryResponse.json();
-
-    console.log("=== AI API TEST RESPONSE ===");
-    console.log("Full response:", JSON.stringify(aiSummary, null, 2));
-    console.log("Headline:", aiSummary.headline);
-    console.log("Analysis preview:", aiSummary.analysis?.slice(0, 200) + "...");
-    console.log("Model used:", aiSummary.model_used);
-    console.log("Headline model:", aiSummary.headline_model_used);
-    console.log("Tokens used:", aiSummary.tokens_used);
-    console.log("Headline tokens:", aiSummary.headline_tokens_used);
-    console.log("Processing time:", aiSummary.processing_time_ms, "ms");
-    console.log("=== END TEST RESPONSE ===");
 
     return {
       success: true,
@@ -376,18 +341,14 @@ export const testAiConnection = action({
 // Manually trigger AI news summary update
 export const triggerAiNewsSummaryUpdate = action({
   handler: async (ctx, args) => {
-    console.log("Manually triggering AI news summary update...");
-
     try {
       await ctx.runAction(api.ai.generateAiNewsSummary);
-      console.log("AI news summary update completed successfully");
 
       return {
         success: true,
         message: "AI news summary updated successfully",
       };
     } catch (error) {
-      console.error("Failed to update AI news summary:", error);
       throw new Error(`Failed to update AI news summary: ${error}`);
     }
   },
@@ -399,20 +360,13 @@ export const triggerAiPortfolioSummaryUpdate = action({
     portfolioId: v.id("portfolios"),
   },
   handler: async (ctx, args) => {
-    console.log(
-      "Manually triggering AI portfolio summary update for:",
-      args.portfolioId,
-    );
-
     try {
       const result = await ctx.runAction(api.ai.generateAiPortfolioSummary, {
         portfolioId: args.portfolioId,
       });
-      console.log("AI portfolio summary update completed successfully");
 
       return result;
     } catch (error) {
-      console.error("Failed to update AI portfolio summary:", error);
       throw new Error(`Failed to update AI portfolio summary: ${error}`);
     }
   },
