@@ -22,10 +22,10 @@ import { V2Vault } from "@/components/v2/v2-vault";
 import { V2AddAssetDialog } from "@/components/v2/v2-add-asset-dialog";
 import { V2EditAssetDialog } from "@/components/v2/v2-edit-asset-dialog";
 import { V2EditPortfolioDialog } from "@/components/v2/v2-edit-portfolio-dialog";
-import { cleanMarkdownWrapper } from "@/lib/markdown-parser";
 import { Id } from "@/convex/_generated/dataModel";
 import type { Asset } from "@/app/(webapp)/portfolio/[id]/components/types";
 import { useUser } from "@clerk/nextjs";
+import { parseMarkdown } from "@/lib/markdown-parser";
 
 export default function V2PortfolioDetail() {
   const { user } = useUser();
@@ -121,11 +121,11 @@ export default function V2PortfolioDetail() {
 
   const dateRanges = ["1M", "3M", "6M", "1Y", "ALL"];
 
-  const cleanAnalysis = cleanMarkdownWrapper(
+  const cleanAnalysis = parseMarkdown(
     portfolioAI?.analysis || "Analysis will appear once data is processed.",
   );
 
-  const aiHeadline = portfolioAI?.headline;
+  const aiHeadline = parseMarkdown(portfolioAI?.headline);
   const portfolioTimestamp = portfolioAI?.timestamp;
 
   const handleGenerateAI = async () => {

@@ -13,7 +13,7 @@ import { V2AICard } from "@/components/v2/v2-ai-card";
 import { V2PortfolioCard } from "@/components/v2/v2-portfolio-card";
 import { V2AllocationBar } from "@/components/v2/v2-allocation-bar";
 import { V2CreatePortfolioDialog } from "@/components/v2/v2-create-portfolio-dialog";
-import { cleanMarkdownWrapper } from "@/lib/markdown-parser";
+import { parseMarkdown } from "@/lib/markdown-parser";
 
 export default function V2Dashboard() {
   const { user } = useUser();
@@ -44,11 +44,11 @@ export default function V2Dashboard() {
     { id: "markets", label: "Markets" },
   ];
 
-  const cleanAnalysis = cleanMarkdownWrapper(
+  const cleanAnalysis = parseMarkdown(
     (aiSummaryData as any)?.analysis || "Analyzing market conditions...",
   );
 
-  const aiHeadline = (aiSummaryData as any)?.headline;
+  const aiHeadline = parseMarkdown((aiSummaryData as any)?.headline || "");
   const aiTimestamp = (aiSummaryData as any)?.timestamp;
 
   const isPositive = totalChange >= 0;
