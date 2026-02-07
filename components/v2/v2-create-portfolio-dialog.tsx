@@ -39,7 +39,6 @@ export function V2CreatePortfolioDialog({ userId, triggerClassName, triggerLabel
         onClick={() => setOpen(true)}
         className={triggerClassName || "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors"}
       >
-        <Plus className="h-4 w-4" />
         {triggerLabel}
       </button>
 

@@ -20,7 +20,7 @@ export default function V2Dashboard() {
   const [activeTab, setActiveTab] = useState("portfolios");
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
-    clerkId: user?.id,
+    clerkId: user?.id || "",
   });
   const userId = convexUser?._id;
   const userPortfolios =
@@ -45,7 +45,7 @@ export default function V2Dashboard() {
   ];
 
   const cleanAnalysis = cleanMarkdownWrapper(
-    aiSummaryData?.analysis || "Analyzing market conditions...",
+    (aiSummaryData as any)?.analysis || "Analyzing market conditions...",
   );
 
   const isPositive = totalChange >= 0;
@@ -74,7 +74,7 @@ export default function V2Dashboard() {
         />
 
         {/* Ticker Strip */}
-        <V2Ticker benchmarks={benchmarkData} />
+        <V2Ticker benchmarks={benchmarkData as any} />
 
         {/* Tab Navigation */}
         <V2Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
@@ -91,26 +91,39 @@ export default function V2Dashboard() {
                   {userPortfolios.length} active
                 </p>
               </div>
-              <V2CreatePortfolioDialog userId={userId} />
+              {/* Show traditional button after 4 portfolios */}
+              {userPortfolios.length >= 4 && (
+                <V2CreatePortfolioDialog userId={userId} triggerLabel="Add Portfolio" />
+              )}
             </div>
 
             {/* Portfolio Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-12">
               {userPortfolios.length > 0 ? (
-                userPortfolios.map((portfolio: any) => (
-                  <V2PortfolioCard
-                    key={portfolio._id}
-                    id={portfolio._id}
-                    name={portfolio.name}
-                    value={portfolio.currentValue}
-                    change={portfolio.change}
-                    changePercent={portfolio.changePercent}
-                    assetsCount={portfolio.assetsCount}
-                    description={portfolio.description}
-                  />
-                ))
+                <>
+                  {userPortfolios.map((portfolio: any) => (
+                    <V2PortfolioCard
+                      key={portfolio._id}
+                      id={portfolio._id}
+                      name={portfolio.name}
+                      value={portfolio.currentValue}
+                      change={portfolio.change}
+                      changePercent={portfolio.changePercent}
+                      assetsCount={portfolio.assetsCount}
+                      description={portfolio.description}
+                    />
+                  ))}
+                  {/* Show new portfolio card if less than 4 portfolios */}
+                  {userPortfolios.length < 4 && (
+                    <V2CreatePortfolioDialog
+                      userId={userId}
+                      triggerLabel="Create a new portfolio"
+                      triggerClassName="relative rounded-2xl border border-white/[0.06] bg-zinc-950/60 p-5 hover:border-white/[0.12] transition-all hover:bg-zinc-900/50 min-h-[200px] flex flex-col items-center justify-center group cursor-pointer text-zinc-500 group-hover:text-white text-sm font-medium"
+                    />
+                  )}
+                </>
               ) : (
-                <div className="col-span-3 flex flex-col items-center justify-center py-20 text-center">
+                <div className="col-span-4 flex flex-col items-center justify-center py-20 text-center">
                   <p className="text-zinc-600 text-sm mb-6">
                     No portfolios yet. Create one to begin tracking.
                   </p>
