@@ -25,7 +25,7 @@ export default defineSchema({
   flags: defineTable({
     key: v.string(), // "new-portfolio-chart"
     enabled: v.boolean(),
-    description: v.string(),
+    description: v.optional(v.string()),
     targeting: v.optional(
       v.array(v.union(v.literal("all"), v.literal("beta"), v.string())),
     ), // userIds/emails
