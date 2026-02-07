@@ -18,6 +18,8 @@ export default defineSchema({
     openRouterApiKey: v.optional(v.string()),
     tunnelId: v.optional(v.string()),
     selfHostedUrl: v.optional(v.string()),
+    uiVersion: v.optional(v.union(v.literal("v1"), v.literal("v2"))),
+    earlyAccess: v.optional(v.boolean()),
   }).index("byUser", ["userId"]),
   // portfolios, assets, transactions, and snapshots
   portfolios: defineTable({
