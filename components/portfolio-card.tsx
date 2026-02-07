@@ -45,7 +45,7 @@ export function V2PortfolioCard({
   const isPositive = change >= 0;
 
   return (
-    <Link href={`/v2/portfolio/${id}`} className="group">
+    <Link href={`/portfolio/${id}`} className="group">
       <div className="relative rounded-2xl border border-white/[0.06] bg-zinc-950 p-5 hover:border-white/[0.12] transition-all hover:bg-zinc-900/50 min-h-[200px]">
         {/* Sparkline Background Graphics */}
         <div className="absolute bottom-0 left-0 right-0 h-16 opacity-[0.06] overflow-hidden rounded-b-2xl">

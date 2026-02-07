@@ -16,8 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { V2TransactionDialog } from "@/components/v2/v2-transaction-dialog";
-import type { Asset } from "@/app/(webapp)/portfolio/[id]/components/types";
+import { V2TransactionDialog } from "@/components/transaction-dialog";
+import type { Asset } from "@/components/types";
 
 interface V2HoldingsProps {
   assets: Asset[];
@@ -47,19 +47,31 @@ function AssetTypeIcon({ type }: { type: string }) {
   };
   const c = colors[type] || colors.other;
   return (
-    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold uppercase ${c}`}>
+    <div
+      className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold uppercase ${c}`}
+    >
       {type.slice(0, 2)}
     </div>
   );
 }
 
-function HoldingRow({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (a: Asset) => void; onDelete: (id: string) => void }) {
+function HoldingRow({
+  asset,
+  onEdit,
+  onDelete,
+}: {
+  asset: Asset;
+  onEdit: (a: Asset) => void;
+  onDelete: (id: string) => void;
+}) {
   const [txOpen, setTxOpen] = useState(false);
   const up = asset.change >= 0;
 
   const getLink = (a: Asset) => {
-    if (a.type === "crypto" && a.symbol) return `https://www.coingecko.com/en/coins/${a.symbol.toLowerCase()}`;
-    if (a.type === "stock" && a.symbol) return `https://finance.yahoo.com/quote/${a.symbol}`;
+    if (a.type === "crypto" && a.symbol)
+      return `https://www.coingecko.com/en/coins/${a.symbol.toLowerCase()}`;
+    if (a.type === "stock" && a.symbol)
+      return `https://finance.yahoo.com/quote/${a.symbol}`;
     return null;
   };
   const link = getLink(asset);
@@ -72,9 +84,16 @@ function HoldingRow({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (a: Ass
         {/* Name + Symbol */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-white truncate">{asset.symbol || asset.name}</span>
+            <span className="text-sm font-semibold text-white truncate">
+              {asset.symbol || asset.name}
+            </span>
             {link && (
-              <a href={link} target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-zinc-400 transition-colors">
+              <a
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-600 hover:text-zinc-400 transition-colors"
+              >
                 <ExternalLink className="h-3 w-3" />
               </a>
             )}
@@ -95,31 +114,44 @@ function HoldingRow({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (a: Ass
 
         {/* Avg Buy */}
         <div className="hidden lg:block text-right min-w-[90px]">
-          <p className="text-sm text-zinc-400">${asset.avgBuyPrice?.toFixed(2) || "0.00"}</p>
+          <p className="text-sm text-zinc-400">
+            ${asset.avgBuyPrice?.toFixed(2) || "0.00"}
+          </p>
           <p className="text-[10px] text-zinc-600">avg buy</p>
         </div>
 
         {/* Current Price */}
         <div className="hidden lg:block text-right min-w-[90px]">
-          <p className="text-sm text-white font-medium">${asset.currentPrice?.toFixed(2) || "0.00"}</p>
+          <p className="text-sm text-white font-medium">
+            ${asset.currentPrice?.toFixed(2) || "0.00"}
+          </p>
           <p className="text-[10px] text-zinc-600">current</p>
         </div>
 
         {/* Value */}
         <div className="text-right min-w-[100px]">
           <p className="text-sm font-semibold text-white">
-            {asset.type === "cash" && asset.currency ? `${asset.currency} ` : "$"}
+            {asset.type === "cash" && asset.currency
+              ? `${asset.currency} `
+              : "$"}
             {asset.currentValue.toLocaleString()}
           </p>
-          <p className="text-[10px] text-zinc-600">{asset.allocation?.toFixed(1)}% alloc</p>
+          <p className="text-[10px] text-zinc-600">
+            {asset.allocation?.toFixed(1)}% alloc
+          </p>
         </div>
 
         {/* Change */}
         <div className="text-right min-w-[100px]">
-          <p className={`text-sm font-medium ${up ? "text-emerald-500" : "text-red-500"}`}>
-            {up ? "+" : ""}{asset.changePercent?.toFixed(2)}%
+          <p
+            className={`text-sm font-medium ${up ? "text-emerald-500" : "text-red-500"}`}
+          >
+            {up ? "+" : ""}
+            {asset.changePercent?.toFixed(2)}%
           </p>
-          <p className={`text-[10px] ${up ? "text-emerald-500/60" : "text-red-500/60"}`}>
+          <p
+            className={`text-[10px] ${up ? "text-emerald-500/60" : "text-red-500/60"}`}
+          >
             {up ? "+" : ""}${Math.abs(asset.change).toLocaleString()}
           </p>
         </div>
@@ -131,15 +163,30 @@ function HoldingRow({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (a: Ass
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-zinc-950 border-white/[0.06]">
-            <DropdownMenuItem onClick={() => setTxOpen(true)} className="text-zinc-300 focus:text-white focus:bg-white/[0.06]">
-              <Receipt className="h-3.5 w-3.5 mr-2" />Transactions
+          <DropdownMenuContent
+            align="end"
+            className="bg-zinc-950 border-white/[0.06]"
+          >
+            <DropdownMenuItem
+              onClick={() => setTxOpen(true)}
+              className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
+            >
+              <Receipt className="h-3.5 w-3.5 mr-2" />
+              Transactions
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(asset)} className="text-zinc-300 focus:text-white focus:bg-white/[0.06]">
-              <Edit className="h-3.5 w-3.5 mr-2" />Edit
+            <DropdownMenuItem
+              onClick={() => onEdit(asset)}
+              className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
+            >
+              <Edit className="h-3.5 w-3.5 mr-2" />
+              Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(asset._id)} className="text-red-400 focus:text-red-300 focus:bg-red-500/10">
-              <Trash2 className="h-3.5 w-3.5 mr-2" />Delete
+            <DropdownMenuItem
+              onClick={() => onDelete(asset._id)}
+              className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-2" />
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -165,13 +212,23 @@ export function V2Holdings({ assets, onEdit, onDelete }: V2HoldingsProps) {
     return acc;
   }, {});
 
-  const typeOrder = ["stock", "crypto", "real estate", "commodity", "bond", "cash", "other"];
+  const typeOrder = [
+    "stock",
+    "crypto",
+    "real estate",
+    "commodity",
+    "bond",
+    "cash",
+    "other",
+  ];
   const sortedTypes = typeOrder.filter((t) => grouped[t]?.length > 0);
 
   if (assets.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-zinc-600 text-sm">No holdings in this portfolio yet.</p>
+        <p className="text-zinc-600 text-sm">
+          No holdings in this portfolio yet.
+        </p>
       </div>
     );
   }
@@ -179,14 +236,23 @@ export function V2Holdings({ assets, onEdit, onDelete }: V2HoldingsProps) {
   return (
     <div className="flex flex-col gap-6">
       {sortedTypes.map((type) => (
-        <div key={type} className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden">
+        <div
+          key={type}
+          className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden"
+        >
           {/* Section header */}
           <div className="flex items-center justify-between px-5 py-3 bg-white/[0.02]">
             <h3 className="text-sm font-semibold text-white">
-              {TYPE_LABELS[type]} <span className="text-zinc-600 font-normal ml-1">({grouped[type].length})</span>
+              {TYPE_LABELS[type]}{" "}
+              <span className="text-zinc-600 font-normal ml-1">
+                ({grouped[type].length})
+              </span>
             </h3>
             <p className="text-xs text-zinc-500">
-              ${grouped[type].reduce((s, a) => s + a.currentValue, 0).toLocaleString()}
+              $
+              {grouped[type]
+                .reduce((s, a) => s + a.currentValue, 0)
+                .toLocaleString()}
             </p>
           </div>
 
@@ -195,7 +261,9 @@ export function V2Holdings({ assets, onEdit, onDelete }: V2HoldingsProps) {
             <div className="w-8" />
             <div className="flex-1">Asset</div>
             <div className="hidden md:block text-right min-w-[80px]">Qty</div>
-            <div className="hidden lg:block text-right min-w-[90px]">Avg Buy</div>
+            <div className="hidden lg:block text-right min-w-[90px]">
+              Avg Buy
+            </div>
             <div className="hidden lg:block text-right min-w-[90px]">Price</div>
             <div className="text-right min-w-[100px]">Value</div>
             <div className="text-right min-w-[100px]">Change</div>
@@ -204,7 +272,12 @@ export function V2Holdings({ assets, onEdit, onDelete }: V2HoldingsProps) {
 
           {/* Rows */}
           {grouped[type].map((asset) => (
-            <HoldingRow key={asset._id} asset={asset} onEdit={onEdit} onDelete={onDelete} />
+            <HoldingRow
+              key={asset._id}
+              asset={asset}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
           ))}
         </div>
       ))}

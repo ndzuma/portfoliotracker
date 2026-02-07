@@ -21,30 +21,30 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 const BASE_NAV_ITEMS = [
-  { id: "overview", label: "Overview", href: "/v2", icon: LayoutDashboard },
-  { id: "news", label: "News", href: "/v2/news", icon: Newspaper },
+  { id: "overview", label: "Overview", href: "/", icon: LayoutDashboard },
+  { id: "news", label: "News", href: "/news", icon: Newspaper },
   {
     id: "watchlist",
     label: "Watchlist",
-    href: "/v2/watchlist",
+    href: "/watchlist",
     icon: Eye,
     flagKey: "watchlist",
   },
   {
     id: "research",
     label: "Research",
-    href: "/v2/research",
+    href: "/research",
     icon: FlaskConical,
     flagKey: "research",
   },
   {
     id: "earnings",
     label: "Earnings",
-    href: "/v2/earnings",
+    href: "/earnings",
     icon: CalendarDays,
     flagKey: "earnings",
   },
-  { id: "settings", label: "Settings", href: "/v2/settings", icon: Settings },
+  { id: "settings", label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function V2Header() {
@@ -83,9 +83,9 @@ export function V2Header() {
   });
 
   const getActiveId = () => {
-    if (pathname === "/v2") return "overview";
+    if (pathname === "/") return "overview";
     const match = NAV_ITEMS.find(
-      (item) => item.href !== "/v2" && pathname.startsWith(item.href),
+      (item) => item.href !== "/" && pathname.startsWith(item.href),
     );
     return match?.id || "overview";
   };
@@ -107,7 +107,7 @@ export function V2Header() {
           {/* Mobile Layout */}
           <div className="flex md:hidden items-center justify-between w-full px-4 py-3">
             {/* Logo */}
-            <Link href="/v2" className="flex items-center">
+            <Link href="/" className="flex items-center">
               <span className="text-sm font-semibold text-white tracking-tight">
                 PulsePortfolio
               </span>
@@ -154,7 +154,7 @@ export function V2Header() {
               className="flex items-center px-6 py-3 shrink-0 border-r"
               style={{ borderColor: "rgba(255,255,255,0.06)" }}
             >
-              <Link href="/v2" className="flex items-center">
+              <Link href="/" className="flex items-center">
                 <span className="text-sm font-semibold text-white tracking-tight">
                   PulsePortfolio
                 </span>

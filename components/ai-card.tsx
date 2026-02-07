@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { V2AISummaryPopup } from "./v2-ai-summary-popup";
+import { V2AISummaryPopup } from "./ai-summary-popup";
 
 interface V2AICardProps {
-  headline?: string;
-  analysis: string;
+  headline?: JSX.Element[] | null;
+  analysis: JSX.Element[] | null;
   timestamp?: string;
   maxDisplayLength?: number;
   onRefresh?: () => void;
@@ -93,8 +93,14 @@ export function V2AICard({
       <V2AISummaryPopup
         open={popupOpen}
         onOpenChange={setPopupOpen}
-        headline={headline || displayText}
-        analysis={analysis}
+        headline={
+          typeof headline === "string"
+            ? headline
+            : typeof analysis === "string"
+              ? analysis
+              : ""
+        }
+        analysis={typeof analysis === "string" ? analysis : ""}
         timestamp={timestamp}
       />
     </>

@@ -1,29 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Newspaper, Filter, ChevronDown } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { V2Header } from "@/components/header";
+import { V2AICard } from "@/components/ai-card";
+import { V2Ticker } from "@/components/ticker";
+import { parseMarkdown } from "@/lib/markdown-parser";
+import { Filter, ChevronDown, ExternalLink, Newspaper } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NewsCard } from "./components/NewsCard";
-import { AISummaryCard } from "./components/AISummaryCard";
-import { MarketOverviewCard } from "./components/MarketOverviewCard";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 
 interface NewsItem {
   category: string;
@@ -36,289 +26,179 @@ interface NewsItem {
   url: string;
 }
 
-interface NewsData {
-  Data: NewsItem[];
-}
-
-export default function NewsPage() {
+export default function V2NewsPage() {
   const [newsData, setNewsData] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 9;
+  const [filter, setFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const perPage = 12;
+
   const aiSummaryData = useQuery(api.ai.getAiNewsSummary) || {};
   const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
 
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const response = await fetch("/api/market-data/news");
-        if (!response.ok) {
-          throw new Error(`Failed to fetch news: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setNewsData(data.Data || []);
-      } catch (error) {
-        console.error("Error fetching news:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNews();
+    fetch("/api/market-data/news")
+      .then((r) => r.json())
+      .then((d) => setNewsData(d.Data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const filteredNews =
-    filter === "all"
-      ? newsData
-      : newsData.filter((item: NewsItem) => item.category === filter);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
-  const currentItems = filteredNews.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+  const filtered =
+    filter === "all" ? newsData : newsData.filter((n) => n.category === filter);
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const current = filtered.slice((page - 1) * perPage, page * perPage);
+  const categories = ["all", ...new Set(newsData.map((n) => n.category))];
+  const cleanAnalysis = parseMarkdown(
+    aiSummaryData?.analysis || "Analyzing...",
   );
-
-  const categories = [
-    "all",
-    ...new Set(newsData.map((item: NewsItem) => item.category)),
-  ];
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const aiHeadline = parseMarkdown(aiSummaryData?.headline);
+  const aiTimestamp = aiSummaryData?.timestamp;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-semibold text-foreground">
-            News & Market Insights
-          </h1>
+    <div className="min-h-screen" style={{ background: "#09090b" }}>
+      <V2Header />
+      <V2Ticker benchmarks={benchmarkData} />
+
+      <div className="max-w-[1600px] mx-auto px-8 py-8">
+        {/* Hero */}
+        <div className="flex flex-col lg:flex-row gap-6 mb-10">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
+              News & Insights
+            </h1>
+            <p className="text-sm text-zinc-600">
+              Latest market news and AI-powered analysis.
+            </p>
+          </div>
+          <div className="lg:w-[400px] rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
+            <V2AICard
+              headline={aiHeadline}
+              analysis={cleanAnalysis}
+              timestamp={aiTimestamp}
+              maxDisplayLength={100}
+            />
+          </div>
+        </div>
+
+        {/* Filter */}
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-sm text-zinc-500">{filtered.length} articles</p>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter: {filter === "all" ? "All Categories" : filter}
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
+              <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-zinc-400 rounded-lg border border-white/[0.06] hover:border-white/[0.12] transition-colors">
+                <Filter className="h-3.5 w-3.5" />
+                {filter === "all" ? "All" : filter}
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {categories.map((category) => (
+            <DropdownMenuContent
+              align="end"
+              className="bg-zinc-950 border-white/[0.06]"
+            >
+              {categories.map((c) => (
                 <DropdownMenuItem
-                  key={category}
+                  key={c}
                   onClick={() => {
-                    setFilter(category);
-                    setCurrentPage(1);
+                    setFilter(c);
+                    setPage(1);
                   }}
-                  className="capitalize"
+                  className="capitalize text-zinc-300 focus:text-white focus:bg-white/[0.06]"
                 >
-                  {category === "all" ? "All Categories" : category}
+                  {c === "all" ? "All Categories" : c}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        {/* AI Summary and Market Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2">
-            <AISummaryCard data={aiSummaryData} />
+        {/* News Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden animate-pulse"
+              >
+                <div className="h-40 bg-white/[0.04]" />
+                <div className="p-5 flex flex-col gap-2">
+                  <div className="h-3 bg-white/[0.04] rounded w-20" />
+                  <div className="h-4 bg-white/[0.04] rounded w-full" />
+                  <div className="h-3 bg-white/[0.04] rounded w-3/4" />
+                </div>
+              </div>
+            ))}
           </div>
-          <MarketOverviewCard data={benchmarkData} />
-        </div>
-
-        {/* News Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading
-            ? Array(9)
-                .fill(0)
-                .map((_, i) => (
-                  <div key={i} className="h-full radius-lg">
-                    <div className="relative h-40 bg-muted">
-                      <Skeleton className="h-full w-full bg-neutral-800" />
-                      <div className="absolute top-2 left-2">
-                        <Skeleton className="h-5 w-16 bg-black" />
-                      </div>
-                      <div className="absolute top-2 right-2">
-                        <Skeleton className="h-5 w-20 bg-black" />
-                      </div>
-                    </div>
-                    <div className="p-4 space-y-3 bg-muted">
-                      <Skeleton className="h-4 w-24 bg-neutral-800" />
-                      <Skeleton className="h-6 w-full bg-neutral-800" />
-                      <Skeleton className="h-4 w-full bg-neutral-800" />
-                      <Skeleton className="h-4 w-2/3 bg-neutral-800" />
-                      <Skeleton className="h-8 w-full mt-4 bg-neutral-800" />
-                    </div>
+        ) : current.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {current.map((item) => (
+              <a
+                key={item.id}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden hover:border-white/[0.12] transition-all"
+              >
+                {item.image && (
+                  <div className="relative h-40 overflow-hidden">
+                    <img
+                      src={item.image}
+                      alt=""
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent opacity-60" />
+                    <span className="absolute top-3 left-3 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white backdrop-blur-sm">
+                      {item.category}
+                    </span>
                   </div>
-                ))
-            : currentItems.map((item) => (
-                <NewsCard key={item.id} item={item} />
-              ))}
-        </div>
-
-        {!loading && filteredNews.length === 0 && (
+                )}
+                <div className="p-5">
+                  <p className="text-xs text-zinc-600 mb-2">
+                    {item.source} &middot;{" "}
+                    {new Date(item.datetime * 1000).toLocaleDateString()}
+                  </p>
+                  <h3 className="text-sm font-semibold text-white leading-snug mb-2 line-clamp-2 group-hover:text-zinc-200 transition-colors">
+                    {item.headline}
+                  </h3>
+                  <p className="text-xs text-zinc-600 line-clamp-2">
+                    {item.summary}
+                  </p>
+                  <div className="flex items-center gap-1 mt-3 text-[11px] text-zinc-600 group-hover:text-zinc-400 transition-colors">
+                    Read <ExternalLink className="h-3 w-3" />
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
           <div className="text-center py-20">
-            <Newspaper className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4" />
-            <h3 className="text-xl font-medium mb-2">No news articles found</h3>
-            <p className="text-muted-foreground">
-              No articles available in this category. Try selecting a different
-              filter.
-            </p>
+            <Newspaper className="mx-auto h-10 w-10 text-zinc-700 mb-4" />
+            <p className="text-zinc-600 text-sm">No articles found.</p>
           </div>
         )}
 
         {/* Pagination */}
-        {filteredNews.length > itemsPerPage && (
-          <div className="mt-8">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                      e.preventDefault();
-                      if (currentPage > 1) handlePageChange(currentPage - 1);
-                    }}
-                    className={
-                      currentPage === 1 ? "pointer-events-none opacity-50" : ""
-                    }
-                  />
-                </PaginationItem>
-
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  // For many pages, show ellipsis
-                  if (totalPages > 5) {
-                    // Always show first and last page
-                    if (i === 0) {
-                      return (
-                        <PaginationItem key={1}>
-                          <PaginationLink
-                            href="#"
-                            onClick={(
-                              e: React.MouseEvent<HTMLAnchorElement>,
-                            ) => {
-                              e.preventDefault();
-                              handlePageChange(1);
-                            }}
-                            isActive={currentPage === 1}
-                          >
-                            1
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }
-
-                    // Show ellipsis if needed
-                    if (i === 1 && currentPage > 3) {
-                      return (
-                        <PaginationItem key="ellipsis-1">
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      );
-                    }
-
-                    // Show current page and surrounding pages
-                    let pageToShow: number;
-                    if (currentPage <= 3) {
-                      pageToShow = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageToShow = totalPages - (4 - i);
-                    } else {
-                      pageToShow = currentPage - 1 + i;
-                    }
-
-                    if (pageToShow > 1 && pageToShow < totalPages) {
-                      return (
-                        <PaginationItem key={pageToShow}>
-                          <PaginationLink
-                            href="#"
-                            onClick={(
-                              e: React.MouseEvent<HTMLAnchorElement>,
-                            ) => {
-                              e.preventDefault();
-                              handlePageChange(pageToShow);
-                            }}
-                            isActive={currentPage === pageToShow}
-                          >
-                            {pageToShow}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }
-
-                    // Show ellipsis if needed
-                    if (i === 3 && currentPage < totalPages - 2) {
-                      return (
-                        <PaginationItem key="ellipsis-2">
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      );
-                    }
-
-                    // Show last page
-                    if (i === 4) {
-                      return (
-                        <PaginationItem key={totalPages}>
-                          <PaginationLink
-                            href="#"
-                            onClick={(
-                              e: React.MouseEvent<HTMLAnchorElement>,
-                            ) => {
-                              e.preventDefault();
-                              handlePageChange(totalPages);
-                            }}
-                            isActive={currentPage === totalPages}
-                          >
-                            {totalPages}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }
-
-                    return null;
-                  } else {
-                    // For fewer pages, show all page numbers
-                    const page = i + 1;
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                            e.preventDefault();
-                            handlePageChange(page);
-                          }}
-                          isActive={currentPage === page}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }
-                })}
-
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages)
-                        handlePageChange(currentPage + 1);
-                    }}
-                    className={
-                      currentPage === totalPages
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-10">
+            {Array.from(
+              { length: Math.min(totalPages, 7) },
+              (_, i) => i + 1,
+            ).map((p) => (
+              <button
+                key={p}
+                onClick={() => {
+                  setPage(p);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className={`w-8 h-8 rounded-md text-xs font-medium transition-colors ${
+                  page === p
+                    ? "bg-white text-black"
+                    : "text-zinc-500 hover:text-white hover:bg-white/[0.06]"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
           </div>
         )}
       </div>

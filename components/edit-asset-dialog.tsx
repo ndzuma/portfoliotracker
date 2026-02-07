@@ -16,7 +16,7 @@ import { Save, ArrowLeft } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import type { Asset } from "@/app/(webapp)/portfolio/[id]/components/types";
+import type { Asset } from "@/components/types";
 
 interface V2EditAssetDialogProps {
   isOpen: boolean;

@@ -3,17 +3,28 @@ import { Sparkles } from "lucide-react";
 
 // Type definitions
 export interface Asset {
+  _id: string;
   id: string;
   symbol: string;
   name: string;
-  type: "stock" | "property" | "commodity" | "bond";
+  type:
+    | "stock"
+    | "bond"
+    | "commodity"
+    | "real estate"
+    | "crypto"
+    | "cash"
+    | "other";
   value: number;
   change: number;
   changePercent: number;
   allocation: number;
   shares?: number;
+  quantity?: number;
   avgBuyPrice: number;
   currentPrice: number;
+  currentValue: number;
+  currency?: string;
 }
 
 export interface Portfolio {

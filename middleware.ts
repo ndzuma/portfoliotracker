@@ -43,46 +43,6 @@ export default clerkMiddleware(async (auth, request) => {
     return;
   }
 
-  // Check for v2 route access
-  if (request.nextUrl.pathname.startsWith("/v2")) {
-    const { userId } = await auth();
-
-    // If not authenticated, let Clerk handle it
-    if (!userId) {
-      return;
-    }
-
-    try {
-      // Check user's UI version preference
-      const response = await fetch(
-        `${request.nextUrl.origin}/api/check-ui-version`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ userId }),
-        },
-      );
-
-      if (response.ok) {
-        const { uiVersion, earlyAccess } = await response.json();
-
-        // If user doesn't have v2 access, redirect to v1 equivalent
-        if (uiVersion !== "v2" || !earlyAccess) {
-          const v1Path = request.nextUrl.pathname.replace("/v2", "");
-          const redirectUrl = new URL(v1Path || "/", request.url);
-          return NextResponse.redirect(redirectUrl);
-        }
-      }
-    } catch (error) {
-      // On error, redirect to v1 (safe fallback)
-      const v1Path = request.nextUrl.pathname.replace("/v2", "");
-      const redirectUrl = new URL(v1Path || "/", request.url);
-      return NextResponse.redirect(redirectUrl);
-    }
-  }
-
   // For other routes, apply normal auth logic
   // (This will be handled by the auth wrapper)
 });
