@@ -197,6 +197,8 @@ export default function V2PortfolioDetail() {
                   userId={convexUser._id}
                   initialName={portfolio.name}
                   initialDescription={portfolio.description}
+                  initialRiskTolerance={portfolio.riskTolerance}
+                  initialTimeHorizon={portfolio.timeHorizon}
                 />
               </>
             )}

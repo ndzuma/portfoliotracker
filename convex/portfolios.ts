@@ -252,12 +252,16 @@ export const createPortfolio = mutation({
     userId: v.union(v.id("users"), v.string()),
     name: v.string(),
     description: v.optional(v.string()),
+    riskTolerance: v.optional(v.string()),
+    timeHorizon: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const portfolioId = await ctx.db.insert("portfolios", {
       userId: args.userId,
       name: args.name,
       description: args.description || "",
+      riskTolerance: args.riskTolerance,
+      timeHorizon: args.timeHorizon,
     });
     return portfolioId;
   },
@@ -270,6 +274,8 @@ export const updatePortfolio = mutation({
     userId: v.union(v.id("users"), v.string()),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
+    riskTolerance: v.optional(v.string()),
+    timeHorizon: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const portfolio = await ctx.db.get(args.portfolioId);
@@ -282,6 +288,8 @@ export const updatePortfolio = mutation({
     await ctx.db.patch(args.portfolioId, {
       name: args.name ?? portfolio.name,
       description: args.description ?? portfolio.description,
+      riskTolerance: args.riskTolerance ?? portfolio.riskTolerance,
+      timeHorizon: args.timeHorizon ?? portfolio.timeHorizon,
     });
   },
 });

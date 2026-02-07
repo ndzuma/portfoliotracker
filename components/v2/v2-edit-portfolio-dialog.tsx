@@ -5,6 +5,13 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Settings2, Save, ArrowLeft, Check } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -15,6 +22,8 @@ interface V2EditPortfolioDialogProps {
   userId: string;
   initialName: string;
   initialDescription?: string;
+  initialRiskTolerance?: string;
+  initialTimeHorizon?: string;
 }
 
 export function V2EditPortfolioDialog({
@@ -22,11 +31,15 @@ export function V2EditPortfolioDialog({
   userId,
   initialName,
   initialDescription = "",
+  initialRiskTolerance = "",
+  initialTimeHorizon = "",
 }: V2EditPortfolioDialogProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"details" | "confirm">("details");
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
+  const [riskTolerance, setRiskTolerance] = useState(initialRiskTolerance);
+  const [timeHorizon, setTimeHorizon] = useState(initialTimeHorizon);
 
   const updatePortfolio = useMutation(api.portfolios.updatePortfolio);
 
@@ -34,6 +47,8 @@ export function V2EditPortfolioDialog({
     setStep("details");
     setName(initialName);
     setDescription(initialDescription);
+    setRiskTolerance(initialRiskTolerance);
+    setTimeHorizon(initialTimeHorizon);
   };
 
   const handleOpen = () => {
@@ -48,6 +63,8 @@ export function V2EditPortfolioDialog({
       userId: userId as Id<"users">,
       name,
       description,
+      riskTolerance: riskTolerance || undefined,
+      timeHorizon: timeHorizon || undefined,
     });
     setOpen(false);
   };
@@ -129,6 +146,79 @@ export function V2EditPortfolioDialog({
                     Optional but helpful for organizing your portfolios
                   </p>
                 </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
+                    Risk Tolerance
+                  </Label>
+                  <Select
+                    value={riskTolerance}
+                    onValueChange={setRiskTolerance}
+                  >
+                    <SelectTrigger className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm">
+                      <SelectValue placeholder="Select your risk tolerance" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-white/[0.08]">
+                      <SelectItem
+                        value="Conservative"
+                        className="text-white hover:bg-zinc-800"
+                      >
+                        Conservative
+                      </SelectItem>
+                      <SelectItem
+                        value="Moderate"
+                        className="text-white hover:bg-zinc-800"
+                      >
+                        Moderate
+                      </SelectItem>
+                      <SelectItem
+                        value="Aggressive"
+                        className="text-white hover:bg-zinc-800"
+                      >
+                        Aggressive
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-zinc-600">
+                    Conservative: Low risk, stable returns. Moderate: Balanced
+                    risk/reward. Aggressive: High risk, high potential returns.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
+                    Time Horizon
+                  </Label>
+                  <Select value={timeHorizon} onValueChange={setTimeHorizon}>
+                    <SelectTrigger className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm">
+                      <SelectValue placeholder="Select your investment timeframe" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-white/[0.08]">
+                      <SelectItem
+                        value="Short-term (< 3 years)"
+                        className="text-white hover:bg-zinc-800"
+                      >
+                        Short-term (&lt; 3 years)
+                      </SelectItem>
+                      <SelectItem
+                        value="Medium-term (3-10 years)"
+                        className="text-white hover:bg-zinc-800"
+                      >
+                        Medium-term (3-10 years)
+                      </SelectItem>
+                      <SelectItem
+                        value="Long-term (10+ years)"
+                        className="text-white hover:bg-zinc-800"
+                      >
+                        Long-term (10+ years)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-zinc-600">
+                    How long do you plan to hold these investments before
+                    needing the money?
+                  </p>
+                </div>
               </div>
             )}
 
@@ -161,6 +251,26 @@ export function V2EditPortfolioDialog({
                         </Label>
                         <p className="text-zinc-300 text-sm mt-1">
                           {description}
+                        </p>
+                      </div>
+                    )}
+                    {riskTolerance && (
+                      <div>
+                        <Label className="text-xs text-zinc-500 uppercase tracking-wider">
+                          Risk Tolerance
+                        </Label>
+                        <p className="text-zinc-300 text-sm mt-1">
+                          {riskTolerance}
+                        </p>
+                      </div>
+                    )}
+                    {timeHorizon && (
+                      <div>
+                        <Label className="text-xs text-zinc-500 uppercase tracking-wider">
+                          Time Horizon
+                        </Label>
+                        <p className="text-zinc-300 text-sm mt-1">
+                          {timeHorizon}
                         </p>
                       </div>
                     )}

@@ -117,31 +117,65 @@ export const generateAiPortfolioSummary = action({
       portfolioId: args.portfolioId,
     });
 
+    // Calculate asset allocation
+    const totalValue = portfolio.currentValue || 0;
+    const assetAllocation = portfolio.assets?.reduce(
+      (allocation: any, asset: any) => {
+        if (asset.type) {
+          allocation[asset.type] =
+            (allocation[asset.type] || 0) + (asset.currentValue || 0);
+        }
+        return allocation;
+      },
+      {},
+    );
+
+    const allocationPercentages = Object.entries(assetAllocation || {}).map(
+      ([type, value]) => ({
+        asset_type: type,
+        percentage:
+          totalValue > 0 ? ((value as number) / totalValue) * 100 : "unknown",
+        value: value,
+      }),
+    );
+
     // Format portfolio data for AI API
     const portfolioData = {
       assets:
         portfolio.assets?.map((asset: any) => ({
-          symbol: asset.symbol || asset.name,
-          name: asset.name,
-          type: asset.type,
-          allocation: asset.allocation || 0,
-          shares: asset.quantity || 0,
-          current_price: asset.currentPrice || 0,
-          cost_basis: asset.averagePrice || 0,
+          symbol: asset.symbol || "unknown",
+          name: asset.name || "unknown",
+          type: asset.type || "unknown",
+          allocation: asset.allocation || "unknown",
+          shares: asset.quantity || "unknown",
+          current_price: asset.currentPrice || "unknown",
+          cost_basis: asset.averagePrice || "unknown",
+          country: asset.country || "unknown",
+          current_value: asset.currentValue || "unknown",
         })) || [],
+      asset_allocation: allocationPercentages,
       portfolio_stats: {
-        total_value: portfolio.currentValue || 0,
-        ytd_return: analytics?.performanceMetrics?.ytdReturn || 0,
-        total_return: analytics?.performanceMetrics?.totalReturn || 0,
-        sharpe_ratio: analytics?.riskMetrics?.sharpeRatio || 0,
-        volatility: analytics?.riskMetrics?.volatility || 0,
-        beta_to_spy: analytics?.riskMetrics?.beta || 0,
-        alpha_vs_spy: analytics?.riskMetrics?.alpha || 0,
+        total_value: portfolio.currentValue || "unknown",
+        ytd_return: analytics?.performanceMetrics?.ytdReturn || "unknown",
+        total_return: analytics?.performanceMetrics?.totalReturn || "unknown",
+        sharpe_ratio: analytics?.riskMetrics?.sharpeRatio || "unknown",
+        volatility: analytics?.riskMetrics?.volatility || "unknown",
+        beta_to_spy: analytics?.riskMetrics?.beta || "unknown",
+        alpha_vs_spy: analytics?.riskMetrics?.alpha || "unknown",
+        max_drawdown: analytics?.riskMetrics?.maxDrawdown || "unknown",
+        tracking_error: analytics?.riskMetrics?.trackingError || "unknown",
+        sortino_ratio: analytics?.riskMetrics?.sortinoRatio || "unknown",
       },
       investor_thesis: {
         summary: portfolio.description || "No strategy description provided",
-        risk_tolerance: "Moderate", // Could be made configurable
-        time_horizon: "Long-term", // Could be made configurable
+        risk_tolerance: portfolio.riskTolerance || "unknown",
+        time_horizon: portfolio.timeHorizon || "unknown",
+      },
+      context: {
+        data_availability:
+          "Some portfolio metrics may show 'unknown' due to insufficient data, recent portfolio creation, or pending market data updates. Unknown values typically indicate that calculations cannot be performed without adequate historical data or when assets lack current market pricing.",
+        portfolio_size: portfolio.assets?.length || 0,
+        last_updated: portfolio.updatedAt || "unknown",
       },
     };
 
