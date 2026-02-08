@@ -23,22 +23,11 @@ export const createUser = mutation({
       name: args.name,
       email: args.email,
       clerkId: args.clerkId,
+      hasOnboarded: false,
     });
 
-    // Create default user preferences
-    await ctx.db.insert("userPreferences", {
-      userId,
-      currency: "USD",
-      theme: "dark",
-      language: "en",
-    });
-
-    // Create a default portfolio
-    await ctx.db.insert("portfolios", {
-      userId,
-      name: "My First Portfolio",
-      description: "Track your investments here",
-    });
+    // No automatic preferences or portfolio creation
+    // This will be handled by the onboarding flow
 
     return userId;
   },
@@ -343,5 +332,67 @@ export const getAllUsersWithAdminStatus = query({
       clerkId: user.clerkId,
       isAdmin: user.isAdmin ?? false,
     }));
+  },
+});
+
+// Save user preferences during onboarding
+export const saveOnboardingPreferences = mutation({
+  args: {
+    userId: v.id("users"),
+    currency: v.string(),
+    language: v.string(),
+    theme: v.optional(v.union(v.literal("light"), v.literal("dark"))),
+  },
+  handler: async (ctx, args) => {
+    // Create user preferences
+    return await ctx.db.insert("userPreferences", {
+      userId: args.userId,
+      currency: args.currency,
+      language: args.language,
+      theme: args.theme || "dark",
+    });
+  },
+});
+
+// Save AI preferences during onboarding
+export const saveOnboardingAiPreferences = mutation({
+  args: {
+    userId: v.id("users"),
+    aiProvider: v.string(),
+    openRouterApiKey: v.optional(v.string()),
+    tunnelId: v.optional(v.string()),
+    selfHostedUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const preferences = await ctx.db
+      .query("userPreferences")
+      .withIndex("byUser", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (preferences) {
+      await ctx.db.patch(preferences._id, {
+        aiProvider: args.aiProvider,
+        openRouterApiKey: args.openRouterApiKey || "",
+        tunnelId: args.tunnelId || "",
+        selfHostedUrl: args.selfHostedUrl || "",
+      });
+    }
+  },
+});
+
+// Mark onboarding as complete
+export const markOnboardingComplete = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(args.userId, {
+      hasOnboarded: true,
+    });
   },
 });
