@@ -30,10 +30,6 @@ export default clerkMiddleware(async (auth, request) => {
       return new NextResponse(null, { status: 404 });
     }
   }
-  // Allow access to demo routes without any Clerk intervention
-  if (request.nextUrl.pathname.startsWith("/auth-demo")) {
-    return;
-  }
 
   // Allow access to auth pages without authentication
   if (
@@ -42,9 +38,6 @@ export default clerkMiddleware(async (auth, request) => {
   ) {
     return;
   }
-
-  // For other routes, apply normal auth logic
-  // (This will be handled by the auth wrapper)
 });
 
 export const config = {

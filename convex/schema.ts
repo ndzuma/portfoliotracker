@@ -8,6 +8,7 @@ export default defineSchema({
     email: v.string(),
     clerkId: v.optional(v.string()),
     isAdmin: v.optional(v.boolean()),
+    hasOnboarded: v.optional(v.boolean()),
   }),
   // user settings and preferences
   userPreferences: defineTable({
