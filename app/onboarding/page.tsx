@@ -33,7 +33,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (isLoaded && user && existingUser === null) {
-      // New user - create Convex record
+      // New user - create Convex record with hasOnboarded: false
       createUser({
         name: user.fullName || user.username || "New User",
         email: user.primaryEmailAddress?.emailAddress || "",
@@ -46,7 +46,7 @@ export default function OnboardingPage() {
       setIsProcessing(false);
       router.push("/");
     } else if (isLoaded && user && existingUser && !existingUser.hasOnboarded) {
-      // User exists but hasn't completed onboarding, show onboarding
+      // User exists but hasn't completed onboarding, show onboarding flow
       setIsProcessing(false);
     } else if (isLoaded && !user) {
       // No user logged in, redirect to login
