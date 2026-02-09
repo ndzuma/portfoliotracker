@@ -529,6 +529,7 @@ function PresetGoalCard({
   currentValue,
   portfolioId,
   onEdit,
+  onDelete,
   index,
 }: {
   type: keyof typeof PRESET_META;
@@ -536,6 +537,7 @@ function PresetGoalCard({
   currentValue: number;
   portfolioId: string;
   onEdit: (goal: GoalRow) => void;
+  onDelete: (goalId: Id<"portfolioGoals">) => void;
   index: number;
 }) {
   const meta = PRESET_META[type];
@@ -668,6 +670,25 @@ function PresetGoalCard({
                   {formatVal(goal.targetValue)}
                 </button>
               </div>
+            </div>
+
+            {/* Edit / Remove actions */}
+            <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-white/[0.04]">
+              <button
+                onClick={() => goal && onEdit(goal)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+              >
+                <PencilSimple className="h-3 w-3" />
+                Edit Target
+              </button>
+              <div className="w-px h-3 bg-white/[0.06]" />
+              <button
+                onClick={() => goal && onDelete(goal._id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/[0.04] transition-colors"
+              >
+                <Trash className="h-3 w-3" />
+                Remove
+              </button>
             </div>
           </>
         ) : (
@@ -1857,6 +1878,7 @@ export function V2PortfolioGoals({
               currentValue={presetValues[type]}
               portfolioId={portfolioId}
               onEdit={handleEdit}
+              onDelete={handleDelete}
               index={i}
             />
           ))}
