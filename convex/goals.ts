@@ -10,9 +10,11 @@ export const getGoalsByPortfolio = query({
   handler: async (ctx, args) => {
     const goals = await ctx.db
       .query("goals")
-      .withIndex("byPortfolio", (q) => q.eq("portfolioId", args.portfolioId as Id<"portfolios">))
+      .withIndex("byPortfolio", (q) =>
+        q.eq("portfolioId", args.portfolioId as Id<"portfolios">),
+      )
       .first();
-    
+
     return goals;
   },
 });
@@ -21,26 +23,36 @@ export const getGoalsByPortfolio = query({
 export const upsertGoals = mutation({
   args: {
     portfolioId: v.union(v.id("portfolios"), v.string()),
-    targetValue: v.number(),
-    targetReturn: v.number(),
-    targetContribution: v.number(),
+    targetValue: v.optional(v.number()),
+    targetReturn: v.optional(v.number()),
+    targetYearlyReturn: v.optional(v.number()),
+    targetContribution: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { portfolioId, targetValue, targetReturn, targetContribution } = args;
-    
+    const {
+      portfolioId,
+      targetValue,
+      targetReturn,
+      targetYearlyReturn,
+      targetContribution,
+    } = args;
+
     // Check if goals already exist for this portfolio
     const existingGoals = await ctx.db
       .query("goals")
-      .withIndex("byPortfolio", (q) => q.eq("portfolioId", portfolioId as Id<"portfolios">))
+      .withIndex("byPortfolio", (q) =>
+        q.eq("portfolioId", portfolioId as Id<"portfolios">),
+      )
       .first();
-    
+
     const now = Date.now();
-    
+
     if (existingGoals) {
       // Update existing goals
       await ctx.db.patch(existingGoals._id, {
         targetValue,
         targetReturn,
+        targetYearlyReturn,
         targetContribution,
         updatedAt: now,
       });
@@ -51,6 +63,7 @@ export const upsertGoals = mutation({
         portfolioId: portfolioId as Id<"portfolios">,
         targetValue,
         targetReturn,
+        targetYearlyReturn,
         targetContribution,
         createdAt: now,
         updatedAt: now,
@@ -68,9 +81,11 @@ export const deleteGoals = mutation({
   handler: async (ctx, args) => {
     const goals = await ctx.db
       .query("goals")
-      .withIndex("byPortfolio", (q) => q.eq("portfolioId", args.portfolioId as Id<"portfolios">))
+      .withIndex("byPortfolio", (q) =>
+        q.eq("portfolioId", args.portfolioId as Id<"portfolios">),
+      )
       .first();
-    
+
     if (goals) {
       await ctx.db.delete(goals._id);
     }

@@ -162,9 +162,10 @@ export default defineSchema({
       v.union(
         v.literal("Strategy Document"),
         v.literal("Account Statement"),
+        v.literal("Portfolio Thesis"),
         v.literal("Research Report"),
-        v.literal("Tax Document"),
         v.literal("Annual Report"),
+        v.literal("Tax Document"),
         v.literal("Other"),
       ),
     ),
@@ -188,9 +189,10 @@ export default defineSchema({
   // portfolio goals
   goals: defineTable({
     portfolioId: v.id("portfolios"),
-    targetValue: v.number(),
-    targetReturn: v.number(),
-    targetContribution: v.number(),
+    targetValue: v.optional(v.number()),
+    targetReturn: v.optional(v.number()),
+    targetYearlyReturn: v.optional(v.number()),
+    targetContribution: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("byPortfolio", ["portfolioId"]),
