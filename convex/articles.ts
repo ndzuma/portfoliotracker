@@ -27,6 +27,7 @@ export const saveArticle = mutation({
     portfolioId: v.optional(v.union(v.id("portfolios"), v.string())),
     title: v.string(),
     url: v.string(),
+    notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const newArticle = await ctx.db.insert("userArticles", {
@@ -34,8 +35,33 @@ export const saveArticle = mutation({
       portfolioId: args.portfolioId || null,
       title: args.title,
       url: args.url,
+      notes: args.notes,
     });
     return newArticle;
+  },
+});
+
+export const updateArticle = mutation({
+  args: {
+    articleId: v.union(v.id("userArticles"), v.string()),
+    userId: v.union(v.id("users"), v.string()),
+    title: v.string(),
+    url: v.string(),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const article = await ctx.db.get(args.articleId);
+    if (!article) {
+      throw new Error("Article not found");
+    }
+    if (article.userId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
+    await ctx.db.patch(args.articleId, {
+      title: args.title,
+      url: args.url,
+      notes: args.notes,
+    });
   },
 });
 

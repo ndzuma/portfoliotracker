@@ -130,3 +130,13 @@
   }
   /* Remove the global override for rounded corners to allow subtle rounding */
 }
+
+/* Moving ticker — infinite marquee scroll */
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}

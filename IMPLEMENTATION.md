@@ -85,28 +85,33 @@
 
 ### Phase 2: Medium Components
 
-- [ ] **Step 5 — Asset allocation bar on portfolio page**
-  - Create tooltip-based variant of `V2AllocationBar` (tooltips, no labels)
-  - Use portfolio's asset type allocation data
-  - Layout below stats: `[AI Card | Allocation Bar]` side by side
+- [x] **Step 5 — Asset allocation bar on portfolio page**
+  - Created `V2AssetAllocationBar` component with tooltip-based segments (no external labels)
+  - Groups assets by type with color-coded segments, hover-dim effect, and compact legend
+  - Placed in 2-column grid alongside AI card on portfolio detail page
   - Files: `components/allocation-bar.tsx`, `app/(webapp)/portfolio/[id]/page.tsx`
 
-- [ ] **Step 6 — Research links: notes + edit button**
-  - Convex: update `saveArticle` to accept `notes`. Create `updateArticle` mutation (title, url, notes)
-  - Frontend: notes textarea in add flow, edit button per article, inline edit or dialog
+- [x] **Step 6 — Research links: notes + edit button**
+  - Convex: updated `saveArticle` to accept optional `notes`, created `updateArticle` mutation (title, url, notes)
+  - Frontend: notes textarea in save article dialog, edit button (pencil icon) per article, full edit dialog with title/url/notes
+  - Notes preview shown inline on article rows (italic, line-clamped)
   - Files: `convex/articles.ts`, `components/vault.tsx`
 
-- [ ] **Step 7 — Document upload dialog revamp**
-  - Replace raw file input with drag-and-drop dialog
-  - Add document type selector (7 types from schema)
-  - Add confirm step before upload
-  - Pass `type` to `uploadDocument` mutation
+- [x] **Step 7 — Document upload dialog revamp**
+  - Replaced raw file input with drag-and-drop `UploadDocumentDialog` component
+  - Step 1: drag-drop zone + document type selector grid (7 schema types with emoji icons)
+  - Step 2: confirm step with file summary (name, format, size, type)
+  - Step indicators in dialog header, Framer Motion step transitions
+  - Passes `type` to `uploadDocument` mutation
   - Files: `components/vault.tsx`
 
-- [ ] **Step 8 — Moving ticker strip**
-  - New `V2MovingTicker` component with CSS infinite scroll animation
-  - Duplicate items for seamless loop, pause on hover
-  - Files: new `components/moving-ticker.tsx`
+- [x] **Step 8 — Moving ticker strip**
+  - New `V2MovingTicker` component with CSS `@keyframes` infinite scroll animation
+  - Duplicated content for seamless loop, pause on hover, speed prop for tuning
+  - Edge fade masks via CSS `mask-image` gradient, gold accent bottom border glow
+  - Sparklines per benchmark, tabular-nums formatting, `aria-hidden` on duplicate set
+  - Keyframes in `app/globals.css`, duration auto-calculated from content width ÷ speed
+  - Files: new `components/moving-ticker.tsx`, `app/globals.css`
 
 - [ ] **Step 9 — News page header redesign**
   - Match hero-split DNA layout for title + AI card
@@ -181,3 +186,5 @@ Step 16 ─── independent (but do last — most complex)
 | Date | Steps | Notes |
 |---|---|---|
 | 2026-02-09 | 1, 2, 3, 4 | Phase 1 complete — AI card, holdings header, delete portfolio, vault search |
+| 2026-02-09 | 5, 6, 7 | Phase 2 partial — allocation bar, article notes+edit, document upload dialog |
+| 2026-02-09 | 8 | Moving ticker strip component — infinite marquee with CSS animation |

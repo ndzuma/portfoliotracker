@@ -1,10 +1,19 @@
 "use client";
 
-import { useState, useRef, FormEvent, ChangeEvent, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  FormEvent,
+  ChangeEvent,
+  useEffect,
+  DragEvent,
+  useCallback,
+} from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Crosshair,
   FileText,
@@ -20,6 +29,12 @@ import {
   DotsThree,
   LinkSimple,
   MagnifyingGlass,
+  CloudArrowUp,
+  File,
+  CheckCircle,
+  NotePencil,
+  CaretRight,
+  CaretLeft,
 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +60,29 @@ interface V2VaultProps {
   userId?: string;
 }
 
+/* ---------- CONSTANTS ---------- */
+const DOCUMENT_TYPES = [
+  "Strategy Document",
+  "Account Statement",
+  "Portfolio Thesis",
+  "Research Report",
+  "Annual Report",
+  "Tax Document",
+  "Other",
+] as const;
+
+type DocumentType = (typeof DOCUMENT_TYPES)[number];
+
+const DOC_TYPE_ICONS: Record<DocumentType, string> = {
+  "Strategy Document": "📐",
+  "Account Statement": "📊",
+  "Portfolio Thesis": "📝",
+  "Research Report": "🔬",
+  "Annual Report": "📈",
+  "Tax Document": "🧾",
+  Other: "📄",
+};
+
 /* ========================================================================== */
 /*  GOAL TRACKER                                                               */
 /* ========================================================================== */
@@ -65,24 +103,25 @@ function GoalTracker({
 
   const defaults = {
     targetValue: 100000,
-    targetReturn: 8,
+    targetReturn: 10,
     targetContribution: 500,
   };
-  const g = goals || defaults;
+  const g = goals;
 
-  const [form, setForm] = useState(g);
-  useEffect(() => {
-    if (goals) setForm(goals);
-  }, [goals]);
+  const [form, setForm] = useState({
+    targetValue: g?.targetValue ?? defaults.targetValue,
+    targetReturn: g?.targetReturn ?? defaults.targetReturn,
+    targetContribution: g?.targetContribution ?? defaults.targetContribution,
+  });
 
-  const pctValue = Math.min(
-    Math.round((portfolioValue / g.targetValue) * 100),
-    100,
-  );
-  const pctReturn = Math.min(
-    Math.round((annualReturn / g.targetReturn) * 100),
-    100,
-  );
+  const pctValue =
+    g?.targetValue && g.targetValue > 0
+      ? Math.min(100, (portfolioValue / g.targetValue) * 100)
+      : 0;
+  const pctReturn =
+    g?.targetReturn && g.targetReturn > 0
+      ? Math.min(100, (annualReturn / g.targetReturn) * 100)
+      : 0;
 
   const handleSave = async () => {
     try {
@@ -101,49 +140,81 @@ function GoalTracker({
 
   return (
     <>
-      <div className="flex flex-col gap-5">
-        {/* Value progress */}
+      <div className="flex flex-col gap-4">
+        {/* Portfolio Value Goal */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-zinc-300">Portfolio Value</span>
-            <span className="text-xs text-zinc-500">
-              ${portfolioValue.toLocaleString()} / $
-              {g.targetValue.toLocaleString()}
-            </span>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs text-zinc-500">Portfolio Value</p>
+            <p className="text-xs text-zinc-400 tabular-nums">
+              {pctValue.toFixed(0)}%
+            </p>
           </div>
           <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
             <div
-              className="h-full rounded-full bg-emerald-500 transition-all"
+              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
               style={{ width: `${pctValue}%` }}
             />
           </div>
-          <p className="text-[11px] text-zinc-600 mt-1">{pctValue}% of goal</p>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-[11px] text-zinc-600">
+              ${portfolioValue.toLocaleString()}
+            </p>
+            <p className="text-[11px] text-zinc-600">
+              ${(g?.targetValue ?? defaults.targetValue).toLocaleString()}
+            </p>
+          </div>
         </div>
 
-        {/* Return progress */}
+        {/* Annual Return Goal */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-zinc-300">Annual Return</span>
-            <span className="text-xs text-zinc-500">
-              {annualReturn.toFixed(1)}% / {g.targetReturn}%
-            </span>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs text-zinc-500">Annual Return</p>
+            <p className="text-xs text-zinc-400 tabular-nums">
+              {pctReturn.toFixed(0)}%
+            </p>
           </div>
           <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
             <div
-              className="h-full rounded-full bg-blue-500 transition-all"
+              className="h-full rounded-full bg-blue-500 transition-all duration-500"
               style={{ width: `${pctReturn}%` }}
             />
           </div>
-          <p className="text-[11px] text-zinc-600 mt-1">
-            {pctReturn}% of target
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-[11px] text-zinc-600">
+              {annualReturn.toFixed(2)}%
+            </p>
+            <p className="text-[11px] text-zinc-600">
+              {(g?.targetReturn ?? defaults.targetReturn).toFixed(1)}%
+            </p>
+          </div>
+        </div>
+
+        {/* Monthly Contribution */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs text-zinc-500">Monthly Contribution</p>
+          </div>
+          <p className="text-sm font-semibold text-white">
+            $
+            {(
+              g?.targetContribution ?? defaults.targetContribution
+            ).toLocaleString()}
           </p>
         </div>
 
         <button
-          onClick={() => setEditOpen(true)}
-          className="self-start text-xs text-zinc-500 hover:text-white transition-colors mt-1"
+          onClick={() => {
+            setForm({
+              targetValue: g?.targetValue ?? defaults.targetValue,
+              targetReturn: g?.targetReturn ?? defaults.targetReturn,
+              targetContribution:
+                g?.targetContribution ?? defaults.targetContribution,
+            });
+            setEditOpen(true);
+          }}
+          className="flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mt-1 self-start"
         >
-          Edit goals
+          <PencilSimple className="h-3 w-3" /> Edit goals
         </button>
       </div>
 
@@ -158,33 +229,26 @@ function GoalTracker({
             <div className="flex flex-col gap-4 py-2">
               <div className="flex flex-col gap-1.5">
                 <Label className="text-xs text-zinc-400">
-                  Target Value ($)
+                  Target Portfolio Value ($)
                 </Label>
                 <Input
                   type="number"
                   value={form.targetValue}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      targetValue: parseInt(e.target.value) || 0,
-                    })
+                    setForm({ ...form, targetValue: Number(e.target.value) })
                   }
                   className="bg-zinc-900 border-white/[0.06] text-white h-9"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label className="text-xs text-zinc-400">
-                  Target Return (%)
+                  Target Annual Return (%)
                 </Label>
                 <Input
                   type="number"
-                  step="0.1"
                   value={form.targetReturn}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      targetReturn: parseFloat(e.target.value) || 0,
-                    })
+                    setForm({ ...form, targetReturn: Number(e.target.value) })
                   }
                   className="bg-zinc-900 border-white/[0.06] text-white h-9"
                 />
@@ -199,7 +263,7 @@ function GoalTracker({
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      targetContribution: parseInt(e.target.value) || 0,
+                      targetContribution: Number(e.target.value),
                     })
                   }
                   className="bg-zinc-900 border-white/[0.06] text-white h-9"
@@ -228,8 +292,16 @@ function GoalTracker({
 }
 
 /* ========================================================================== */
-/*  ARTICLES                                                                   */
+/*  ARTICLES                                                                    */
 /* ========================================================================== */
+
+interface ArticleItem {
+  _id: string;
+  title: string;
+  url: string;
+  notes?: string;
+}
+
 function ArticlesList({
   userId,
   portfolioId,
@@ -240,12 +312,23 @@ function ArticlesList({
   searchQuery: string;
 }) {
   const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<ArticleItem | null>(
+    null,
+  );
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
+  const [notes, setNotes] = useState("");
+
+  /* Edit form state */
+  const [editTitle, setEditTitle] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [editNotes, setEditNotes] = useState("");
 
   const articles =
     useQuery(api.articles.getArticles, { userId, portfolioId }) || [];
   const addArticle = useMutation(api.articles.saveArticle);
+  const updateArticle = useMutation(api.articles.updateArticle);
   const deleteArticle = useMutation(api.articles.deleteArticle);
 
   // Filter articles by search query
@@ -270,14 +353,42 @@ function ArticlesList({
         portfolioId: portfolioId as Id<"portfolios">,
         title,
         url,
+        notes: notes.trim() || undefined,
       });
       setTitle("");
       setUrl("");
+      setNotes("");
       setAddOpen(false);
       toast.success("Article saved");
     } catch {
       toast.error("Failed to save");
     }
+  };
+
+  const handleEdit = async () => {
+    if (!editingArticle || !editTitle.trim() || !editUrl.trim()) return;
+    try {
+      await updateArticle({
+        articleId: editingArticle._id as Id<"userArticles">,
+        userId: userId as Id<"users">,
+        title: editTitle,
+        url: editUrl,
+        notes: editNotes.trim() || undefined,
+      });
+      setEditOpen(false);
+      setEditingArticle(null);
+      toast.success("Article updated");
+    } catch {
+      toast.error("Failed to update");
+    }
+  };
+
+  const openEditDialog = (article: ArticleItem) => {
+    setEditingArticle(article);
+    setEditTitle(article.title);
+    setEditUrl(article.url);
+    setEditNotes(article.notes || "");
+    setEditOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -300,51 +411,56 @@ function ArticlesList({
             {searchQuery ? "No matching articles." : "No saved articles yet."}
           </p>
         ) : (
-          filteredArticles.map(
-            (a: {
-              _id: string;
-              title: string;
-              url: string;
-              notes?: string;
-            }) => (
-              <div
-                key={a._id}
-                className="group flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-white/[0.02] transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <LinkSimple className="h-3.5 w-3.5 text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-zinc-300 truncate">{a.title}</p>
-                  <p className="text-[11px] text-zinc-600 truncate">
-                    {(() => {
-                      try {
-                        return new URL(a.url).hostname;
-                      } catch {
-                        return a.url;
-                      }
-                    })()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <a
-                    href={a.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors"
-                  >
-                    <ArrowSquareOut className="h-3.5 w-3.5" />
-                  </a>
-                  <button
-                    onClick={() => handleDelete(a._id)}
-                    className="p-1.5 rounded-md text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    <Trash className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+          filteredArticles.map((a: ArticleItem) => (
+            <div
+              key={a._id}
+              className="group flex items-start gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <LinkSimple className="h-3.5 w-3.5 text-blue-400" />
               </div>
-            ),
-          )
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-zinc-300 truncate">{a.title}</p>
+                <p className="text-[11px] text-zinc-600 truncate">
+                  {(() => {
+                    try {
+                      return new URL(a.url).hostname;
+                    } catch {
+                      return a.url;
+                    }
+                  })()}
+                </p>
+                {a.notes && (
+                  <p className="text-[11px] text-zinc-500 mt-1 line-clamp-2 leading-relaxed italic">
+                    {a.notes}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <button
+                  onClick={() => openEditDialog(a)}
+                  className="p-1.5 rounded-md text-zinc-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                  title="Edit article"
+                >
+                  <PencilSimple className="h-3.5 w-3.5" />
+                </button>
+                <a
+                  href={a.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <ArrowSquareOut className="h-3.5 w-3.5" />
+                </a>
+                <button
+                  onClick={() => handleDelete(a._id)}
+                  className="p-1.5 rounded-md text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                >
+                  <Trash className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ))
         )}
         <button
           onClick={() => setAddOpen(true)}
@@ -354,8 +470,9 @@ function ArticlesList({
         </button>
       </div>
 
+      {/* ---- ADD ARTICLE DIALOG ---- */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="sm:max-w-[400px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[440px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
           <div className="px-6 py-4 border-b border-white/[0.06]">
             <DialogTitle className="text-white text-base font-semibold">
               Save Article
@@ -381,6 +498,19 @@ function ArticlesList({
                   className="bg-zinc-900 border-white/[0.06] text-white h-9"
                 />
               </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-zinc-400">
+                  Notes{" "}
+                  <span className="text-zinc-600 font-normal">(optional)</span>
+                </Label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Key takeaways, thoughts..."
+                  rows={3}
+                  className="bg-zinc-900 border border-white/[0.06] text-white text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-white/[0.12] transition-colors placeholder:text-zinc-600"
+                />
+              </div>
             </div>
             <div className="flex items-center justify-between gap-3 mt-3 pt-4 border-t border-white/[0.06]">
               <button
@@ -400,47 +530,152 @@ function ArticlesList({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ---- EDIT ARTICLE DIALOG ---- */}
+      <Dialog
+        open={editOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open);
+          if (!open) setEditingArticle(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[440px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.06]">
+            <DialogTitle className="text-white text-base font-semibold">
+              Edit Article
+            </DialogTitle>
+          </div>
+          <div className="px-6 pb-6 pt-5">
+            <div className="flex flex-col gap-4 py-2">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-zinc-400">Title</Label>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Article title"
+                  className="bg-zinc-900 border-white/[0.06] text-white h-9"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-zinc-400">URL</Label>
+                <Input
+                  value={editUrl}
+                  onChange={(e) => setEditUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="bg-zinc-900 border-white/[0.06] text-white h-9"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-zinc-400">
+                  Notes{" "}
+                  <span className="text-zinc-600 font-normal">(optional)</span>
+                </Label>
+                <textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Key takeaways, thoughts..."
+                  rows={3}
+                  className="bg-zinc-900 border border-white/[0.06] text-white text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-white/[0.12] transition-colors placeholder:text-zinc-600"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3 mt-3 pt-4 border-t border-white/[0.06]">
+              <button
+                onClick={() => {
+                  setEditOpen(false);
+                  setEditingArticle(null);
+                }}
+                className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEdit}
+                disabled={!editTitle.trim() || !editUrl.trim()}
+                className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Update Article
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
 
 /* ========================================================================== */
-/*  DOCUMENTS                                                                  */
+/*  DOCUMENT UPLOAD DIALOG                                                     */
 /* ========================================================================== */
-function DocumentsList({
+
+function UploadDocumentDialog({
+  open,
+  onOpenChange,
   userId,
   portfolioId,
-  searchQuery,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   userId: string;
   portfolioId: string;
-  searchQuery: string;
 }) {
+  const [step, setStep] = useState<1 | 2>(1);
+  const [file, setFile] = useState<File | null>(null);
+  const [docType, setDocType] = useState<DocumentType>("Other");
+  const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [newName, setNewName] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const docs =
-    useQuery(api.documents.getDocuments, { userId, portfolioId }) || [];
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const uploadDoc = useMutation(api.documents.uploadDocument);
-  const updateName = useMutation(api.documents.updateFileName);
-  const deleteDoc = useMutation(api.documents.deleteDocument);
 
-  // Filter documents by search query
-  const filteredDocs = searchQuery
-    ? docs.filter((doc: { fileName: string; type?: string; _id: string }) => {
-        const q = searchQuery.toLowerCase();
-        return (
-          doc.fileName.toLowerCase().includes(q) ||
-          (doc.type && doc.type.toLowerCase().includes(q))
-        );
-      })
-    : docs;
+  const resetState = () => {
+    setStep(1);
+    setFile(null);
+    setDocType("Other");
+    setIsDragOver(false);
+    setIsUploading(false);
+  };
 
-  const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleClose = (open: boolean) => {
+    if (!open) resetState();
+    onOpenChange(open);
+  };
+
+  const handleFileSelect = (selectedFile: File) => {
+    setFile(selectedFile);
+  };
+
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      handleFileSelect(droppedFile);
+    }
+  }, []);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      handleFileSelect(selectedFile);
+    }
+  };
+
+  const handleUpload = async () => {
     if (!file) return;
     setIsUploading(true);
     try {
@@ -456,15 +691,319 @@ function DocumentsList({
         userId: userId as Id<"users">,
         portfolioId: portfolioId as Id<"portfolios">,
         fileName: file.name,
+        type: docType,
       });
-      toast.success("Uploaded");
+      toast.success("Document uploaded");
+      handleClose(false);
     } catch {
       toast.error("Upload failed");
-    } finally {
       setIsUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
     }
   };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getFileExtension = (name: string): string => {
+    const parts = name.split(".");
+    return parts.length > 1 ? parts.pop()!.toUpperCase() : "FILE";
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
+        {/* Header with step indicators */}
+        <div className="px-6 py-4 border-b border-white/[0.06]">
+          <DialogTitle className="text-white text-base font-semibold mb-3">
+            Upload Document
+          </DialogTitle>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <div
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
+                  step >= 1
+                    ? "bg-white text-black"
+                    : "bg-white/[0.06] text-zinc-500"
+                }`}
+              >
+                1
+              </div>
+              <span
+                className={`text-[11px] font-medium ${step >= 1 ? "text-white" : "text-zinc-600"}`}
+              >
+                Select File
+              </span>
+            </div>
+            <div className="w-6 h-px bg-white/[0.08]" />
+            <div className="flex items-center gap-1.5">
+              <div
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
+                  step >= 2
+                    ? "bg-white text-black"
+                    : "bg-white/[0.06] text-zinc-500"
+                }`}
+              >
+                2
+              </div>
+              <span
+                className={`text-[11px] font-medium ${step >= 2 ? "text-white" : "text-zinc-600"}`}
+              >
+                Confirm
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 pb-6 pt-5">
+          <AnimatePresence mode="wait">
+            {/* ---- STEP 1: SELECT FILE + TYPE ---- */}
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{ duration: 0.15 }}
+              >
+                {/* Drag and drop zone */}
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`relative flex flex-col items-center justify-center gap-3 py-10 px-6 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 ${
+                    isDragOver
+                      ? "border-white/[0.25] bg-white/[0.04]"
+                      : file
+                        ? "border-emerald-500/30 bg-emerald-500/[0.03]"
+                        : "border-white/[0.08] bg-white/[0.01] hover:border-white/[0.12] hover:bg-white/[0.02]"
+                  }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleInputChange}
+                    className="hidden"
+                  />
+
+                  {file ? (
+                    <>
+                      <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                        <CheckCircle
+                          className="h-5 w-5 text-emerald-400"
+                          weight="fill"
+                        />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-white font-medium truncate max-w-[280px]">
+                          {file.name}
+                        </p>
+                        <p className="text-[11px] text-zinc-500 mt-0.5">
+                          {getFileExtension(file.name)} ·{" "}
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFile(null);
+                          if (fileInputRef.current)
+                            fileInputRef.current.value = "";
+                        }}
+                        className="text-[11px] text-zinc-500 hover:text-white transition-colors underline underline-offset-2"
+                      >
+                        Choose different file
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-11 h-11 rounded-xl bg-white/[0.04] flex items-center justify-center">
+                        <CloudArrowUp className="h-5 w-5 text-zinc-400" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-zinc-300">
+                          <span className="text-white font-medium">
+                            Click to browse
+                          </span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-[11px] text-zinc-600 mt-0.5">
+                          PDF, DOCX, XLSX, CSV, TXT — up to 10MB
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Document type selector */}
+                <div className="mt-5">
+                  <Label className="text-xs text-zinc-400 mb-2 block">
+                    Document Type
+                  </Label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {DOCUMENT_TYPES.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setDocType(type)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left text-xs transition-all duration-150 ${
+                          docType === type
+                            ? "bg-white/[0.08] text-white border border-white/[0.12]"
+                            : "bg-white/[0.02] text-zinc-400 border border-white/[0.04] hover:border-white/[0.08] hover:text-zinc-300"
+                        }`}
+                      >
+                        <span className="text-sm leading-none">
+                          {DOC_TYPE_ICONS[type]}
+                        </span>
+                        <span className="truncate">{type}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Step 1 footer */}
+                <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+                  <button
+                    onClick={() => handleClose(false)}
+                    className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setStep(2)}
+                    disabled={!file}
+                    className="flex items-center gap-1.5 px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Next
+                    <CaretRight className="h-3.5 w-3.5" weight="bold" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ---- STEP 2: CONFIRM ---- */}
+            {step === 2 && file && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.15 }}
+              >
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                  <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-4">
+                    Upload Summary
+                  </p>
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <File className="h-5 w-5 text-amber-400" weight="fill" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-medium truncate">
+                        {file.name}
+                      </p>
+                      <div className="flex flex-col gap-1 mt-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-zinc-500">
+                            Format
+                          </span>
+                          <span className="text-[11px] text-zinc-300 font-medium">
+                            {getFileExtension(file.name)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-zinc-500">
+                            Size
+                          </span>
+                          <span className="text-[11px] text-zinc-300 font-medium">
+                            {formatFileSize(file.size)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-zinc-500">
+                            Type
+                          </span>
+                          <span className="text-[11px] text-zinc-300 font-medium flex items-center gap-1.5">
+                            <span>{DOC_TYPE_ICONS[docType]}</span>
+                            {docType}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 2 footer */}
+                <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
+                  <button
+                    onClick={() => setStep(1)}
+                    disabled={isUploading}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors disabled:opacity-40"
+                  >
+                    <CaretLeft className="h-3.5 w-3.5" weight="bold" />
+                    Back
+                  </button>
+                  <button
+                    onClick={handleUpload}
+                    disabled={isUploading}
+                    className="flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isUploading ? (
+                      <>
+                        <CircleNotch className="h-3.5 w-3.5 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-3.5 w-3.5" />
+                        Upload Document
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ========================================================================== */
+/*  DOCUMENTS                                                                  */
+/* ========================================================================== */
+function DocumentsList({
+  userId,
+  portfolioId,
+  searchQuery,
+}: {
+  userId: string;
+  portfolioId: string;
+  searchQuery: string;
+}) {
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+
+  const docs =
+    useQuery(api.documents.getDocuments, { userId, portfolioId }) || [];
+  const updateName = useMutation(api.documents.updateFileName);
+  const deleteDoc = useMutation(api.documents.deleteDocument);
+
+  // Filter documents by search query
+  const filteredDocs = searchQuery
+    ? docs.filter((doc: { fileName: string; type?: string; _id: string }) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          doc.fileName.toLowerCase().includes(q) ||
+          (doc.type && doc.type.toLowerCase().includes(q))
+        );
+      })
+    : docs;
 
   const handleRename = async (id: string) => {
     if (!newName.trim()) return;
@@ -495,128 +1034,128 @@ function DocumentsList({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      {filteredDocs.length === 0 ? (
-        <p className="text-sm text-zinc-600 py-3">
-          {searchQuery
-            ? "No matching documents."
-            : "No documents uploaded yet."}
-        </p>
-      ) : (
-        filteredDocs.map(
-          (doc: {
-            _id: string;
-            fileName: string;
-            type?: string;
-            url: string | null;
-            size: number;
-          }) => (
-            <div
-              key={doc._id}
-              className="group flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-white/[0.02] transition-colors"
-            >
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                <FileText className="h-3.5 w-3.5 text-amber-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                {editingId === doc._id ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      autoFocus
-                      className="text-sm bg-zinc-900 border border-white/[0.06] rounded px-2 py-0.5 text-white w-full focus:outline-none focus:border-white/[0.12]"
-                    />
-                    <button
-                      onClick={() => handleRename(doc._id)}
-                      className="p-1 text-emerald-500 hover:text-emerald-400"
+    <>
+      <div className="flex flex-col gap-2">
+        {filteredDocs.length === 0 ? (
+          <p className="text-sm text-zinc-600 py-3">
+            {searchQuery
+              ? "No matching documents."
+              : "No documents uploaded yet."}
+          </p>
+        ) : (
+          filteredDocs.map(
+            (doc: {
+              _id: string;
+              fileName: string;
+              type?: string;
+              url: string | null;
+              size: number;
+            }) => (
+              <div
+                key={doc._id}
+                className="group flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <FileText className="h-3.5 w-3.5 text-amber-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  {editingId === doc._id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        autoFocus
+                        className="text-sm bg-zinc-900 border border-white/[0.06] rounded px-2 py-0.5 text-white w-full focus:outline-none focus:border-white/[0.12]"
+                      />
+                      <button
+                        onClick={() => handleRename(doc._id)}
+                        className="p-1 text-emerald-500 hover:text-emerald-400"
+                      >
+                        <FloppyDisk className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingId(null);
+                          setNewName("");
+                        }}
+                        className="p-1 text-zinc-500 hover:text-white"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-zinc-300 truncate">
+                        {doc.fileName}
+                      </p>
+                      <p className="text-[11px] text-zinc-600">
+                        {doc.type && doc.type !== "Other" ? (
+                          <span className="text-zinc-500">{doc.type} · </span>
+                        ) : null}
+                        {(doc.size / 1024).toFixed(1)} KB
+                      </p>
+                    </>
+                  )}
+                </div>
+                {editingId !== doc._id && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a
+                      href={doc.url || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors"
                     >
-                      <FloppyDisk className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingId(null);
-                        setNewName("");
-                      }}
-                      className="p-1 text-zinc-500 hover:text-white"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
+                      <ArrowSquareOut className="h-3.5 w-3.5" />
+                    </a>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors">
+                          <DotsThree className="h-3.5 w-3.5" weight="bold" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-zinc-950 border-white/[0.08]"
+                      >
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditingId(doc._id);
+                            setNewName(doc.fileName);
+                          }}
+                          className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
+                        >
+                          <PencilSimple className="h-3.5 w-3.5 mr-2" /> Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(doc._id)}
+                          className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
+                        >
+                          <Trash className="h-3.5 w-3.5 mr-2" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                ) : (
-                  <>
-                    <p className="text-sm text-zinc-300 truncate">
-                      {doc.fileName}
-                    </p>
-                    <p className="text-[11px] text-zinc-600">
-                      {(doc.size / 1024).toFixed(1)} KB
-                    </p>
-                  </>
                 )}
               </div>
-              {editingId !== doc._id && (
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <a
-                    href={doc.url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors"
-                  >
-                    <ArrowSquareOut className="h-3.5 w-3.5" />
-                  </a>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/[0.06] transition-colors">
-                        <DotsThree className="h-3.5 w-3.5" weight="bold" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="bg-zinc-950 border-white/[0.08]"
-                    >
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setEditingId(doc._id);
-                          setNewName(doc.fileName);
-                        }}
-                        className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
-                      >
-                        <PencilSimple className="h-3.5 w-3.5 mr-2" /> Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDelete(doc._id)}
-                        className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
-                      >
-                        <Trash className="h-3.5 w-3.5 mr-2" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )}
-            </div>
-          ),
-        )
-      )}
-      <input
-        ref={fileRef}
-        type="file"
-        onChange={handleUpload}
-        className="hidden"
-      />
-      <button
-        onClick={() => fileRef.current?.click()}
-        disabled={isUploading}
-        className="flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mt-1 self-start disabled:opacity-40"
-      >
-        {isUploading ? (
-          <CircleNotch className="h-3 w-3 animate-spin" />
-        ) : (
-          <Upload className="h-3 w-3" />
+            ),
+          )
         )}
-        {isUploading ? "Uploading..." : "Upload file"}
-      </button>
-    </div>
+        <button
+          onClick={() => setUploadOpen(true)}
+          className="flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mt-1 self-start"
+        >
+          <Upload className="h-3 w-3" /> Upload file
+        </button>
+      </div>
+
+      <UploadDocumentDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        userId={userId}
+        portfolioId={portfolioId}
+      />
+    </>
   );
 }
 

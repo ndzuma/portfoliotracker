@@ -17,6 +17,7 @@ import { V2HeroSplit } from "@/components/hero-split";
 import { V2Tabs } from "@/components/tabs";
 import { V2PerformanceChart } from "@/components/performance-chart";
 import { V2AICard } from "@/components/ai-card";
+import { V2AssetAllocationBar } from "@/components/allocation-bar";
 import { V2Holdings } from "@/components/holdings";
 import { V2Analytics } from "@/components/analytics";
 import { V2Vault } from "@/components/vault";
@@ -357,19 +358,24 @@ export default function V2PortfolioDetail() {
           </div>
         </section>
 
-        {/* AI Summary */}
+        {/* AI Summary + Allocation */}
         <section className="max-w-[1600px] mx-auto px-8 pb-6">
-          <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
-            <V2AICard
-              label="AI Portfolio Insight"
-              headline={aiHeadline}
-              analysis={cleanAnalysis}
-              timestamp={portfolioTimestamp}
-              maxDisplayLength={80}
-              onRefresh={handleGenerateAI}
-              isRefreshing={isGeneratingAI}
-              showRefresh={true}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
+              <V2AICard
+                label="AI Portfolio Insight"
+                headline={aiHeadline}
+                analysis={cleanAnalysis}
+                timestamp={portfolioTimestamp}
+                maxDisplayLength={80}
+                onRefresh={handleGenerateAI}
+                isRefreshing={isGeneratingAI}
+                showRefresh={true}
+              />
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5 flex flex-col justify-center">
+              <V2AssetAllocationBar assets={portfolio?.assets || []} />
+            </div>
           </div>
         </section>
 
