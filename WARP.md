@@ -20,7 +20,7 @@ npm run lint
 ```
 
 ### Package Management
-This project uses npm (package.json present).
+This project uses pnpm as the package manager.
 
 ## Architecture Overview
 
