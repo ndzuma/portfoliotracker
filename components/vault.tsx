@@ -15,7 +15,6 @@ import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  Crosshair,
   FileText,
   BookOpen,
   Plus,
@@ -38,7 +37,7 @@ import {
 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress/index";
+
 import {
   Dialog,
   DialogContent,
@@ -55,8 +54,6 @@ import {
 /* ---------- TYPES ---------- */
 interface V2VaultProps {
   portfolioId: string;
-  portfolioValue: number;
-  annualReturn: number;
   userId?: string;
 }
 
@@ -82,214 +79,6 @@ const DOC_TYPE_ICONS: Record<DocumentType, string> = {
   "Tax Document": "🧾",
   Other: "📄",
 };
-
-/* ========================================================================== */
-/*  GOAL TRACKER                                                               */
-/* ========================================================================== */
-function GoalTracker({
-  portfolioId,
-  portfolioValue,
-  annualReturn,
-}: {
-  portfolioId: string;
-  portfolioValue: number;
-  annualReturn: number;
-}) {
-  const [editOpen, setEditOpen] = useState(false);
-  const goals = useQuery(api.goals.getGoalsByPortfolio, {
-    portfolioId: portfolioId as Id<"portfolios">,
-  });
-  const upsertGoals = useMutation(api.goals.upsertGoals);
-
-  const defaults = {
-    targetValue: 100000,
-    targetReturn: 10,
-    targetContribution: 500,
-  };
-  const g = goals;
-
-  const [form, setForm] = useState({
-    targetValue: g?.targetValue ?? defaults.targetValue,
-    targetReturn: g?.targetReturn ?? defaults.targetReturn,
-    targetContribution: g?.targetContribution ?? defaults.targetContribution,
-  });
-
-  const pctValue =
-    g?.targetValue && g.targetValue > 0
-      ? Math.min(100, (portfolioValue / g.targetValue) * 100)
-      : 0;
-  const pctReturn =
-    g?.targetReturn && g.targetReturn > 0
-      ? Math.min(100, (annualReturn / g.targetReturn) * 100)
-      : 0;
-
-  const handleSave = async () => {
-    try {
-      await upsertGoals({
-        portfolioId: portfolioId as Id<"portfolios">,
-        targetValue: form.targetValue,
-        targetReturn: form.targetReturn,
-        targetContribution: form.targetContribution,
-      });
-      setEditOpen(false);
-      toast.success("Goals updated");
-    } catch {
-      toast.error("Failed to save goals");
-    }
-  };
-
-  return (
-    <>
-      <div className="flex flex-col gap-4">
-        {/* Portfolio Value Goal */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-xs text-zinc-500">Portfolio Value</p>
-            <p className="text-xs text-zinc-400 tabular-nums">
-              {pctValue.toFixed(0)}%
-            </p>
-          </div>
-          <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-              style={{ width: `${pctValue}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-[11px] text-zinc-600">
-              ${portfolioValue.toLocaleString()}
-            </p>
-            <p className="text-[11px] text-zinc-600">
-              ${(g?.targetValue ?? defaults.targetValue).toLocaleString()}
-            </p>
-          </div>
-        </div>
-
-        {/* Annual Return Goal */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-xs text-zinc-500">Annual Return</p>
-            <p className="text-xs text-zinc-400 tabular-nums">
-              {pctReturn.toFixed(0)}%
-            </p>
-          </div>
-          <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-blue-500 transition-all duration-500"
-              style={{ width: `${pctReturn}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-[11px] text-zinc-600">
-              {annualReturn.toFixed(2)}%
-            </p>
-            <p className="text-[11px] text-zinc-600">
-              {(g?.targetReturn ?? defaults.targetReturn).toFixed(1)}%
-            </p>
-          </div>
-        </div>
-
-        {/* Monthly Contribution */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-xs text-zinc-500">Monthly Contribution</p>
-          </div>
-          <p className="text-sm font-semibold text-white">
-            $
-            {(
-              g?.targetContribution ?? defaults.targetContribution
-            ).toLocaleString()}
-          </p>
-        </div>
-
-        <button
-          onClick={() => {
-            setForm({
-              targetValue: g?.targetValue ?? defaults.targetValue,
-              targetReturn: g?.targetReturn ?? defaults.targetReturn,
-              targetContribution:
-                g?.targetContribution ?? defaults.targetContribution,
-            });
-            setEditOpen(true);
-          }}
-          className="flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mt-1 self-start"
-        >
-          <PencilSimple className="h-3 w-3" /> Edit goals
-        </button>
-      </div>
-
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-[400px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
-          <div className="px-6 py-4 border-b border-white/[0.06]">
-            <DialogTitle className="text-white text-base font-semibold">
-              Edit Goals
-            </DialogTitle>
-          </div>
-          <div className="px-6 pb-6 pt-5">
-            <div className="flex flex-col gap-4 py-2">
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">
-                  Target Portfolio Value ($)
-                </Label>
-                <Input
-                  type="number"
-                  value={form.targetValue}
-                  onChange={(e) =>
-                    setForm({ ...form, targetValue: Number(e.target.value) })
-                  }
-                  className="bg-zinc-900 border-white/[0.06] text-white h-9"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">
-                  Target Annual Return (%)
-                </Label>
-                <Input
-                  type="number"
-                  value={form.targetReturn}
-                  onChange={(e) =>
-                    setForm({ ...form, targetReturn: Number(e.target.value) })
-                  }
-                  className="bg-zinc-900 border-white/[0.06] text-white h-9"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">
-                  Monthly Contribution ($)
-                </Label>
-                <Input
-                  type="number"
-                  value={form.targetContribution}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      targetContribution: Number(e.target.value),
-                    })
-                  }
-                  className="bg-zinc-900 border-white/[0.06] text-white h-9"
-                />
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-3 mt-3 pt-4 border-t border-white/[0.06]">
-              <button
-                onClick={() => setEditOpen(false)}
-                className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors"
-              >
-                Save Goals
-              </button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
 
 /* ========================================================================== */
 /*  ARTICLES                                                                    */
@@ -1162,12 +951,7 @@ function DocumentsList({
 /* ========================================================================== */
 /*  VAULT CONTAINER                                                            */
 /* ========================================================================== */
-export function V2Vault({
-  portfolioId,
-  portfolioValue,
-  annualReturn,
-  userId,
-}: V2VaultProps) {
+export function V2Vault({ portfolioId, userId }: V2VaultProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
@@ -1193,20 +977,7 @@ export function V2Vault({
       </div>
 
       {/* Vault grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Goals */}
-        <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
-          <div className="flex items-center gap-2 mb-5">
-            <Crosshair className="h-3.5 w-3.5 text-emerald-500" />
-            <h3 className="text-sm font-semibold text-white">Goals</h3>
-          </div>
-          <GoalTracker
-            portfolioId={portfolioId}
-            portfolioValue={portfolioValue}
-            annualReturn={annualReturn}
-          />
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Articles */}
         <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
           <div className="flex items-center gap-2 mb-5">

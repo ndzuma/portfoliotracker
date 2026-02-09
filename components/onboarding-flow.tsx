@@ -68,7 +68,9 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
   const savePreferences = useMutation(api.users.saveOnboardingPreferences);
   const saveAiPreferences = useMutation(api.users.saveOnboardingAiPreferences);
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
-  const upsertGoals = useMutation(api.goals.upsertGoals);
+  const createGoalsFromOnboarding = useMutation(
+    api.portfolioGoals.createGoalsFromOnboarding,
+  );
   const uploadDocument = useMutation(api.documents.uploadDocument);
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const markComplete = useMutation(api.users.markOnboardingComplete);
@@ -152,7 +154,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         data.targetYearlyReturn ||
         data.targetContribution
       ) {
-        await upsertGoals({
+        await createGoalsFromOnboarding({
           portfolioId: portfolioId as any,
           targetValue: data.targetValue,
           targetReturn: data.targetReturn,

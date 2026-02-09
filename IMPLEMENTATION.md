@@ -15,7 +15,7 @@
 | Asset CRUD + transactions | `convex/assets.ts` |
 | Articles CRUD | `convex/articles.ts` |
 | Documents CRUD | `convex/documents.ts` |
-| Goals CRUD | `convex/goals.ts` |
+| Portfolio Goals CRUD | `convex/portfolioGoals.ts` |
 | Main dashboard page | `app/page.tsx` |
 | Portfolio detail page | `app/(webapp)/portfolio/[id]/page.tsx` |
 | News page | `app/(webapp)/news/page.tsx` |
@@ -24,7 +24,8 @@
 | Ticker strip | `components/ticker.tsx` |
 | AI card | `components/ai-card.tsx` |
 | AI summary popup | `components/ai-summary-popup.tsx` |
-| Vault (goals, articles, docs) | `components/vault.tsx` |
+| Vault (articles, docs) | `components/vault.tsx` |
+| Portfolio Goals tab | `components/portfolio-goals.tsx` |
 | Add asset dialog | `components/add-asset-dialog.tsx` |
 | Edit asset dialog | `components/edit-asset-dialog.tsx` |
 | Create portfolio dialog | `components/create-portfolio-dialog.tsx` |
@@ -35,11 +36,7 @@
 | Types | `components/types.ts` |
 
 **Schema gaps the frontend doesn't use yet**:
-- `userDocuments.type` — 7 document types defined in schema, never sent from frontend
 - `userDocuments.format` — never populated
-- `userArticles.notes` — field exists in schema, `saveArticle` mutation doesn't accept it
-- `portfolios.includeInNetworth` / `portfolios.allowSubscriptions` — schema fields, not in any dialog
-- `goals.targetYearlyReturn` — schema field, not surfaced in UI
 - `articles.editArticleUrl` — mutation exists, no frontend button
 
 **Design rules**:
@@ -174,12 +171,20 @@
 
 ### Phase 4: Large Features
 
-- [ ] **Step 15 — Goals tab redesign**
-  - Schema: consider new `portfolioGoals` table for multiple goals per portfolio, or extend current `goals` table
-  - Convex: CRUD for individual goals
-  - Frontend: "Goals" tab on portfolio page, goal cards with half-radial gauge charts
-  - Add/Edit/Delete per goal
-  - Files: `convex/schema.ts`, new `convex/portfolioGoals.ts`, `app/(webapp)/portfolio/[id]/page.tsx`, new goal components
+- [x] **Step 15 — Goals tab redesign**
+  - Schema: renamed `goals` table → `portfolioGoals` with new multi-goal structure — each goal is its own row with `name`, `type` (5 variants: `portfolio_value`, `annual_return`, `yearly_return`, `monthly_contribution`, `custom`), `targetValue`, `currentValue`, `unit` (`currency`/`percentage`), `icon`, `color`, `deadline`, `notes`
+  - Convex: new `convex/portfolioGoals.ts` with full CRUD — `getGoalsByPortfolio`, `getGoalById`, `createGoal`, `updateGoal`, `deleteGoal`, `deleteGoalsByPortfolio`, plus `createGoalsFromOnboarding` (legacy bridge for onboarding flow)
+  - Deleted old `convex/goals.ts` (single-row-per-portfolio model replaced)
+  - Frontend: new `components/portfolio-goals.tsx` with SVG half-radial gauge cards — 180° arc gauges with gradient fill, tick marks, animated `pathLength` reveal via Framer Motion, status labels (GETTING STARTED → IN PROGRESS → ON TRACK → COMPLETE → EXCEEDED)
+  - Goal cards: accent top-line, icon badge, current→target display, deadline/notes footer, hover-reveal edit/delete actions
+  - Add Goal dialog: `ResponsiveDialog` 3-step flow (Type → Details → Confirm) with card selector auto-advance, type badge with "Change" button, $/%  prefix inputs, optional deadline/notes, confirm step with preview gauge
+  - Edit Goal dialog: `ResponsiveDialog` 2-step flow (Details → Confirm) with read-only type badge
+  - Summary bar: completed/near-target counts, next deadline display
+  - Empty state: dashed border card with Target icon and "Create Your First Goal" CTA
+  - Added "Goals" tab to portfolio page between Analytics and Vault
+  - Removed `GoalTracker` from `components/vault.tsx`, simplified `V2VaultProps` (removed `portfolioValue`/`annualReturn`), changed vault grid from 3-col to 2-col
+  - Updated `components/onboarding-flow.tsx` to use `api.portfolioGoals.createGoalsFromOnboarding`
+  - Files: `convex/schema.ts`, new `convex/portfolioGoals.ts`, deleted `convex/goals.ts`, new `components/portfolio-goals.tsx`, `app/(webapp)/portfolio/[id]/page.tsx`, `components/vault.tsx`, `components/onboarding-flow.tsx`
 
 - [ ] **Step 16 — Global search**
   - Convex: add search indexes to `portfolios`, `assets`, `userDocuments`, `userArticles`
@@ -215,3 +220,4 @@ Step 16 ─── independent (but do last — most complex)
 | 2026-02-09 | 8 | Moving ticker strip component — infinite marquee with CSS animation |
 | 2026-02-09 | 9 | News page header redesign — V2HeroSplit + V2MovingTicker, editorial masthead matching homepage DNA |
 | 2026-02-09 | 10, 11, 12, 13, 14 | Phase 3 complete — ResponsiveDialog base component, all 4 dialog redesigns migrated, surfaced `includeInNetworth`/`allowSubscriptions` schema fields, fixed delete portfolio crash |
+| 2026-02-09 | 15 | Phase 4 partial — Goals tab redesign: renamed `goals` → `portfolioGoals` table, multi-goal CRUD, SVG half-radial gauge cards, Add/Edit dialogs, summary bar, moved goals out of Vault into own tab |

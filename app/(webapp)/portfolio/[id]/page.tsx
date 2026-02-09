@@ -21,6 +21,7 @@ import { V2AssetAllocationBar } from "@/components/allocation-bar";
 import { V2Holdings } from "@/components/holdings";
 import { V2Analytics } from "@/components/analytics";
 import { V2Vault } from "@/components/vault";
+import { V2PortfolioGoals } from "@/components/portfolio-goals";
 import { V2AddAssetDialog } from "@/components/add-asset-dialog";
 import { V2EditAssetDialog } from "@/components/edit-asset-dialog";
 import { V2EditPortfolioDialog } from "@/components/edit-portfolio-dialog";
@@ -141,6 +142,7 @@ export default function V2PortfolioDetail() {
   const tabs = [
     { id: "holdings", label: "Holdings" },
     { id: "analytics", label: "Portfolio Analytics" },
+    { id: "goals", label: "Goals" },
     { id: "vault", label: "Vault" },
   ];
 
@@ -438,13 +440,16 @@ export default function V2PortfolioDetail() {
             <V2Analytics portfolioId={portfolioId} />
           )}
 
-          {activeTab === "vault" && (
-            <V2Vault
+          {activeTab === "goals" && (
+            <V2PortfolioGoals
               portfolioId={portfolioId}
               portfolioValue={portfolio?.currentValue || 0}
               annualReturn={portfolio?.changePercent || 0}
-              userId={convexUser?._id}
             />
+          )}
+
+          {activeTab === "vault" && (
+            <V2Vault portfolioId={portfolioId} userId={convexUser?._id} />
           )}
         </section>
 

@@ -187,13 +187,24 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
   }).index("byDate", ["date"]),
-  // portfolio goals
-  goals: defineTable({
+  // portfolio goals — individual goals per portfolio
+  portfolioGoals: defineTable({
     portfolioId: v.id("portfolios"),
-    targetValue: v.optional(v.number()),
-    targetReturn: v.optional(v.number()),
-    targetYearlyReturn: v.optional(v.number()),
-    targetContribution: v.optional(v.number()),
+    name: v.string(),
+    type: v.union(
+      v.literal("portfolio_value"),
+      v.literal("annual_return"),
+      v.literal("yearly_return"),
+      v.literal("monthly_contribution"),
+      v.literal("custom"),
+    ),
+    targetValue: v.number(),
+    currentValue: v.optional(v.number()),
+    unit: v.union(v.literal("currency"), v.literal("percentage")),
+    icon: v.optional(v.string()),
+    color: v.optional(v.string()),
+    deadline: v.optional(v.number()),
+    notes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("byPortfolio", ["portfolioId"]),
