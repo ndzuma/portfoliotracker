@@ -198,10 +198,10 @@ export const getPortfolioById = query({
         : 0;
     }
 
-    // Get the portfolio information
+    // Get the portfolio information — return null if deleted (avoids race condition on delete)
     const portfolio = await ctx.db.get(args.portfolioId);
     if (!portfolio) {
-      throw new Error("Portfolio not found");
+      return null;
     }
 
     let aiHeadline = "";
@@ -254,6 +254,8 @@ export const createPortfolio = mutation({
     description: v.optional(v.string()),
     riskTolerance: v.optional(v.string()),
     timeHorizon: v.optional(v.string()),
+    includeInNetworth: v.optional(v.boolean()),
+    allowSubscriptions: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const portfolioId = await ctx.db.insert("portfolios", {
@@ -262,6 +264,8 @@ export const createPortfolio = mutation({
       description: args.description || "",
       riskTolerance: args.riskTolerance,
       timeHorizon: args.timeHorizon,
+      includeInNetworth: args.includeInNetworth ?? true,
+      allowSubscriptions: args.allowSubscriptions ?? false,
     });
     return portfolioId;
   },
@@ -276,6 +280,8 @@ export const updatePortfolio = mutation({
     description: v.optional(v.string()),
     riskTolerance: v.optional(v.string()),
     timeHorizon: v.optional(v.string()),
+    includeInNetworth: v.optional(v.boolean()),
+    allowSubscriptions: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const portfolio = await ctx.db.get(args.portfolioId);
@@ -290,6 +296,9 @@ export const updatePortfolio = mutation({
       description: args.description ?? portfolio.description,
       riskTolerance: args.riskTolerance ?? portfolio.riskTolerance,
       timeHorizon: args.timeHorizon ?? portfolio.timeHorizon,
+      includeInNetworth: args.includeInNetworth ?? portfolio.includeInNetworth,
+      allowSubscriptions:
+        args.allowSubscriptions ?? portfolio.allowSubscriptions,
     });
   },
 });

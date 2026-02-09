@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useParams, useRouter } from "next/navigation";
@@ -167,6 +167,26 @@ export default function V2PortfolioDetail() {
     }
   };
 
+  // Handle deleted portfolio — redirect home gracefully
+  useEffect(() => {
+    if (portfolio === null) {
+      router.push("/");
+    }
+  }, [portfolio, router]);
+
+  if (portfolio === null) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#09090b" }}
+      >
+        <div className="text-center">
+          <p className="text-sm text-zinc-500">Redirecting…</p>
+        </div>
+      </div>
+    );
+  }
+
   if (canUserAccess === false) {
     return (
       <div
@@ -222,6 +242,10 @@ export default function V2PortfolioDetail() {
                   initialDescription={portfolio.description}
                   initialRiskTolerance={portfolio.riskTolerance}
                   initialTimeHorizon={portfolio.timeHorizon}
+                  initialIncludeInNetworth={portfolio.includeInNetworth ?? true}
+                  initialAllowSubscriptions={
+                    portfolio.allowSubscriptions ?? false
+                  }
                 />
                 <div className="w-px h-3 bg-white/[0.1]" />
                 <button

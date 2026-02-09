@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -12,9 +12,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, ArrowLeft, Check } from "@phosphor-icons/react";
+import {
+  Plus,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ShieldCheck,
+  ChartLineUp,
+  Clock,
+  Wallet,
+  Bell,
+} from "@phosphor-icons/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
 
 interface V2CreatePortfolioDialogProps {
   userId?: string;
@@ -22,25 +33,65 @@ interface V2CreatePortfolioDialogProps {
   triggerLabel?: string;
 }
 
+const STEPS = ["Name", "Strategy", "Confirm"] as const;
+
+const RISK_OPTIONS = [
+  {
+    value: "Conservative",
+    icon: ShieldCheck,
+    description: "Low risk, stable returns",
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-500/10",
+  },
+  {
+    value: "Moderate",
+    icon: ChartLineUp,
+    description: "Balanced risk & reward",
+    color: "text-amber-400",
+    bgColor: "bg-amber-500/10",
+  },
+  {
+    value: "Aggressive",
+    icon: ChartLineUp,
+    description: "High risk, high potential",
+    color: "text-red-400",
+    bgColor: "bg-red-500/10",
+  },
+] as const;
+
+const TIME_HORIZONS = [
+  { value: "Short-term (< 3 years)", label: "Short-term", sub: "< 3 years" },
+  {
+    value: "Medium-term (3-10 years)",
+    label: "Medium-term",
+    sub: "3–10 years",
+  },
+  { value: "Long-term (10+ years)", label: "Long-term", sub: "10+ years" },
+] as const;
+
 export function V2CreatePortfolioDialog({
   userId,
   triggerClassName,
   triggerLabel = "New Portfolio",
 }: V2CreatePortfolioDialogProps) {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"details" | "confirm">("details");
+  const [stepIdx, setStepIdx] = useState(0);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [riskTolerance, setRiskTolerance] = useState<string>("");
   const [timeHorizon, setTimeHorizon] = useState<string>("");
+  const [includeInNetworth, setIncludeInNetworth] = useState(true);
+  const [allowSubscriptions, setAllowSubscriptions] = useState(false);
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
 
   const reset = () => {
-    setStep("details");
+    setStepIdx(0);
     setName("");
     setDescription("");
     setRiskTolerance("");
     setTimeHorizon("");
+    setIncludeInNetworth(true);
+    setAllowSubscriptions(false);
   };
 
   const handleCreate = () => {
@@ -51,6 +102,8 @@ export function V2CreatePortfolioDialog({
         description,
         riskTolerance: riskTolerance || undefined,
         timeHorizon: timeHorizon || undefined,
+        includeInNetworth,
+        allowSubscriptions,
       });
       reset();
       setOpen(false);
@@ -58,6 +111,56 @@ export function V2CreatePortfolioDialog({
   };
 
   const canProceed = name.trim();
+
+  const goNext = () => {
+    if (stepIdx < STEPS.length - 1) setStepIdx(stepIdx + 1);
+  };
+  const goBack = () => {
+    if (stepIdx > 0) setStepIdx(stepIdx - 1);
+  };
+
+  // ─── Footer (navigation buttons) ──────────────────────────────
+  const footer = (
+    <div className="flex items-center justify-between gap-3">
+      <button
+        onClick={() => {
+          if (stepIdx === 0) {
+            reset();
+            setOpen(false);
+          } else {
+            goBack();
+          }
+        }}
+        className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
+      >
+        {stepIdx > 0 && <ArrowLeft className="h-3.5 w-3.5" />}
+        {stepIdx === 0 ? "Cancel" : "Back"}
+      </button>
+      <button
+        onClick={() => {
+          if (stepIdx === STEPS.length - 1) {
+            handleCreate();
+          } else {
+            goNext();
+          }
+        }}
+        disabled={!canProceed}
+        className="px-5 py-2.5 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+      >
+        {stepIdx === STEPS.length - 1 ? (
+          <>
+            <Plus className="h-3.5 w-3.5" />
+            Create Portfolio
+          </>
+        ) : (
+          <>
+            Continue
+            <ArrowRight className="h-3.5 w-3.5" />
+          </>
+        )}
+      </button>
+    </div>
+  );
 
   return (
     <>
@@ -72,246 +175,238 @@ export function V2CreatePortfolioDialog({
         {triggerLabel}
       </button>
 
-      <Dialog
+      <ResponsiveDialog
         open={open}
         onOpenChange={(v) => {
           setOpen(v);
           if (!v) reset();
         }}
+        title="Create Portfolio"
+        steps={[...STEPS]}
+        currentStep={stepIdx}
+        footer={footer}
+        maxWidth="480px"
       >
-        <DialogContent className="sm:max-w-[460px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
-          <DialogTitle className="sr-only">Create Portfolio</DialogTitle>
+        {/* ─── Step 1: Name & Description ──────────────────── */}
+        {stepIdx === 0 && (
+          <div className="flex flex-col gap-5 pb-4">
+            <div className="flex flex-col gap-2">
+              <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
+                Portfolio Name
+              </Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Growth Portfolio, Tech Stocks…"
+                className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
+                autoFocus
+              />
+            </div>
 
-          {/* Step indicator */}
-          <div className="flex items-center gap-0 border-b border-white/[0.06]">
-            {["Details", "Confirm"].map((s, i) => {
-              const stepMap = ["details", "confirm"];
-              const currentIdx = stepMap.indexOf(step);
-              const isActive = i === currentIdx;
-              const isDone = i < currentIdx;
-              return (
-                <div
-                  key={s}
-                  className={`flex-1 py-3 text-center text-[11px] font-medium uppercase tracking-wider transition-colors ${
-                    isActive
-                      ? "text-white bg-white/[0.04]"
-                      : isDone
-                        ? "text-zinc-500"
-                        : "text-zinc-700"
-                  }`}
-                >
-                  {s}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="px-6 pb-6 pt-5">
-            {step === "details" && (
-              <div className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
-                    Portfolio Name
-                  </Label>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g., Growth Portfolio, Tech Stocks, etc."
-                    className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
-                    autoFocus
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
-                    Description
-                  </Label>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe your investment strategy or goals..."
-                    rows={3}
-                    className="bg-zinc-900 border-white/[0.06] text-white resize-none text-sm"
-                  />
-                  <p className="text-xs text-zinc-600">
-                    Optional but helpful for organizing your portfolios
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
-                    Risk Tolerance
-                  </Label>
-                  <Select
-                    value={riskTolerance}
-                    onValueChange={setRiskTolerance}
-                  >
-                    <SelectTrigger className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm">
-                      <SelectValue placeholder="Select your risk tolerance" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-white/[0.08]">
-                      <SelectItem
-                        value="Conservative"
-                        className="text-white hover:bg-zinc-800"
-                      >
-                        Conservative
-                      </SelectItem>
-                      <SelectItem
-                        value="Moderate"
-                        className="text-white hover:bg-zinc-800"
-                      >
-                        Moderate
-                      </SelectItem>
-                      <SelectItem
-                        value="Aggressive"
-                        className="text-white hover:bg-zinc-800"
-                      >
-                        Aggressive
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-zinc-600">
-                    Conservative: Low risk, stable returns. Moderate: Balanced
-                    risk/reward. Aggressive: High risk, high potential returns.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs text-zinc-400 uppercase tracking-wider font-medium">
-                    Time Horizon
-                  </Label>
-                  <Select value={timeHorizon} onValueChange={setTimeHorizon}>
-                    <SelectTrigger className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm">
-                      <SelectValue placeholder="Select your investment timeframe" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-white/[0.08]">
-                      <SelectItem
-                        value="Short-term (< 3 years)"
-                        className="text-white hover:bg-zinc-800"
-                      >
-                        Short-term (&lt; 3 years)
-                      </SelectItem>
-                      <SelectItem
-                        value="Medium-term (3-10 years)"
-                        className="text-white hover:bg-zinc-800"
-                      >
-                        Medium-term (3-10 years)
-                      </SelectItem>
-                      <SelectItem
-                        value="Long-term (10+ years)"
-                        className="text-white hover:bg-zinc-800"
-                      >
-                        Long-term (10+ years)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-zinc-600">
-                    How long do you plan to hold these investments before
-                    needing the money?
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {step === "confirm" && (
-              <div className="flex flex-col gap-4">
-                <div className="text-center py-2">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
-                    <Check className="h-6 w-6 text-emerald-400" />
-                  </div>
-                  <h3 className="text-white text-lg font-semibold mb-1">
-                    Ready to Create Portfolio
-                  </h3>
-                  <p className="text-zinc-400 text-sm">
-                    Review your portfolio details before creating
-                  </p>
-                </div>
-
-                <div className="bg-zinc-900/50 rounded-lg p-4 border border-white/[0.06]">
-                  <div className="flex flex-col gap-3">
-                    <div>
-                      <Label className="text-xs text-zinc-500 uppercase tracking-wider">
-                        Name
-                      </Label>
-                      <p className="text-white text-sm mt-1">{name}</p>
-                    </div>
-                    {description && (
-                      <div>
-                        <Label className="text-xs text-zinc-500 uppercase tracking-wider">
-                          Description
-                        </Label>
-                        <p className="text-zinc-300 text-sm mt-1">
-                          {description}
-                        </p>
-                      </div>
-                    )}
-                    {riskTolerance && (
-                      <div>
-                        <Label className="text-xs text-zinc-500 uppercase tracking-wider">
-                          Risk Tolerance
-                        </Label>
-                        <p className="text-zinc-300 text-sm mt-1">
-                          {riskTolerance}
-                        </p>
-                      </div>
-                    )}
-                    {timeHorizon && (
-                      <div>
-                        <Label className="text-xs text-zinc-500 uppercase tracking-wider">
-                          Time Horizon
-                        </Label>
-                        <p className="text-zinc-300 text-sm mt-1">
-                          {timeHorizon}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.06]">
-              <button
-                onClick={() => {
-                  if (step === "details") {
-                    reset();
-                    setOpen(false);
-                  } else {
-                    setStep("details");
-                  }
-                }}
-                className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
-              >
-                {step === "confirm" && <ArrowLeft className="h-3.5 w-3.5" />}
-                {step === "details" ? "Cancel" : "Back"}
-              </button>
-              <button
-                onClick={() => {
-                  if (step === "details") {
-                    setStep("confirm");
-                  } else {
-                    handleCreate();
-                  }
-                }}
-                disabled={!canProceed}
-                className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {step === "details" ? (
-                  <>
-                    Continue
-                    <Plus className="h-3.5 w-3.5" />
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-3.5 w-3.5" />
-                    Create Portfolio
-                  </>
-                )}
-              </button>
+            <div className="flex flex-col gap-2">
+              <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
+                Description
+              </Label>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe your investment strategy or goals…"
+                rows={3}
+                className="bg-zinc-900 border-white/[0.06] text-white resize-none text-sm"
+              />
+              <p className="text-xs text-zinc-600">
+                Optional — helps organize your portfolios
+              </p>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
+
+        {/* ─── Step 2: Strategy ────────────────────────────── */}
+        {stepIdx === 1 && (
+          <div className="flex flex-col gap-6 pb-4">
+            {/* Risk Tolerance — card selector */}
+            <div className="flex flex-col gap-3">
+              <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
+                Risk Tolerance
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                {RISK_OPTIONS.map((opt) => {
+                  const Icon = opt.icon;
+                  const isSelected = riskTolerance === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() =>
+                        setRiskTolerance(isSelected ? "" : opt.value)
+                      }
+                      className={`relative flex flex-col items-center gap-2 rounded-lg border p-3 transition-all duration-150 ${
+                        isSelected
+                          ? "border-white/20 bg-white/[0.04]"
+                          : "border-white/[0.06] bg-zinc-900/50 hover:border-white/10 hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${opt.bgColor}`}
+                      >
+                        <Icon
+                          className={`h-4 w-4 ${opt.color}`}
+                          weight={isSelected ? "fill" : "regular"}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-white">
+                        {opt.value}
+                      </span>
+                      <span className="text-[10px] text-zinc-600 leading-tight text-center">
+                        {opt.description}
+                      </span>
+                      {/* Selection indicator dot */}
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Time Horizon — card selector */}
+            <div className="flex flex-col gap-3">
+              <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
+                Time Horizon
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                {TIME_HORIZONS.map((opt) => {
+                  const isSelected = timeHorizon === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() =>
+                        setTimeHorizon(isSelected ? "" : opt.value)
+                      }
+                      className={`relative flex flex-col items-center gap-1.5 rounded-lg border p-3 transition-all duration-150 ${
+                        isSelected
+                          ? "border-white/20 bg-white/[0.04]"
+                          : "border-white/[0.06] bg-zinc-900/50 hover:border-white/10 hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      <Clock
+                        className={`h-4 w-4 ${isSelected ? "text-white" : "text-zinc-600"}`}
+                        weight={isSelected ? "fill" : "regular"}
+                      />
+                      <span className="text-xs font-medium text-white">
+                        {opt.label}
+                      </span>
+                      <span className="text-[10px] text-zinc-600">
+                        {opt.sub}
+                      </span>
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Toggles — includeInNetworth & allowSubscriptions */}
+            <div className="flex flex-col gap-0 rounded-lg border border-white/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3.5 bg-zinc-900/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <Wallet className="h-3.5 w-3.5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-white font-medium">
+                      Include in Net Worth
+                    </p>
+                    <p className="text-[11px] text-zinc-600 mt-0.5">
+                      Count this portfolio in your total net worth
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={includeInNetworth}
+                  onCheckedChange={setIncludeInNetworth}
+                />
+              </div>
+              <div className="w-full h-px bg-white/[0.06]" />
+              <div className="flex items-center justify-between px-4 py-3.5 bg-zinc-900/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <Bell className="h-3.5 w-3.5 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-white font-medium">
+                      Allow Subscriptions
+                    </p>
+                    <p className="text-[11px] text-zinc-600 mt-0.5">
+                      Let others follow this portfolio's updates
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={allowSubscriptions}
+                  onCheckedChange={setAllowSubscriptions}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Step 3: Confirm ────────────────────────────── */}
+        {stepIdx === 2 && (
+          <div className="flex flex-col gap-5 pb-4">
+            <div className="text-center py-2">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                <Check className="h-6 w-6 text-emerald-400" />
+              </div>
+              <h3 className="text-white text-lg font-semibold mb-1">
+                Ready to Create Portfolio
+              </h3>
+              <p className="text-zinc-400 text-sm">
+                Review your portfolio details before creating
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-white/[0.06] overflow-hidden">
+              {[
+                { label: "Name", value: name },
+                ...(description
+                  ? [{ label: "Description", value: description }]
+                  : []),
+                ...(riskTolerance
+                  ? [{ label: "Risk Tolerance", value: riskTolerance }]
+                  : []),
+                ...(timeHorizon
+                  ? [{ label: "Time Horizon", value: timeHorizon }]
+                  : []),
+                {
+                  label: "Include in Net Worth",
+                  value: includeInNetworth ? "Yes" : "No",
+                },
+                {
+                  label: "Allow Subscriptions",
+                  value: allowSubscriptions ? "Yes" : "No",
+                },
+              ].map((row, i, arr) => (
+                <div
+                  key={row.label}
+                  className={`flex items-start justify-between px-4 py-3 bg-zinc-900/30 ${
+                    i < arr.length - 1 ? "border-b border-white/[0.06]" : ""
+                  }`}
+                >
+                  <span className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.12em] pt-0.5">
+                    {row.label}
+                  </span>
+                  <span className="text-sm text-white font-medium text-right max-w-[55%] leading-snug">
+                    {row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </ResponsiveDialog>
     </>
   );
 }
