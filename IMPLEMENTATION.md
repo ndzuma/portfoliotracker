@@ -113,10 +113,13 @@
   - Keyframes in `app/globals.css`, duration auto-calculated from content width ÷ speed
   - Files: new `components/moving-ticker.tsx`, `app/globals.css`
 
-- [ ] **Step 9 — News page header redesign**
-  - Match hero-split DNA layout for title + AI card
-  - Swap in `V2MovingTicker` (depends on Step 8)
-  - Match ticker strip border language
+- [x] **Step 9 — News page header redesign**
+  - Replaced `V2Ticker` with `V2MovingTicker` (infinite marquee, speed=35)
+  - Swapped ad-hoc flex hero for `V2HeroSplit` — same 60/40 DNA as homepage
+  - Left panel: editorial masthead with live pulse indicator, "Updated at" timestamp, dramatic 56px title, subtitle
+  - Right panel: `V2AICard` placed raw (no wrapping card) — matches homepage pattern exactly
+  - Filter bar enhanced with contextual label (shows active category inline)
+  - Derived latest article timestamp from news data for masthead
   - File: `app/(webapp)/news/page.tsx`
 
 ### Phase 3: Dialog System Overhaul
@@ -188,3 +191,4 @@ Step 16 ─── independent (but do last — most complex)
 | 2026-02-09 | 1, 2, 3, 4 | Phase 1 complete — AI card, holdings header, delete portfolio, vault search |
 | 2026-02-09 | 5, 6, 7 | Phase 2 partial — allocation bar, article notes+edit, document upload dialog |
 | 2026-02-09 | 8 | Moving ticker strip component — infinite marquee with CSS animation |
+| 2026-02-09 | 9 | News page header redesign — V2HeroSplit + V2MovingTicker, editorial masthead matching homepage DNA |

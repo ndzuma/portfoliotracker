@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowsClockwise } from "@phosphor-icons/react";
+import { ArrowsClockwise, ArrowRight } from "@phosphor-icons/react";
 import { V2AISummaryPopup } from "./ai-summary-popup";
 
 interface V2AICardProps {
@@ -63,23 +63,26 @@ export function V2AICard({
           )}
         </div>
 
-        <div className="relative flex-1">
-          <div className="overflow-hidden">
-            <div className="text-[13px] text-zinc-400 leading-relaxed whitespace-pre-line">
-              {displayText}
-            </div>
+        <div className="overflow-hidden">
+          <div className="text-[13px] text-zinc-400 leading-relaxed whitespace-pre-line">
+            {displayText}
           </div>
-
-          {/* Show More button */}
-          {shouldShowMore && (
-            <button
-              onClick={() => setPopupOpen(true)}
-              className="mt-3 flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
-            >
-              Show More
-            </button>
-          )}
         </div>
+
+        {/* Show More — pinned bottom-left */}
+        {shouldShowMore && (
+          <button
+            onClick={() => setPopupOpen(true)}
+            className="group mt-auto pt-4 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] transition-colors"
+            style={{ color: "var(--primary, #d4af37)" }}
+          >
+            Read Full Analysis
+            <ArrowRight
+              className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
+              weight="bold"
+            />
+          </button>
+        )}
       </div>
 
       {/* AI Summary Popup */}

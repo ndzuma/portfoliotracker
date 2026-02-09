@@ -103,9 +103,9 @@ export function V2AISummaryPopup({
                   Executive Summary
                 </p>
               </div>
-              <p className="text-white text-base leading-relaxed font-medium">
+              <div className="text-white text-base leading-relaxed font-medium">
                 {headline}
-              </p>
+              </div>
             </div>
 
             {/* Analysis Section */}
@@ -116,9 +116,9 @@ export function V2AISummaryPopup({
                   Detailed Analysis
                 </p>
               </div>
-              <p className="text-[14px] text-zinc-300 leading-relaxed whitespace-pre-line">
+              <div className="text-[14px] text-zinc-300 leading-relaxed whitespace-pre-line">
                 {analysis}
-              </p>
+              </div>
             </div>
 
             {/* Risk Warning */}
@@ -183,9 +183,9 @@ export function V2AISummaryPopup({
                     Executive Summary
                   </p>
                 </div>
-                <p className="text-white text-base leading-relaxed font-medium">
+                <div className="text-white text-base leading-relaxed font-medium">
                   {headline}
-                </p>
+                </div>
               </div>
 
               {/* Analysis Section */}
@@ -196,9 +196,9 @@ export function V2AISummaryPopup({
                     Detailed Analysis
                   </p>
                 </div>
-                <p className="text-[14px] text-zinc-300 leading-relaxed whitespace-pre-line">
+                <div className="text-[14px] text-zinc-300 leading-relaxed whitespace-pre-line">
                   {analysis}
-                </p>
+                </div>
               </div>
 
               {/* Risk Warning */}

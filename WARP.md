@@ -20,7 +20,7 @@ npm run lint
 ```
 
 ### Package Management
-This project uses npm (package.json present). The project includes pnpm-lock.yaml, suggesting pnpm may also be used.
+This project uses npm (package.json present).
 
 ## Architecture Overview
 

@@ -5,7 +5,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { V2Header } from "@/components/header";
 import { V2AICard } from "@/components/ai-card";
-import { V2Ticker } from "@/components/ticker";
+import { V2MovingTicker } from "@/components/moving-ticker";
+import { V2HeroSplit } from "@/components/hero-split";
 import { parseMarkdown } from "@/lib/markdown-parser";
 import {
   Funnel,
@@ -60,35 +61,86 @@ export default function V2NewsPage() {
   const aiHeadline = parseMarkdown(aiSummaryData?.headline);
   const aiTimestamp = aiSummaryData?.timestamp;
 
+  // Derive the most recent article timestamp for the masthead
+  const latestArticleTime =
+    newsData.length > 0
+      ? new Date(
+          Math.max(...newsData.map((n) => n.datetime)) * 1000,
+        ).toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
+
   return (
     <div className="min-h-screen" style={{ background: "#09090b" }}>
       <V2Header />
-      <V2Ticker benchmarks={benchmarkData} />
 
-      <div className="max-w-[1600px] mx-auto px-8 py-8">
-        {/* Hero */}
-        <div className="flex flex-col lg:flex-row gap-6 mb-10">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
-              News & Insights
+      {/* Moving Ticker — infinite marquee replacing static V2Ticker */}
+      <V2MovingTicker benchmarks={benchmarkData} speed={35} />
+
+      {/* Hero Split — editorial masthead (left) + AI card (right) */}
+      <V2HeroSplit
+        leftContent={
+          <div className="flex flex-col justify-center h-full">
+            {/* Live indicator + last update */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] text-emerald-500 font-semibold uppercase tracking-[0.2em]">
+                  Live Feed
+                </span>
+              </div>
+              {latestArticleTime && (
+                <>
+                  <div
+                    className="w-px h-3"
+                    style={{ background: "rgba(255,255,255,0.1)" }}
+                  />
+                  <span className="text-[10px] text-zinc-600 font-medium tracking-wide">
+                    Updated {latestArticleTime}
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Title */}
+            <h1 className="text-4xl lg:text-[56px] font-bold text-white tracking-tighter leading-[0.95] mb-4">
+              News &<br />
+              Insights
             </h1>
-            <p className="text-sm text-zinc-600">
-              Latest market news and AI-powered analysis.
+
+            {/* Subtitle */}
+            <p className="text-sm text-zinc-500 leading-relaxed max-w-md">
+              Real-time market intelligence aggregated from trusted sources,
+              enriched with AI-powered analysis.
             </p>
           </div>
-          <div className="lg:w-[400px] rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
-            <V2AICard
-              headline={aiHeadline}
-              analysis={cleanAnalysis}
-              timestamp={aiTimestamp}
-              maxDisplayLength={100}
-            />
-          </div>
-        </div>
+        }
+        rightContent={
+          <V2AICard
+            headline={aiHeadline}
+            analysis={cleanAnalysis}
+            timestamp={aiTimestamp}
+            maxDisplayLength={120}
+          />
+        }
+      />
 
+      <div className="max-w-[1600px] mx-auto px-8 py-8">
         {/* Filter */}
         <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-zinc-500">{filtered.length} articles</p>
+          <p className="text-sm text-zinc-500 tabular-nums">
+            {filtered.length} article{filtered.length !== 1 ? "s" : ""}
+            {filter !== "all" && (
+              <span className="text-zinc-600">
+                {" "}
+                in <span className="text-zinc-400 capitalize">{filter}</span>
+              </span>
+            )}
+          </p>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-zinc-400 rounded-lg border border-white/[0.06] hover:border-white/[0.12] transition-colors">
