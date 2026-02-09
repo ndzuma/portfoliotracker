@@ -124,30 +124,52 @@
 
 ### Phase 3: Dialog System Overhaul
 
-- [ ] **Step 10 — Responsive dialog base component**
-  - Extract mobile bottom-sheet / desktop modal pattern from `ai-summary-popup.tsx`
-  - Reusable `ResponsiveDialog` with step indicator support
-  - Reduce backdrop blur
+- [x] **Step 10 — Responsive dialog base component**
+  - Portal-based `ResponsiveDialog` with Framer Motion `AnimatePresence`
+  - Mobile: bottom sheet with drag handle, touch drag-to-dismiss (120px threshold), spring slide-up animation
+  - Desktop: centered modal with scale entrance, configurable `maxWidth`
+  - Step indicator with gold `var(--primary)` accent underline via `layoutId` spring animation
+  - Step content transitions slide horizontally (`x: 16 → 0 → -16`) between steps
+  - Reduced backdrop blur (`backdrop-blur-[2px]`) per design rules
+  - Body scroll lock via `position: fixed` (preserves scroll position on close)
+  - Accessibility: `role="dialog"`, `aria-modal`, `aria-label`, escape key, focus management
   - File: new `components/responsive-dialog.tsx`
 
-- [ ] **Step 11 — Create Portfolio dialog redesign**
-  - Migrate to `ResponsiveDialog`
-  - Steps: Name & Description → Strategy (risk, time horizon, includeInNetworth, allowSubscriptions) → Confirm
-  - File: `components/create-portfolio-dialog.tsx`
+- [x] **Step 11 — Create Portfolio dialog redesign**
+  - Migrated to `ResponsiveDialog` with 3-step flow: Name → Strategy → Confirm
+  - Step 2 "Strategy": risk tolerance card selector (3 cards with icons — ShieldCheck/ChartLineUp, colored accents), time horizon card selector (Clock icons), plus toggle panel for `includeInNetworth` and `allowSubscriptions` with Switch component
+  - Convex: updated `createPortfolio` mutation to accept `includeInNetworth` (default true) and `allowSubscriptions` (default false)
+  - Confirm step: clean row-based summary with `border-b` separators
+  - Files: `components/create-portfolio-dialog.tsx`, `convex/portfolios.ts`
 
-- [ ] **Step 12 — Edit Portfolio dialog redesign**
-  - Same `ResponsiveDialog` base
-  - Surface `includeInNetworth` / `allowSubscriptions` from schema
-  - File: `components/edit-portfolio-dialog.tsx`
+- [x] **Step 12 — Edit Portfolio dialog redesign**
+  - Migrated to `ResponsiveDialog` with 3-step flow: Details → Strategy → Confirm
+  - Same Strategy step visual pattern as create dialog (risk cards, time horizon cards, toggle panel)
+  - Confirm step shows **diff view** — only changed fields with strikethrough old → ArrowRight → new value; disables save if no changes
+  - Convex: updated `updatePortfolio` mutation to accept and patch `includeInNetworth` and `allowSubscriptions`
+  - `useEffect` syncs state when initial props change (e.g. after refetch)
+  - Bug fix: `getPortfolioById` returns `null` instead of throwing on missing portfolio — fixes delete race condition crash
+  - Bug fix: portfolio page `useEffect` redirects to `/` when `portfolio === null`
+  - Files: `components/edit-portfolio-dialog.tsx`, `convex/portfolios.ts`, `app/(webapp)/portfolio/[id]/page.tsx`
 
-- [ ] **Step 13 — Edit Asset dialog redesign**
-  - Migrate to `ResponsiveDialog`
-  - Steps: Asset Info → Pricing → Notes → Confirm
+- [x] **Step 13 — Edit Asset dialog redesign**
+  - Migrated to `ResponsiveDialog` with 4-step flow: Asset Info → Pricing → Notes → Confirm
+  - Step 1 "Asset Info": read-only type badge (icon + colored circle), name input, symbol input (stock/crypto only)
+  - Step 2 "Pricing": currency selector (cash) or current price with `$` prefix input (non-cash), live "Current Value" context panel showing qty × price
+  - Step 3 "Notes": focused textarea step with placeholder guidance
+  - Step 4 "Confirm": row-based summary, notes truncated to 80 chars
+  - Type metadata map (`TYPE_META`) for icon/color lookup per asset type
   - File: `components/edit-asset-dialog.tsx`
 
-- [ ] **Step 14 — Add Asset dialog redesign**
-  - Migrate to `ResponsiveDialog`
-  - Steps: Type (keep card selector) → Asset Details → Purchase Info → Notes → Confirm
+- [x] **Step 14 — Add Asset dialog redesign**
+  - Migrated to `ResponsiveDialog` with 5-step flow: Type → Details → Purchase → Notes → Confirm
+  - Step 1 "Type": enhanced card selector — added descriptions per type, selection dot indicator, auto-advances to step 2 on click
+  - Step 2 "Details": compact type badge with "Change" button to go back, name/symbol/currency inputs
+  - Step 3 "Purchase": quantity, purchase price with `$` prefix, date, current price, fees — live "Total Cost" summary panel with breakdown
+  - Step 4 "Notes": focused textarea step
+  - Step 5 "Confirm": full row-based summary + "Total Investment" highlight panel
+  - Per-step validation: details requires name, purchase requires price + quantity
+  - Footer adapts: type step shows "Select an asset type" hint, other steps show Back/Continue
   - File: `components/add-asset-dialog.tsx`
 
 ### Phase 4: Large Features
@@ -192,3 +214,4 @@ Step 16 ─── independent (but do last — most complex)
 | 2026-02-09 | 5, 6, 7 | Phase 2 partial — allocation bar, article notes+edit, document upload dialog |
 | 2026-02-09 | 8 | Moving ticker strip component — infinite marquee with CSS animation |
 | 2026-02-09 | 9 | News page header redesign — V2HeroSplit + V2MovingTicker, editorial masthead matching homepage DNA |
+| 2026-02-09 | 10, 11, 12, 13, 14 | Phase 3 complete — ResponsiveDialog base component, all 4 dialog redesigns migrated, surfaced `includeInNetworth`/`allowSubscriptions` schema fields, fixed delete portfolio crash |
