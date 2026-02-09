@@ -58,7 +58,7 @@ export default function RootLayout({
                 <Suspense fallback={<div>Loading...</div>}>
                   <AuthenticatedWrapper>{children}</AuthenticatedWrapper>
                 </Suspense>
-                <Toaster position="top-right" richColors />
+                <Toaster position="bottom-right" richColors />
               </ConvexClientProvider>
             </ClerkProvider>
           </ThemeProvider>

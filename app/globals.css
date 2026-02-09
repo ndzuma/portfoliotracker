@@ -131,6 +131,15 @@
   /* Remove the global override for rounded corners to allow subtle rounding */
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Moving ticker — infinite marquee scroll */
 @keyframes ticker-scroll {
   0% {

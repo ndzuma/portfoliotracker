@@ -137,6 +137,7 @@ export default function V2PortfolioDetail() {
     null,
   );
   const ytdReturn = analytics?.performanceMetrics?.ytdReturn;
+  const annualizedReturn = analytics?.performanceMetrics?.annualizedReturn;
   const volatility = analytics?.riskMetrics?.volatility;
 
   const tabs = [
@@ -444,7 +445,13 @@ export default function V2PortfolioDetail() {
             <V2PortfolioGoals
               portfolioId={portfolioId}
               portfolioValue={portfolio?.currentValue || 0}
-              annualReturn={portfolio?.changePercent || 0}
+              annualizedReturn={
+                annualizedReturn !== undefined
+                  ? annualizedReturn * 100
+                  : portfolio?.changePercent || 0
+              }
+              ytdReturn={ytdReturn !== undefined ? ytdReturn * 100 : 0}
+              analytics={analytics as any}
             />
           )}
 

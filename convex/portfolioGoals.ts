@@ -5,9 +5,8 @@ import { Id } from "./_generated/dataModel";
 // ─── Goal type union (mirrors schema) ────────────────────────────────────────
 const goalTypeValidator = v.union(
   v.literal("portfolio_value"),
-  v.literal("annual_return"),
-  v.literal("yearly_return"),
-  v.literal("monthly_contribution"),
+  v.literal("annualized_return"),
+  v.literal("ytd_return"),
   v.literal("custom"),
 );
 
@@ -53,6 +52,7 @@ export const createGoal = mutation({
     targetValue: v.number(),
     currentValue: v.optional(v.number()),
     unit: unitValidator,
+    metricKey: v.optional(v.string()),
     icon: v.optional(v.string()),
     color: v.optional(v.string()),
     deadline: v.optional(v.number()),
@@ -68,6 +68,7 @@ export const createGoal = mutation({
       targetValue: args.targetValue,
       currentValue: args.currentValue,
       unit: args.unit,
+      metricKey: args.metricKey,
       icon: args.icon,
       color: args.color,
       deadline: args.deadline,
@@ -89,6 +90,7 @@ export const updateGoal = mutation({
     targetValue: v.optional(v.number()),
     currentValue: v.optional(v.number()),
     unit: v.optional(unitValidator),
+    metricKey: v.optional(v.string()),
     icon: v.optional(v.string()),
     color: v.optional(v.string()),
     deadline: v.optional(v.number()),
@@ -112,6 +114,7 @@ export const updateGoal = mutation({
     if (updates.currentValue !== undefined)
       patch.currentValue = updates.currentValue;
     if (updates.unit !== undefined) patch.unit = updates.unit;
+    if (updates.metricKey !== undefined) patch.metricKey = updates.metricKey;
     if (updates.icon !== undefined) patch.icon = updates.icon;
     if (updates.color !== undefined) patch.color = updates.color;
     if (updates.deadline !== undefined) patch.deadline = updates.deadline;
@@ -160,6 +163,12 @@ export const deleteGoalsByPortfolio = mutation({
  * Bulk-create goals from onboarding flow.
  * Accepts the legacy shape (targetValue, targetReturn, etc.) and converts
  * each non-empty field into an individual portfolioGoal row.
+ *
+ * Maps to new types:
+ * - targetValue → portfolio_value
+ * - targetReturn → annualized_return
+ * - targetYearlyReturn → ytd_return (closest match)
+ * - targetContribution → custom goal with note
  */
 export const createGoalsFromOnboarding = mutation({
   args: {
@@ -191,8 +200,8 @@ export const createGoalsFromOnboarding = mutation({
     if (args.targetReturn && args.targetReturn > 0) {
       const id = await ctx.db.insert("portfolioGoals", {
         portfolioId: pid,
-        name: "Annual Return Target",
-        type: "annual_return",
+        name: "Annualized Return Target",
+        type: "annualized_return",
         targetValue: args.targetReturn,
         unit: "percentage",
         icon: "📈",
@@ -205,8 +214,8 @@ export const createGoalsFromOnboarding = mutation({
     if (args.targetYearlyReturn && args.targetYearlyReturn > 0) {
       const id = await ctx.db.insert("portfolioGoals", {
         portfolioId: pid,
-        name: "Yearly Return Target",
-        type: "yearly_return",
+        name: "YTD Return Target",
+        type: "ytd_return",
         targetValue: args.targetYearlyReturn,
         unit: "percentage",
         icon: "📊",
@@ -220,10 +229,12 @@ export const createGoalsFromOnboarding = mutation({
       const id = await ctx.db.insert("portfolioGoals", {
         portfolioId: pid,
         name: "Monthly Contribution",
-        type: "monthly_contribution",
+        type: "custom",
         targetValue: args.targetContribution,
         unit: "currency",
         icon: "🗓️",
+        metricKey: "monthly_contribution",
+        notes: "Recurring monthly savings goal (from onboarding)",
         createdAt: now,
         updatedAt: now,
       });
