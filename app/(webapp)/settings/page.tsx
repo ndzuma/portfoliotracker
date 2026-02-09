@@ -6,8 +6,6 @@ import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { V2Header } from "@/components/header";
-
 import {
   Globe,
   CurrencyDollar,
@@ -205,9 +203,7 @@ export default function V2SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "#09090b" }}>
-      <V2Header />
-
+    <div>
       <div className="max-w-[720px] mx-auto px-8 py-10">
         {/* Page header */}
         <div className="flex items-center justify-between mb-10">

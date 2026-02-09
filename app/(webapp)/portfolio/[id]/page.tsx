@@ -12,7 +12,7 @@ import {
   Sparkle,
   Trash,
 } from "@phosphor-icons/react";
-import { V2Header } from "@/components/header";
+
 import { V2HeroSplit } from "@/components/hero-split";
 import { V2Tabs } from "@/components/tabs";
 import { V2PerformanceChart } from "@/components/performance-chart";
@@ -195,15 +195,13 @@ export default function V2PortfolioDetail() {
   const isPositive = (portfolio?.change || 0) >= 0;
 
   return (
-    <div className="min-h-screen relative" style={{ background: "#09090b" }}>
+    <div className="relative">
       {isPositive ? (
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(34,197,94,0.06),transparent)]" />
       ) : (
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(239,68,68,0.06),transparent)]" />
       )}
       <div className="relative">
-        <V2Header />
-
         {/* Back + Edit */}
         <div className="max-w-[1600px] mx-auto px-8 pt-6">
           <div className="flex items-center gap-3">

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { V2Header } from "@/components/header";
 import { V2AICard } from "@/components/ai-card";
 import { V2MovingTicker } from "@/components/moving-ticker";
 import { V2HeroSplit } from "@/components/hero-split";
@@ -105,9 +104,7 @@ export default function V2NewsPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "#09090b" }}>
-      <V2Header />
-
+    <div>
       {/* Moving Ticker — infinite marquee */}
       <V2MovingTicker benchmarks={benchmarkData} speed={35} />
 

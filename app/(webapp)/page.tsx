@@ -5,7 +5,6 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { ArrowUpRight, ArrowDownRight } from "@phosphor-icons/react";
-import { V2Header } from "@/components/header";
 import { V2HeroSplit, NetWorthHero } from "@/components/hero-split";
 import { V2Ticker } from "@/components/ticker";
 import { V2Tabs } from "@/components/tabs";
@@ -54,15 +53,13 @@ export default function V2Dashboard() {
   const isPositive = totalChange >= 0;
 
   return (
-    <div className="min-h-screen relative" style={{ background: "#09090b" }}>
+    <div className="relative">
       {isPositive ? (
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(34,197,94,0.06),transparent)]" />
       ) : (
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(239,68,68,0.06),transparent)]" />
       )}
       <div className="relative">
-        <V2Header />
-
         {/* Hero: 60% Net Worth | line | 40% AI Intelligence */}
         <V2HeroSplit
           leftContent={
