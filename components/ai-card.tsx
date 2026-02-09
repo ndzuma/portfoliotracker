@@ -65,9 +65,9 @@ export function V2AICard({
 
         <div className="relative flex-1">
           <div className="overflow-hidden">
-            <p className="text-[13px] text-zinc-400 leading-relaxed whitespace-pre-line">
+            <div className="text-[13px] text-zinc-400 leading-relaxed whitespace-pre-line">
               {displayText}
-            </p>
+            </div>
           </div>
 
           {/* Show More button */}

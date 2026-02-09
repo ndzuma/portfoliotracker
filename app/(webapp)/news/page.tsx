@@ -6,7 +6,6 @@ import { api } from "@/convex/_generated/api";
 import { V2Header } from "@/components/header";
 import { V2AICard } from "@/components/ai-card";
 import { V2Ticker } from "@/components/ticker";
-import { V2MovingTicker } from "@/components/moving-ticker";
 import { parseMarkdown } from "@/lib/markdown-parser";
 import {
   Funnel,
@@ -65,7 +64,6 @@ export default function V2NewsPage() {
     <div className="min-h-screen" style={{ background: "#09090b" }}>
       <V2Header />
       <V2Ticker benchmarks={benchmarkData} />
-      <V2MovingTicker benchmarks={benchmarkData} speed={40} />
 
       <div className="max-w-[1600px] mx-auto px-8 py-8">
         {/* Hero */}

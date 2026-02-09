@@ -214,7 +214,10 @@ export function V2MovingTicker({
         ref={trackRef}
         className="flex items-center w-max"
         style={{
-          animation: `ticker-scroll ${duration}s linear infinite`,
+          animationName: "ticker-scroll",
+          animationDuration: `${duration}s`,
+          animationTimingFunction: "linear",
+          animationIterationCount: "infinite",
           animationPlayState: isPaused ? "paused" : "running",
         }}
       >
