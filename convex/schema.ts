@@ -179,6 +179,7 @@ export default defineSchema({
     portfolioId: v.optional(v.union(v.string(), v.id("portfolios"))),
     title: v.string(),
     url: v.string(),
+    notes: v.optional(v.string()),
   }).index("byUser", ["userId"]),
   // calendar events
   calendarEvents: defineTable({

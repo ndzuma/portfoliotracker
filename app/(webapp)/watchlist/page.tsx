@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookmarkIcon, Plus, Search } from "lucide-react";
+import { BookmarkSimple, Plus, MagnifyingGlass } from "@phosphor-icons/react";
 
 export default function WatchlistPage() {
   return (
@@ -27,19 +27,22 @@ export default function WatchlistPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BookmarkIcon className="h-5 w-5" />
+                <BookmarkSimple className="h-5 w-5" />
                 Your Watchlist
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
-                <BookmarkIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-lg font-medium mb-2">No watchlist items yet</p>
+                <BookmarkSimple className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-lg font-medium mb-2">
+                  No watchlist items yet
+                </p>
                 <p className="text-muted-foreground mb-6">
-                  Start tracking stocks, ETFs, and other assets you're interested in
+                  Start tracking stocks, ETFs, and other assets you're
+                  interested in
                 </p>
                 <Button variant="outline">
-                  <Search className="h-4 w-4 mr-2" />
+                  <MagnifyingGlass className="h-4 w-4 mr-2" />
                   Search Symbols
                 </Button>
               </div>

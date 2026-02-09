@@ -10,19 +10,19 @@ import { V2Header } from "@/components/header";
 
 import {
   Globe,
-  DollarSign,
+  CurrencyDollar,
   Palette,
-  Download,
-  Sparkles,
-  ExternalLink,
-  Server,
+  DownloadSimple,
+  Sparkle,
+  ArrowSquareOut,
+  HardDrives,
   Moon,
   Sun,
-  Save,
-  ChevronRight,
-  Zap,
+  FloppyDisk,
+  CaretRight,
+  Lightning,
   Bell,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -224,7 +224,7 @@ export default function V2SettingsPage() {
               onClick={handleSave}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors"
             >
-              <Save className="h-3.5 w-3.5" /> Save Changes
+              <FloppyDisk className="h-3.5 w-3.5" /> Save Changes
             </button>
           )}
         </div>
@@ -278,7 +278,7 @@ export default function V2SettingsPage() {
           </Section>
 
           {/* Currency */}
-          <Section icon={DollarSign} title="Currency">
+          <Section icon={CurrencyDollar} title="Currency">
             <SettingRow
               label="Base Currency"
               description="Used for portfolio value calculations"
@@ -317,14 +317,14 @@ export default function V2SettingsPage() {
           </Section>
 
           {/* Export */}
-          <Section icon={Download} title="Data Export">
+          <Section icon={DownloadSimple} title="Data Export">
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleExport}
                 disabled={isExporting}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border border-white/[0.06] text-zinc-300 hover:text-white hover:bg-white/[0.04] transition-colors disabled:opacity-40"
               >
-                <Download className="h-3 w-3" />{" "}
+                <DownloadSimple className="h-3 w-3" />{" "}
                 {isExporting ? "Exporting..." : "JSON"}
               </button>
               {["CSV", "PDF", "Excel"].map((f) => (
@@ -333,7 +333,7 @@ export default function V2SettingsPage() {
                   disabled
                   className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border border-white/[0.06] text-zinc-700 cursor-not-allowed"
                 >
-                  <Download className="h-3 w-3" /> {f}
+                  <DownloadSimple className="h-3 w-3" /> {f}
                 </button>
               ))}
             </div>
@@ -341,7 +341,7 @@ export default function V2SettingsPage() {
 
           {/* BYOAI */}
           {byoaiEnabled && (
-            <Section icon={Sparkles} title="AI Provider">
+            <Section icon={Sparkle} title="AI Provider">
               <div className="flex flex-col gap-5">
                 <SettingRow
                   label="Provider"
@@ -383,7 +383,7 @@ export default function V2SettingsPage() {
                 {aiProvider === "openrouter" && (
                   <div className="rounded-lg border border-white/[0.06] p-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <ExternalLink className="h-3 w-3 text-zinc-500" />
+                      <ArrowSquareOut className="h-3 w-3 text-zinc-500" />
                       <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
                         OpenRouter Config
                       </span>
@@ -407,7 +407,7 @@ export default function V2SettingsPage() {
                 {aiProvider === "self-hosted" && (
                   <div className="rounded-lg border border-white/[0.06] p-4 flex flex-col gap-3">
                     <div className="flex items-center gap-2 mb-1">
-                      <Server className="h-3 w-3 text-zinc-500" />
+                      <HardDrives className="h-3 w-3 text-zinc-500" />
                       <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
                         Self-Hosted Config
                       </span>
@@ -448,7 +448,7 @@ export default function V2SettingsPage() {
             onClick={handleSave}
             className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors w-full mt-4"
           >
-            <Save className="h-3.5 w-3.5" /> Save All Settings
+            <FloppyDisk className="h-3.5 w-3.5" /> Save All Settings
           </button>
         </div>
       </div>

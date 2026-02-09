@@ -19,14 +19,14 @@ import {
 } from "@/components/ui/select";
 import {
   Plus,
-  TrendingUp,
+  TrendUp,
   Coins,
-  Banknote,
-  Landmark,
-  Building2,
-  Gem,
+  Money,
+  Bank,
+  Buildings,
+  Diamond,
   ArrowLeft,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
@@ -38,7 +38,7 @@ const ASSET_TYPES = [
   {
     id: "stock" as const,
     label: "Stock",
-    icon: TrendingUp,
+    icon: TrendUp,
     color: "text-blue-400 bg-blue-500/10",
   },
   {
@@ -50,25 +50,25 @@ const ASSET_TYPES = [
   {
     id: "cash" as const,
     label: "Cash",
-    icon: Banknote,
+    icon: Money,
     color: "text-emerald-400 bg-emerald-500/10",
   },
   {
     id: "bond" as const,
     label: "Bond",
-    icon: Landmark,
+    icon: Bank,
     color: "text-purple-400 bg-purple-500/10",
   },
   {
     id: "real estate" as const,
     label: "Real Estate",
-    icon: Building2,
+    icon: Buildings,
     color: "text-teal-400 bg-teal-500/10",
   },
   {
     id: "commodity" as const,
     label: "Commodity",
-    icon: Gem,
+    icon: Diamond,
     color: "text-orange-400 bg-orange-500/10",
   },
 ];

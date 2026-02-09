@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import Link from "next/link";
-import { Flag } from "lucide-react";
+import { Flag } from "@phosphor-icons/react";
 
 function AdminCard({
   title,

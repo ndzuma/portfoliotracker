@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendUp, TrendDown } from "@phosphor-icons/react";
 
 interface StatItem {
   label: string;
@@ -23,11 +23,19 @@ export function V2StatsRow({ stats }: V2StatsRowProps) {
 
         return (
           <Card key={i} className="p-5 bg-zinc-950 border-white/[0.06]">
-            <p className="text-sm text-zinc-600 font-medium mb-2">{stat.label}</p>
+            <p className="text-sm text-zinc-600 font-medium mb-2">
+              {stat.label}
+            </p>
             <p className="text-2xl font-bold text-white">{stat.value}</p>
             {hasChange && (
-              <div className={`flex items-center gap-1 text-sm mt-2 ${isPositive ? "text-emerald-500" : "text-red-500"}`}>
-                {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+              <div
+                className={`flex items-center gap-1 text-sm mt-2 ${isPositive ? "text-emerald-500" : "text-red-500"}`}
+              >
+                {isPositive ? (
+                  <TrendUp className="h-4 w-4" />
+                ) : (
+                  <TrendDown className="h-4 w-4" />
+                )}
                 <span>
                   {isPositive ? "+" : ""}
                   {stat.change}% {stat.changeLabel || ""}

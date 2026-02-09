@@ -3,49 +3,213 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard,
-  Search,
+  ChartPieSlice,
+  MagnifyingGlass,
   Bell,
   Newspaper,
-  Eye,
-  FlaskConical,
-  CalendarDays,
-  Settings,
-  Menu,
+  Binoculars,
+  Flask,
+  CalendarDots,
+  GearSix,
+  List,
   X,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 const BASE_NAV_ITEMS = [
-  { id: "overview", label: "Overview", href: "/", icon: LayoutDashboard },
+  { id: "overview", label: "Overview", href: "/", icon: ChartPieSlice },
   { id: "news", label: "News", href: "/news", icon: Newspaper },
   {
     id: "watchlist",
     label: "Watchlist",
     href: "/watchlist",
-    icon: Eye,
+    icon: Binoculars,
     flagKey: "watchlist",
   },
   {
     id: "research",
     label: "Research",
     href: "/research",
-    icon: FlaskConical,
+    icon: Flask,
     flagKey: "research",
   },
   {
     id: "earnings",
     label: "Earnings",
     href: "/earnings",
-    icon: CalendarDays,
+    icon: CalendarDots,
     flagKey: "earnings",
   },
-  { id: "settings", label: "Settings", href: "/settings", icon: Settings },
+  { id: "settings", label: "Settings", href: "/settings", icon: GearSix },
 ];
+
+// Spring config for the label reveal
+const labelSpring = {
+  type: "spring" as const,
+  stiffness: 400,
+  damping: 30,
+  mass: 0.8,
+};
+
+const labelFadeSpring = {
+  type: "spring" as const,
+  stiffness: 300,
+  damping: 25,
+  mass: 0.6,
+};
+
+function NavItem({
+  item,
+  isActive,
+  isLast,
+}: {
+  item: (typeof BASE_NAV_ITEMS)[0];
+  isActive: boolean;
+  isLast: boolean;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const Icon = item.icon;
+  const showLabel = isActive || isHovered;
+
+  return (
+    <div
+      className={`${!isLast ? "border-r" : ""}`}
+      style={{ borderColor: "rgba(255,255,255,0.06)" }}
+    >
+      <Link href={item.href} className="h-full flex">
+        <motion.div
+          className="relative flex items-center gap-2.5 py-3 cursor-pointer h-full"
+          onHoverStart={() => setIsHovered(true)}
+          onHoverEnd={() => setIsHovered(false)}
+          animate={{
+            paddingLeft: showLabel ? 20 : 16,
+            paddingRight: showLabel ? 20 : 16,
+          }}
+          transition={labelSpring}
+        >
+          {/* Active indicator — gold bottom line, flush to border */}
+          {isActive && (
+            <motion.div
+              className="absolute bottom-0 left-0 right-0 h-[2px]"
+              style={{ background: "var(--primary)" }}
+              layoutId="nav-active-indicator"
+              transition={labelSpring}
+            />
+          )}
+
+          {/* Hover glow */}
+          <AnimatePresence>
+            {isHovered && !isActive && (
+              <motion.div
+                className="absolute inset-0"
+                style={{ background: "rgba(255,255,255,0.03)" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Icon */}
+          <motion.div
+            className="relative z-10 shrink-0"
+            animate={{
+              color: isActive
+                ? "var(--primary)"
+                : isHovered
+                  ? "rgba(255,255,255,0.85)"
+                  : "rgba(255,255,255,0.35)",
+            }}
+            transition={{ duration: 0.2 }}
+          >
+            <Icon size={16} weight={isActive ? "duotone" : "regular"} />
+          </motion.div>
+
+          {/* Label — animated width reveal */}
+          <motion.div
+            className="relative z-10 overflow-hidden"
+            animate={{
+              width: showLabel ? "auto" : 0,
+            }}
+            initial={false}
+            transition={labelSpring}
+          >
+            <motion.span
+              className="text-xs font-medium whitespace-nowrap block"
+              animate={{
+                opacity: showLabel ? 1 : 0,
+                x: showLabel ? 0 : -8,
+                color: isActive
+                  ? "rgba(255,255,255,1)"
+                  : "rgba(255,255,255,0.65)",
+              }}
+              transition={labelFadeSpring}
+            >
+              {item.label}
+            </motion.span>
+          </motion.div>
+        </motion.div>
+      </Link>
+    </div>
+  );
+}
+
+function MobileNavItem({
+  item,
+  isActive,
+  onClose,
+  index,
+}: {
+  item: (typeof BASE_NAV_ITEMS)[0];
+  isActive: boolean;
+  onClose: () => void;
+  index: number;
+}) {
+  const Icon = item.icon;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -16 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -8 }}
+      transition={{
+        ...labelSpring,
+        delay: index * 0.04,
+      }}
+    >
+      <Link href={item.href} onClick={onClose} className="block">
+        <div
+          className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
+            isActive
+              ? "bg-white/[0.08] text-white"
+              : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <Icon
+            size={18}
+            weight={isActive ? "duotone" : "regular"}
+            style={isActive ? { color: "var(--primary)" } : undefined}
+          />
+          <span className="text-sm font-medium">{item.label}</span>
+          {isActive && (
+            <motion.div
+              className="ml-auto w-1.5 h-1.5 rounded-full"
+              style={{ background: "var(--primary)" }}
+              layoutId="mobile-nav-dot"
+              transition={labelSpring}
+            />
+          )}
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
 
 export function V2Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -79,7 +243,7 @@ export function V2Header() {
     if (item.flagKey === "watchlist") return watchlistEnabled;
     if (item.flagKey === "research") return researchEnabled;
     if (item.flagKey === "earnings") return earningsEnabled;
-    return true; // Always show items without flagKey
+    return true;
   });
 
   const getActiveId = () => {
@@ -91,7 +255,6 @@ export function V2Header() {
   };
 
   const activeId = getActiveId();
-
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
@@ -104,25 +267,23 @@ export function V2Header() {
         }}
       >
         <div className="max-w-[1600px] mx-auto flex items-center">
-          {/* Mobile Layout */}
+          {/* ─── Mobile Layout ─── */}
           <div className="flex md:hidden items-center justify-between w-full px-4 py-3">
-            {/* Logo */}
             <Link href="/" className="flex items-center">
               <span className="text-sm font-semibold text-white tracking-tight">
                 PulsePortfolio
               </span>
             </Link>
 
-            {/* Mobile Right Section */}
             <div className="flex items-center gap-1">
               {searchEnabled && (
                 <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors">
-                  <Search className="h-4 w-4" />
+                  <MagnifyingGlass size={16} weight="regular" />
                 </button>
               )}
               {notificationsEnabled && (
                 <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors relative">
-                  <Bell className="h-4 w-4" />
+                  <Bell size={16} weight="regular" />
                   <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 </button>
               )}
@@ -134,77 +295,97 @@ export function V2Header() {
                   }}
                 />
               </div>
-              <button
+              <motion.button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors ml-1"
+                whileTap={{ scale: 0.92 }}
               >
-                {mobileMenuOpen ? (
-                  <X className="h-4 w-4" />
-                ) : (
-                  <Menu className="h-4 w-4" />
-                )}
-              </button>
+                <AnimatePresence mode="wait" initial={false}>
+                  {mobileMenuOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <X size={16} weight="bold" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <List size={16} weight="bold" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
             </div>
           </div>
 
-          {/* Desktop Layout */}
-          <div className="hidden md:flex items-center w-full">
-            {/* Logo */}
+          {/* ─── Desktop Layout ─── */}
+          <div className="hidden md:flex items-stretch w-full">
+            {/* Logo cell */}
             <div
               className="flex items-center px-6 py-3 shrink-0 border-r"
               style={{ borderColor: "rgba(255,255,255,0.06)" }}
             >
-              <Link href="/" className="flex items-center">
+              <Link href="/" className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-white tracking-tight">
                   PulsePortfolio
                 </span>
               </Link>
             </div>
 
-            {/* Nav Items - Ticker Style */}
-            <div className="flex items-center">
-              {NAV_ITEMS.map((item, index) => {
-                const Icon = item.icon;
-                const isActive = activeId === item.id;
-                return (
-                  <div
-                    key={item.id}
-                    className={`flex items-center ${index < NAV_ITEMS.length - 1 ? "border-r" : ""}`}
-                    style={{ borderColor: "rgba(255,255,255,0.06)" }}
-                  >
-                    <Link href={item.href} className="block">
-                      <div
-                        className={`flex items-center gap-2 px-4 py-3 transition-all hover:bg-white/[0.04] ${
-                          isActive
-                            ? "bg-white/[0.06] text-white"
-                            : "text-zinc-500 hover:text-zinc-300"
-                        }`}
-                      >
-                        <Icon className="h-3.5 w-3.5 shrink-0" />
-                        <span className="text-xs font-medium whitespace-nowrap">
-                          {item.label}
-                        </span>
-                      </div>
-                    </Link>
-                  </div>
-                );
-              })}
+            {/* Nav items — ticker-cell DNA with expand/collapse */}
+            <div className="flex items-stretch">
+              {NAV_ITEMS.map((item, index) => (
+                <NavItem
+                  key={item.id}
+                  item={item}
+                  isActive={activeId === item.id}
+                  isLast={index === NAV_ITEMS.length - 1}
+                />
+              ))}
             </div>
 
-            {/* Right Section */}
-            <div className="flex items-center ml-auto px-4 py-3 gap-1">
+            {/* Right section — utility icons */}
+            <div
+              className="flex items-stretch ml-auto border-l"
+              style={{ borderColor: "rgba(255,255,255,0.06)" }}
+            >
               {searchEnabled && (
-                <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors">
-                  <Search className="h-3.5 w-3.5" />
-                </button>
+                <motion.button
+                  className="flex items-center px-3.5 py-3 text-zinc-500 hover:text-white transition-colors relative"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <MagnifyingGlass size={15} weight="regular" />
+                </motion.button>
               )}
               {notificationsEnabled && (
-                <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors relative">
-                  <Bell className="h-3.5 w-3.5" />
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                </button>
+                <motion.button
+                  className="flex items-center px-3.5 py-3 text-zinc-500 hover:text-white transition-colors relative"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Bell size={15} weight="regular" />
+                  <motion.span
+                    className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-emerald-500"
+                    animate={{ scale: [1, 1.3, 1] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3,
+                    }}
+                  />
+                </motion.button>
               )}
-              <div className="ml-2">
+              <div className="flex items-center px-3.5 py-3">
                 <UserButton
                   appearance={{
                     elements: { userButtonAvatarBox: "w-6 h-6" },
@@ -216,48 +397,49 @@ export function V2Header() {
           </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-          <div
-            className="md:hidden border-t"
-            style={{ borderColor: "rgba(255,255,255,0.06)" }}
-          >
-            <div className="px-4 py-3 space-y-1">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeId === item.id;
-                return (
-                  <Link
+        {/* ─── Mobile Menu Dropdown ─── */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              className="md:hidden border-t overflow-hidden"
+              style={{ borderColor: "rgba(255,255,255,0.06)" }}
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{
+                height: { ...labelSpring },
+                opacity: { duration: 0.2 },
+              }}
+            >
+              <div className="px-4 py-3 space-y-1">
+                {NAV_ITEMS.map((item, index) => (
+                  <MobileNavItem
                     key={item.id}
-                    href={item.href}
-                    onClick={closeMobileMenu}
-                    className="block"
-                  >
-                    <div
-                      className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
-                        isActive
-                          ? "bg-white/[0.08] text-white"
-                          : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="text-sm font-medium">{item.label}</span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                    item={item}
+                    isActive={activeId === item.id}
+                    onClose={closeMobileMenu}
+                    index={index}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
-      {/* Mobile Menu Backdrop */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
-          onClick={closeMobileMenu}
-        />
-      )}
+      {/* Mobile backdrop */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={closeMobileMenu}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
   ArrowUpRight,
   ArrowDownRight,
-  Sparkles,
-} from "lucide-react";
+  Sparkle,
+  Trash,
+} from "@phosphor-icons/react";
 import { V2Header } from "@/components/header";
 import { V2HeroSplit } from "@/components/hero-split";
 import { V2Tabs } from "@/components/tabs";
@@ -29,14 +30,18 @@ import { parseMarkdown } from "@/lib/markdown-parser";
 
 export default function V2PortfolioDetail() {
   const { user } = useUser();
+  const router = useRouter();
   const routeParams = useParams();
   const portfolioId = routeParams.id as string;
   const [activeTab, setActiveTab] = useState("holdings");
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [chartDateRange, setChartDateRange] = useState("1Y");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const generatePortfolioAI = useAction(api.ai.generateAiPortfolioSummary);
+
+  const deletePortfolio = useMutation(api.portfolios.deletePortfolio);
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: user?.id || "",
@@ -100,6 +105,25 @@ export default function V2PortfolioDetail() {
   const handleDeleteAsset = (id: string) => {
     if (confirm("Are you sure you want to delete this asset?")) {
       deleteAsset({ assetId: id as Id<"assets"> });
+    }
+  };
+
+  const handleDeletePortfolio = async () => {
+    if (!convexUser) return;
+    const confirmed = confirm(
+      "Are you sure you want to delete this portfolio? This will permanently remove all assets, transactions, and associated data. This action cannot be undone.",
+    );
+    if (!confirmed) return;
+    try {
+      setIsDeleting(true);
+      await deletePortfolio({
+        portfolioId: portfolioId as Id<"portfolios">,
+        userId: convexUser._id,
+      });
+      router.push("/");
+    } catch (error) {
+      console.error("Failed to delete portfolio:", error);
+      setIsDeleting(false);
     }
   };
 
@@ -200,6 +224,15 @@ export default function V2PortfolioDetail() {
                   initialRiskTolerance={portfolio.riskTolerance}
                   initialTimeHorizon={portfolio.timeHorizon}
                 />
+                <div className="w-px h-3 bg-white/[0.1]" />
+                <button
+                  onClick={handleDeletePortfolio}
+                  disabled={isDeleting}
+                  className="text-xs text-zinc-500 hover:text-red-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  <Trash className="h-3 w-3" />
+                  {isDeleting ? "Deleting..." : "Delete Portfolio"}
+                </button>
               </>
             )}
           </div>
@@ -328,6 +361,7 @@ export default function V2PortfolioDetail() {
         <section className="max-w-[1600px] mx-auto px-8 pb-6">
           <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
             <V2AICard
+              label="AI Portfolio Insight"
               headline={aiHeadline}
               analysis={cleanAnalysis}
               timestamp={portfolioTimestamp}
@@ -339,14 +373,27 @@ export default function V2PortfolioDetail() {
           </div>
         </section>
 
+        {/* Divider — top line for tabs, matching ticker strip DNA */}
+        <div
+          className="border-b"
+          style={{ borderColor: "rgba(255,255,255,0.06)" }}
+        />
+
         {/* Tabs */}
         <V2Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* Tab Content */}
-        <section className="max-w-[1600px] mx-auto px-8 pb-16">
-          {/* Add Asset Button */}
+        <section className="max-w-[1600px] mx-auto px-8 pt-8 pb-16">
           {activeTab === "holdings" && (
-            <div className="flex justify-end mb-6">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-xl font-semibold text-white tracking-tight">
+                  Holdings
+                </h2>
+                <p className="text-zinc-600 text-xs mt-1">
+                  {portfolio?.assets?.length || 0} assets
+                </p>
+              </div>
               <V2AddAssetDialog portfolioId={portfolioId} />
             </div>
           )}

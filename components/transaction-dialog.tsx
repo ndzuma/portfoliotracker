@@ -20,11 +20,11 @@ import {
   ArrowUpRight,
   Percent,
   Plus,
-  Pencil,
-  Trash2,
-  MoreHorizontal,
+  PencilSimple,
+  Trash,
+  DotsThree,
   ArrowLeft,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -352,7 +352,7 @@ export function V2TransactionDialog({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="p-1.5 rounded-md text-zinc-600 hover:text-white hover:bg-white/[0.06] opacity-0 group-hover:opacity-100 transition-all">
-                            <MoreHorizontal className="h-3.5 w-3.5" />
+                            <DotsThree className="h-3.5 w-3.5" weight="bold" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
@@ -363,13 +363,13 @@ export function V2TransactionDialog({
                             onClick={() => openEdit(tx)}
                             className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
                           >
-                            <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                            <PencilSimple className="h-3.5 w-3.5 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDelete(tx._id)}
                             className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
                           >
-                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                            <Trash className="h-3.5 w-3.5 mr-2" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

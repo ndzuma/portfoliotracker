@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings2, Save, ArrowLeft, Check } from "lucide-react";
+import { GearSix, FloppyDisk, ArrowLeft, Check } from "@phosphor-icons/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -308,11 +308,11 @@ export function V2EditPortfolioDialog({
                 {step === "details" ? (
                   <>
                     Continue
-                    <Settings2 className="h-3.5 w-3.5" />
+                    <GearSix className="h-3.5 w-3.5" />
                   </>
                 ) : (
                   <>
-                    <Save className="h-3.5 w-3.5" />
+                    <FloppyDisk className="h-3.5 w-3.5" />
                     Save Changes
                   </>
                 )}

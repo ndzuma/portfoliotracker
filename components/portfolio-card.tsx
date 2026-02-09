@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 
 /* ─── Sparkline Component ─── */

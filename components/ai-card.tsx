@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowsClockwise } from "@phosphor-icons/react";
 import { V2AISummaryPopup } from "./ai-summary-popup";
 
 interface V2AICardProps {
+  label?: string;
   headline?: string | null;
   analysis: string | null;
   timestamp?: string;
@@ -14,6 +16,7 @@ interface V2AICardProps {
 }
 
 export function V2AICard({
+  label = "AI Market Intelligence",
   headline,
   analysis,
   timestamp,
@@ -40,32 +43,22 @@ export function V2AICard({
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-            AI Market Intelligence
+            {label}
           </p>
           {showRefresh && (
             <button
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="group relative w-4 h-4 rounded-md hover:bg-zinc-800/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center ml-2"
+              className="group ml-auto flex items-center gap-1.5 px-2 py-1 rounded-md border border-white/[0.06] text-zinc-500 hover:text-emerald-400 hover:border-emerald-500/20 hover:bg-emerald-500/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               title={headline ? "Refresh Analysis" : "Generate Analysis"}
             >
-              {isRefreshing ? (
-                <div className="w-2.5 h-2.5 border border-zinc-500 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <svg
-                  className="h-2.5 w-2.5 text-zinc-500 group-hover:text-emerald-400 transition-colors"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-              )}
+              <ArrowsClockwise
+                className={`h-3 w-3 ${isRefreshing ? "animate-spin" : "group-hover:rotate-45 transition-transform duration-300"}`}
+                weight="bold"
+              />
+              <span className="text-[10px] font-medium uppercase tracking-wider">
+                {isRefreshing ? "Analyzing" : headline ? "Refresh" : "Generate"}
+              </span>
             </button>
           )}
         </div>

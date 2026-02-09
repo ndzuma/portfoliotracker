@@ -7,7 +7,12 @@ import { V2Header } from "@/components/header";
 import { V2AICard } from "@/components/ai-card";
 import { V2Ticker } from "@/components/ticker";
 import { parseMarkdown } from "@/lib/markdown-parser";
-import { Filter, ChevronDown, ExternalLink, Newspaper } from "lucide-react";
+import {
+  Funnel,
+  CaretDown,
+  ArrowSquareOut,
+  Newspaper,
+} from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,9 +92,9 @@ export default function V2NewsPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-zinc-400 rounded-lg border border-white/[0.06] hover:border-white/[0.12] transition-colors">
-                <Filter className="h-3.5 w-3.5" />
+                <Funnel className="h-3.5 w-3.5" />
                 {filter === "all" ? "All" : filter}
-                <ChevronDown className="h-3.5 w-3.5" />
+                <CaretDown className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -164,7 +169,7 @@ export default function V2NewsPage() {
                     {item.summary}
                   </p>
                   <div className="flex items-center gap-1 mt-3 text-[11px] text-zinc-600 group-hover:text-zinc-400 transition-colors">
-                    Read <ExternalLink className="h-3 w-3" />
+                    Read <ArrowSquareOut className="h-3 w-3" />
                   </div>
                 </div>
               </a>

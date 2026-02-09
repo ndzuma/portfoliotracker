@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles } from "lucide-react";
+import { Sparkle } from "@phosphor-icons/react";
 
 interface AISummaryCardProps {
   title: string;
@@ -30,7 +30,7 @@ export function AISummaryCard({
       <Card className="p-6 bg-[radial-gradient(circle_at_top_left,_#8d745d_0%,_transparent_30%)] border-[#8d745d] h-full relative">
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Sparkle className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-medium text-foreground">{title}</h3>
           </div>
           {headline && (
@@ -89,7 +89,7 @@ export function AISummaryCard({
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4 mr-2" strokeWidth={2} />
+                  <Sparkle className="h-4 w-4 mr-2" weight="bold" />
                   Force New Analysis
                 </>
               )}

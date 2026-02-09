@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, ArrowLeft } from "lucide-react";
+import { FloppyDisk, ArrowLeft } from "@phosphor-icons/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -293,7 +293,7 @@ export function V2EditAssetDialog({
                     onClick={handleSave}
                     className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors flex items-center gap-2"
                   >
-                    <Save className="h-3.5 w-3.5" />
+                    <FloppyDisk className="h-3.5 w-3.5" />
                     Save Changes
                   </button>
                 </div>

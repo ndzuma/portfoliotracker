@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, Flag } from "lucide-react";
+import { GearSix, Flag } from "@phosphor-icons/react";
 import { UserButton } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 
@@ -27,7 +27,7 @@ export function AdminHeader() {
             style={{ borderColor: "rgba(255,255,255,0.06)" }}
           >
             <Link href="/admin" className="flex items-center gap-2">
-              <Settings className="h-4 w-4 text-zinc-400" />
+              <GearSix className="h-4 w-4 text-zinc-400" />
               <span className="text-sm font-semibold text-white tracking-tight">
                 Admin Panel
               </span>

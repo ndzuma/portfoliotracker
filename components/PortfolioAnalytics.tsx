@@ -9,23 +9,23 @@ import { api } from "../convex/_generated/api";
 import { isFeatureEnabled } from "@/lib/featureFlags";
 import { useState } from "react";
 import {
-  TrendingUp,
-  TrendingDown,
-  Target,
-  BarChart3,
-  PieChart,
-  Activity,
+  TrendUp,
+  TrendDown,
+  Crosshair,
+  ChartBar,
+  ChartPie,
+  Pulse,
   Shield,
-  AlertTriangle,
-  ChevronDown,
-  ChevronUp,
+  Warning,
+  CaretDown,
+  CaretUp,
   Calendar,
-  Zap,
-  TrendingUpDown,
-  RotateCcw,
+  Lightning,
+  ChartLineUp,
+  ArrowCounterClockwise,
   Timer,
   Hash,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 interface PortfolioAnalyticsProps {
   portfolioId: string;
@@ -58,12 +58,12 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
           >
             {isExpanded ? (
               <>
-                <ChevronUp className="h-4 w-4" />
+                <CaretUp className="h-4 w-4" />
                 <span>Collapse</span>
               </>
             ) : (
               <>
-                <ChevronDown className="h-4 w-4" />
+                <CaretDown className="h-4 w-4" />
                 <span>Expand</span>
               </>
             )}
@@ -160,12 +160,12 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
         >
           {isExpanded ? (
             <>
-              <ChevronUp className="h-4 w-4" />
+              <CaretUp className="h-4 w-4" />
               <span>Collapse</span>
             </>
           ) : (
             <>
-              <ChevronDown className="h-4 w-4" />
+              <CaretDown className="h-4 w-4" />
               <span>Expand</span>
             </>
           )}
@@ -177,7 +177,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
           {/* Performance Metrics Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
+              <TrendUp className="h-5 w-5 text-primary" />
               Performance Metrics
             </h3>
 
@@ -186,7 +186,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <TrendUp className="h-4 w-4 text-primary" />
                     Total Return
                   </CardTitle>
                 </CardHeader>
@@ -203,7 +203,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-primary" />
+                    <ChartBar className="h-4 w-4 text-primary" />
                     Annualized Return
                   </CardTitle>
                 </CardHeader>
@@ -241,7 +241,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-primary" />
+                    <Pulse className="h-4 w-4 text-primary" />
                     YTD Return
                   </CardTitle>
                 </CardHeader>
@@ -258,7 +258,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <RotateCcw className="h-5 w-5 text-primary" />
+                  <ArrowCounterClockwise className="h-5 w-5 text-primary" />
                   Rolling Returns
                 </CardTitle>
               </CardHeader>
@@ -313,7 +313,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <TrendUp className="h-4 w-4 text-green-500" />
                       <p className="text-sm font-medium">Best Month</p>
                     </div>
                     <p className="text-xl font-bold text-green-600">
@@ -337,7 +337,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <TrendingDown className="h-4 w-4 text-red-500" />
+                      <TrendDown className="h-4 w-4 text-red-500" />
                       <p className="text-sm font-medium">Worst Month</p>
                     </div>
                     <p className="text-xl font-bold text-red-600">
@@ -360,7 +360,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <TrendUp className="h-4 w-4 text-green-500" />
                       <p className="text-sm font-medium">Best Year</p>
                     </div>
                     <p className="text-xl font-bold text-green-600">
@@ -384,7 +384,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <TrendingDown className="h-4 w-4 text-red-500" />
+                      <TrendDown className="h-4 w-4 text-red-500" />
                       <p className="text-sm font-medium">Worst Year</p>
                     </div>
                     <p className="text-xl font-bold text-red-600">
@@ -448,7 +448,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <TrendDown className="h-4 w-4 text-red-500" />
                     Max Drawdown
                   </CardTitle>
                 </CardHeader>
@@ -465,7 +465,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4 text-orange-500" />
+                    <TrendDown className="h-4 w-4 text-orange-500" />
                     Downside Deviation
                   </CardTitle>
                 </CardHeader>
@@ -482,7 +482,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-primary" />
+                    <Pulse className="h-4 w-4 text-primary" />
                     Sharpe Ratio
                   </CardTitle>
                 </CardHeader>
@@ -501,7 +501,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-orange-500" />
+                  <Warning className="h-5 w-5 text-orange-500" />
                   Value at Risk (95% Confidence)
                 </CardTitle>
               </CardHeader>
@@ -541,7 +541,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
           {/* Benchmark Comparison Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
+              <ChartBar className="h-5 w-5 text-primary" />
               Benchmark Comparison (vs SPY)
             </h3>
 
@@ -550,7 +550,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-primary" />
+                    <Lightning className="h-4 w-4 text-primary" />
                     Alpha
                   </CardTitle>
                 </CardHeader>
@@ -567,7 +567,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-primary" />
+                    <Pulse className="h-4 w-4 text-primary" />
                     Beta
                   </CardTitle>
                 </CardHeader>
@@ -584,7 +584,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <TrendingUpDown className="h-4 w-4 text-primary" />
+                    <ChartLineUp className="h-4 w-4 text-primary" />
                     Correlation
                   </CardTitle>
                 </CardHeader>
@@ -601,7 +601,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Target className="h-4 w-4 text-primary" />
+                    <Crosshair className="h-4 w-4 text-primary" />
                     Information Ratio
                   </CardTitle>
                 </CardHeader>
@@ -662,7 +662,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary" />
+                  <Pulse className="h-5 w-5 text-primary" />
                   Market Capture Analysis
                 </CardTitle>
               </CardHeader>
@@ -670,7 +670,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm font-medium flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <TrendUp className="h-4 w-4 text-green-500" />
                       Up Market Capture
                     </p>
                     <p className="text-2xl font-bold text-green-600">
@@ -685,7 +685,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
                   </div>
                   <div>
                     <p className="text-sm font-medium flex items-center gap-2">
-                      <TrendingDown className="h-4 w-4 text-red-500" />
+                      <TrendDown className="h-4 w-4 text-red-500" />
                       Down Market Capture
                     </p>
                     <p className="text-2xl font-bold text-red-600">
@@ -755,7 +755,7 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
           {/* Asset Allocation */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-primary" />
+              <ChartPie className="h-5 w-5 text-primary" />
               Asset Allocation
             </h3>
 

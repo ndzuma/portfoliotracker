@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, Home, ArrowLeft } from "lucide-react";
+import { ShieldCheck, House, ArrowLeft } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,21 +11,23 @@ export default function UnauthorizedPage() {
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 p-3 rounded-full bg-destructive/10">
-            <Shield className="h-8 w-8 text-destructive" />
+            <ShieldCheck className="h-8 w-8 text-destructive" />
           </div>
           <CardTitle className="text-2xl">Access Denied</CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <p className="text-muted-foreground">
-            You don't have permission to access this page. Administrator privileges are required.
+            You don't have permission to access this page. Administrator
+            privileges are required.
           </p>
           <p className="text-sm text-muted-foreground">
-            If you believe this is an error, please contact your system administrator.
+            If you believe this is an error, please contact your system
+            administrator.
           </p>
           <div className="flex flex-col gap-2 pt-4">
             <Button asChild className="w-full">
               <Link href="/">
-                <Home className="h-4 w-4 mr-2" />
+                <House className="h-4 w-4 mr-2" />
                 Go to Dashboard
               </Link>
             </Button>

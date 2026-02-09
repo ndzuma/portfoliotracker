@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useEffect, useState } from "react";
-import { TrendingUp } from "lucide-react";
+import { TrendUp } from "@phosphor-icons/react";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { RedirectToSignIn } from "@clerk/nextjs";
 import { OnboardingFlow } from "@/components/onboarding-flow";
@@ -49,7 +49,7 @@ export default function OnboardingPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <div className="text-center space-y-4">
-          <TrendingUp className="h-12 w-12 mx-auto text-primary animate-pulse" />
+          <TrendUp className="h-12 w-12 mx-auto text-primary animate-pulse" />
           <h2 className="text-2xl font-semibold">Setting up your account...</h2>
           <p className="text-muted-foreground">
             We're getting everything ready for you.
@@ -75,7 +75,7 @@ export default function OnboardingPage() {
         {/* This should not be reached if user hasn't completed onboarding */}
         <div className="flex flex-col items-center justify-center min-h-screen bg-background">
           <div className="text-center space-y-4">
-            <TrendingUp className="h-12 w-12 mx-auto text-primary animate-pulse" />
+            <TrendUp className="h-12 w-12 mx-auto text-primary animate-pulse" />
             <h2 className="text-2xl font-semibold">Something went wrong</h2>
             <p className="text-muted-foreground">
               Please refresh the page or contact support.

@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  ExternalLink,
+  DotsThree,
+  PencilSimple,
+  Trash,
+  ArrowSquareOut,
   Receipt,
-  TrendingUp,
-  TrendingDown,
-} from "lucide-react";
+  TrendUp,
+  TrendDown,
+} from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,7 +94,7 @@ function HoldingRow({
                 rel="noopener noreferrer"
                 className="text-zinc-600 hover:text-zinc-400 transition-colors"
               >
-                <ExternalLink className="h-3 w-3" />
+                <ArrowSquareOut className="h-3 w-3" />
               </a>
             )}
           </div>
@@ -160,7 +160,7 @@ function HoldingRow({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-1.5 rounded-md text-zinc-600 hover:text-white hover:bg-white/[0.06] opacity-0 group-hover:opacity-100 transition-all">
-              <MoreHorizontal className="h-4 w-4" />
+              <DotsThree className="h-4 w-4" weight="bold" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -178,14 +178,14 @@ function HoldingRow({
               onClick={() => onEdit(asset)}
               className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
             >
-              <Edit className="h-3.5 w-3.5 mr-2" />
+              <PencilSimple className="h-3.5 w-3.5 mr-2" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(asset._id)}
               className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
             >
-              <Trash2 className="h-3.5 w-3.5 mr-2" />
+              <Trash className="h-3.5 w-3.5 mr-2" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

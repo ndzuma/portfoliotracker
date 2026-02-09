@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Sparkles } from "lucide-react";
+import { Sparkle } from "@phosphor-icons/react";
 
 // Type definitions
 export interface Asset {
@@ -59,7 +59,7 @@ export function AISummaryCard({
     <Card className="p-6 bg-card border-border h-full">
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="h-5 w-5 text-primary" />
+          <Sparkle className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-medium text-foreground">{title}</h3>
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed flex-1">

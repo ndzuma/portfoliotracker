@@ -3,7 +3,7 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Filter, ChevronDown } from "lucide-react";
+import { Funnel, CaretDown } from "@phosphor-icons/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
@@ -110,9 +110,7 @@ export function PorfolioPerformanceChart({
         </div>
       ) : hasNoData || chartData.length === 0 ? (
         <div className="aspect-auto h-[250px] w-full flex items-center justify-center">
-          <p className="text-muted-foreground">
-            No performance data available
-          </p>
+          <p className="text-muted-foreground">No performance data available</p>
         </div>
       ) : (
         <ChartContainer

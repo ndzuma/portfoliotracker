@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Sparkles } from "lucide-react";
+import { Sparkle } from "@phosphor-icons/react";
 
 interface V2AISummaryPopupProps {
   open: boolean;
@@ -79,7 +79,7 @@ export function V2AISummaryPopup({
           {/* Header */}
           <div className="flex items-center gap-3 p-6 border-b border-white/[0.06]">
             <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <Sparkle className="h-4 w-4 text-emerald-400" />
             </div>
             <div>
               <h2 className="text-white text-lg font-semibold">
@@ -144,7 +144,7 @@ export function V2AISummaryPopup({
               Close
             </button>
             <div className="flex items-center gap-2 text-xs text-zinc-600">
-              <Sparkles className="h-3 w-3" />
+              <Sparkle className="h-3 w-3" />
               <span>Powered by AI</span>
             </div>
           </div>
@@ -159,7 +159,7 @@ export function V2AISummaryPopup({
             {/* Header */}
             <div className="flex items-center gap-3 p-6 border-b border-white/[0.06]">
               <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-emerald-400" />
+                <Sparkle className="h-4 w-4 text-emerald-400" />
               </div>
               <div>
                 <h2 className="text-white text-lg font-semibold">
@@ -224,7 +224,7 @@ export function V2AISummaryPopup({
                 Close
               </button>
               <div className="flex items-center gap-2 text-xs text-zinc-600">
-                <Sparkles className="h-3 w-3" />
+                <Sparkle className="h-3 w-3" />
                 <span>Powered by AI</span>
               </div>
             </div>

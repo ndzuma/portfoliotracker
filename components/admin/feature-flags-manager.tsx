@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Plus, Trash2, Edit3, Flag, X, Check } from "lucide-react";
+import {
+  Plus,
+  Trash,
+  PencilSimple,
+  Flag,
+  X,
+  Check,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 interface FlagFormData {
@@ -452,7 +459,7 @@ function FlagRow({
           onClick={() => onEdit(flag)}
           className="p-2 text-zinc-500 hover:text-blue-400 hover:bg-blue-500/[0.08] rounded-lg transition-colors"
         >
-          <Edit3 className="h-4 w-4" />
+          <PencilSimple className="h-4 w-4" />
         </button>
 
         <button
@@ -460,7 +467,7 @@ function FlagRow({
           disabled={isDeleting}
           className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/[0.08] rounded-lg transition-colors disabled:opacity-50"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash className="h-4 w-4" />
         </button>
       </div>
     </div>

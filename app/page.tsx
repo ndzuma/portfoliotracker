@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight } from "@phosphor-icons/react";
 import { V2Header } from "@/components/header";
 import { V2HeroSplit, NetWorthHero } from "@/components/hero-split";
 import { V2Ticker } from "@/components/ticker";
@@ -90,7 +90,7 @@ export default function V2Dashboard() {
 
         {/* Portfolios Tab */}
         {activeTab === "portfolios" && (
-          <section className="max-w-[1600px] mx-auto px-8 pb-16">
+          <section className="max-w-[1600px] mx-auto px-8 pt-8 pb-16">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-xl font-semibold text-white tracking-tight">
@@ -159,7 +159,7 @@ export default function V2Dashboard() {
 
         {/* Markets Tab */}
         {activeTab === "markets" && (
-          <section className="max-w-[1600px] mx-auto px-8 pb-16">
+          <section className="max-w-[1600px] mx-auto px-8 pt-8 pb-16">
             <h2 className="text-xl font-semibold text-white tracking-tight mb-8">
               Market Benchmarks
             </h2>

@@ -13,19 +13,19 @@ import {
   ArrowLeft,
   Briefcase,
   Shield,
-  PieChart,
-  TrendingUp,
-  Zap,
+  ChartPie,
+  TrendUp,
+  Lightning,
   Brain,
   Globe,
-  DollarSign,
+  CurrencyDollar,
   Upload,
   FileText,
-  Target,
-  TrendingDown,
+  Crosshair,
+  TrendDown,
   Percent,
   Calendar,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import Image from "next/image";
 
 interface OnboardingFlowProps {
@@ -439,7 +439,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                   >
                     <div className="flex items-center gap-3 mb-6">
                       <div className="p-2 rounded-lg bg-emerald-500/10">
-                        <DollarSign className="h-5 w-5 text-emerald-400" />
+                        <CurrencyDollar className="h-5 w-5 text-emerald-400" />
                       </div>
                       <h3 className="text-xl font-semibold text-white">
                         Base Currency
@@ -506,7 +506,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                       title: "OpenRouter API",
                       description:
                         "Use your own OpenRouter API key for premium models",
-                      icon: <Zap className="h-6 w-6" />,
+                      icon: <Lightning className="h-6 w-6" />,
                       badge: "Advanced",
                       color: "bg-blue-500/10 text-blue-400",
                     },
@@ -842,7 +842,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                         transition={{ delay: 0.3, duration: 0.6 }}
                       >
                         <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-                          <Target className="h-5 w-5" />
+                          <Crosshair className="h-5 w-5" />
                           Investment Goals{" "}
                           <span className="text-sm font-normal text-zinc-500">
                             (Optional)
@@ -851,7 +851,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-3">
                             <Label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                              <DollarSign className="h-4 w-4" />
+                              <CurrencyDollar className="h-4 w-4" />
                               Target Portfolio Value
                             </Label>
                             <Input
@@ -871,7 +871,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                           </div>
                           <div className="space-y-3">
                             <Label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                              <TrendingUp className="h-4 w-4" />
+                              <TrendUp className="h-4 w-4" />
                               Target Overall Return (%)
                             </Label>
                             <Input
@@ -911,7 +911,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                           </div>
                           <div className="space-y-3">
                             <Label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                              <TrendingDown className="h-4 w-4" />
+                              <TrendDown className="h-4 w-4" />
                               Monthly Contribution
                             </Label>
                             <Input
@@ -1056,14 +1056,14 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                       color: "bg-blue-500/10",
                     },
                     {
-                      icon: <PieChart className="h-8 w-8" />,
+                      icon: <ChartPie className="h-8 w-8" />,
                       title: "Asset Allocation",
                       description:
                         "Visualize your portfolio distribution and optimize your investment mix.",
                       color: "bg-purple-500/10",
                     },
                     {
-                      icon: <TrendingUp className="h-8 w-8" />,
+                      icon: <TrendUp className="h-8 w-8" />,
                       title: "Performance Analytics",
                       description:
                         "Detailed performance metrics, benchmarking, and historical analysis.",
@@ -1084,7 +1084,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                       color: "bg-red-500/10",
                     },
                     {
-                      icon: <Zap className="h-8 w-8" />,
+                      icon: <Lightning className="h-8 w-8" />,
                       title: "Real-time Updates",
                       description:
                         "Live market data and instant portfolio valuation updates.",
