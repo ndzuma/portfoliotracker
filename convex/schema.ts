@@ -54,7 +54,12 @@ export default defineSchema({
         v.literal("Long-term (10+ years)"),
       ),
     ),
-  }).index("byUser", ["userId"]),
+  })
+    .index("byUser", ["userId"])
+    .searchIndex("searchPortfolios", {
+      searchField: "name",
+      filterFields: ["userId"],
+    }),
   assets: defineTable({
     portfolioId: v.id("portfolios"),
     symbol: v.optional(v.string()),
@@ -71,7 +76,12 @@ export default defineSchema({
     currentPrice: v.optional(v.number()),
     currency: v.optional(v.string()),
     notes: v.optional(v.string()),
-  }).index("byPortfolio", ["portfolioId"]),
+  })
+    .index("byPortfolio", ["portfolioId"])
+    .searchIndex("searchAssets", {
+      searchField: "name",
+      filterFields: ["portfolioId"],
+    }),
   transactions: defineTable({
     assetId: v.id("assets"),
     type: v.union(v.literal("buy"), v.literal("sell"), v.literal("dividend")),
@@ -172,7 +182,11 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("byUser", ["userId", "portfolioId"])
-    .index("byPortfolio", ["portfolioId"]),
+    .index("byPortfolio", ["portfolioId"])
+    .searchIndex("searchDocuments", {
+      searchField: "fileName",
+      filterFields: ["userId"],
+    }),
   // user articles
   userArticles: defineTable({
     userId: v.union(v.string(), v.id("users")),
@@ -180,7 +194,12 @@ export default defineSchema({
     title: v.string(),
     url: v.string(),
     notes: v.optional(v.string()),
-  }).index("byUser", ["userId"]),
+  })
+    .index("byUser", ["userId"])
+    .searchIndex("searchArticles", {
+      searchField: "title",
+      filterFields: ["userId"],
+    }),
   // calendar events
   calendarEvents: defineTable({
     date: v.string(), // YYYY-MM-DD

@@ -18,6 +18,7 @@ import type * as flags from "../flags.js";
 import type * as marketData from "../marketData.js";
 import type * as portfolioGoals from "../portfolioGoals.js";
 import type * as portfolios from "../portfolios.js";
+import type * as search from "../search.js";
 import type * as transactions from "../transactions.js";
 import type * as users from "../users.js";
 
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   marketData: typeof marketData;
   portfolioGoals: typeof portfolioGoals;
   portfolios: typeof portfolios;
+  search: typeof search;
   transactions: typeof transactions;
   users: typeof users;
 }>;

@@ -20,6 +20,10 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import {
+  CommandPalette,
+  useCommandPalette,
+} from "@/components/command-palette";
 
 const BASE_NAV_ITEMS = [
   { id: "overview", label: "Overview", href: "/", icon: ChartPieSlice },
@@ -211,10 +215,87 @@ function MobileNavItem({
   );
 }
 
+// ─── Search Nav Button (expand-on-hover, ticker-cell DNA) ─────
+function SearchNavButton({ onClick }: { onClick: () => void }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.button
+      className="flex items-center gap-2 py-3 text-zinc-500 hover:text-white transition-colors relative cursor-pointer"
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      onClick={onClick}
+      animate={{
+        paddingLeft: isHovered ? 16 : 14,
+        paddingRight: isHovered ? 16 : 14,
+      }}
+      transition={labelSpring}
+      whileTap={{ scale: 0.97 }}
+    >
+      {/* Hover glow */}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            className="absolute inset-0"
+            style={{ background: "rgba(255,255,255,0.03)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        className="relative z-10 shrink-0"
+        animate={{
+          color: isHovered
+            ? "rgba(255,255,255,0.85)"
+            : "rgba(255,255,255,0.35)",
+        }}
+        transition={{ duration: 0.2 }}
+      >
+        <MagnifyingGlass size={15} weight="regular" />
+      </motion.div>
+
+      {/* Label + shortcut — animated width reveal */}
+      <motion.div
+        className="relative z-10 overflow-hidden"
+        animate={{ width: isHovered ? "auto" : 0 }}
+        initial={false}
+        transition={labelSpring}
+      >
+        <motion.span
+          className="text-xs font-medium whitespace-nowrap flex items-center gap-2"
+          animate={{
+            opacity: isHovered ? 1 : 0,
+            x: isHovered ? 0 : -8,
+            color: "rgba(255,255,255,0.65)",
+          }}
+          transition={labelFadeSpring}
+        >
+          Search
+          <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-[10px] text-zinc-600 font-mono">
+            ⌘K
+          </kbd>
+        </motion.span>
+      </motion.div>
+    </motion.button>
+  );
+}
+
 export function V2Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { user } = useUser();
+  const { open: commandPaletteOpen, setOpen: setCommandPaletteOpen } =
+    useCommandPalette();
+
+  // Get convex user for search
+  const convexUser = useQuery(api.users.getUserByClerkId, {
+    clerkId: user?.id || "",
+  });
+  const userId = convexUser?._id;
 
   // Get feature flags
   const watchlistEnabled = useQuery(api.flags.getFlag, {
@@ -277,7 +358,10 @@ export function V2Header() {
 
             <div className="flex items-center gap-1">
               {searchEnabled && (
-                <button className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors">
+                <button
+                  onClick={() => setCommandPaletteOpen(true)}
+                  className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-colors"
+                >
                   <MagnifyingGlass size={16} weight="regular" />
                 </button>
               )}
@@ -359,13 +443,7 @@ export function V2Header() {
               style={{ borderColor: "rgba(255,255,255,0.06)" }}
             >
               {searchEnabled && (
-                <motion.button
-                  className="flex items-center px-3.5 py-3 text-zinc-500 hover:text-white transition-colors relative"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MagnifyingGlass size={15} weight="regular" />
-                </motion.button>
+                <SearchNavButton onClick={() => setCommandPaletteOpen(true)} />
               )}
               {notificationsEnabled && (
                 <motion.button
@@ -426,6 +504,13 @@ export function V2Header() {
           )}
         </AnimatePresence>
       </nav>
+
+      {/* Command Palette */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        userId={userId}
+      />
 
       {/* Mobile backdrop */}
       <AnimatePresence>
