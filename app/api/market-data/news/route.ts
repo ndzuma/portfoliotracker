@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const marketDataServiceUrl = process.env.MARKET_DATA_SERVICE_URL;
     if (!marketDataServiceUrl) {
@@ -9,8 +9,13 @@ export async function GET() {
       );
     }
 
-    // Fetch from your market data service
-    const response = await fetch(`${marketDataServiceUrl}/news`);
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get("page") || "1";
+    const limit = searchParams.get("limit") || "12";
+
+    const response = await fetch(
+      `${marketDataServiceUrl}/v2/news?page=${page}&limit=${limit}`,
+    );
     if (!response.ok) {
       throw new Error(`Failed to fetch market news: ${response.statusText}`);
     }

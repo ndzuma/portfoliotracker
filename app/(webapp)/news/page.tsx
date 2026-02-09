@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { V2Header } from "@/components/header";
@@ -8,18 +8,7 @@ import { V2AICard } from "@/components/ai-card";
 import { V2MovingTicker } from "@/components/moving-ticker";
 import { V2HeroSplit } from "@/components/hero-split";
 import { parseMarkdown } from "@/lib/markdown-parser";
-import {
-  Funnel,
-  CaretDown,
-  ArrowSquareOut,
-  Newspaper,
-} from "@phosphor-icons/react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ArrowSquareOut, Newspaper } from "@phosphor-icons/react";
 
 interface NewsItem {
   category: string;
@@ -32,40 +21,66 @@ interface NewsItem {
   url: string;
 }
 
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+}
+
 export default function V2NewsPage() {
-  const [newsData, setNewsData] = useState<NewsItem[]>([]);
+  const [items, setItems] = useState<NewsItem[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
   const perPage = 12;
 
   const aiSummaryData = useQuery(api.ai.getAiNewsSummary) || {};
   const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
 
-  useEffect(() => {
-    fetch("/api/market-data/news")
-      .then((r) => r.json())
-      .then((d) => setNewsData(d.Data || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const fetchPage = useCallback(
+    (p: number) => {
+      setLoading(true);
+      fetch(`/api/market-data/news?page=${p}&limit=${perPage}`)
+        .then((r) => r.json())
+        .then((res) => {
+          setItems(res.data || []);
+          setPagination(res.pagination || null);
+        })
+        .catch(() => {
+          setItems([]);
+          setPagination(null);
+        })
+        .finally(() => setLoading(false));
+    },
+    [perPage],
+  );
 
-  const filtered =
-    filter === "all" ? newsData : newsData.filter((n) => n.category === filter);
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const current = filtered.slice((page - 1) * perPage, page * perPage);
-  const categories = ["all", ...new Set(newsData.map((n) => n.category))];
+  useEffect(() => {
+    fetchPage(page);
+  }, [page, fetchPage]);
+
+  const handlePageChange = (p: number) => {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const total = pagination?.total ?? 0;
+  const totalPages = pagination?.total_pages ?? 0;
+  const rangeStart = total > 0 ? (page - 1) * perPage + 1 : 0;
+  const rangeEnd = Math.min(page * perPage, total);
+
   const cleanAnalysis = parseMarkdown(
     aiSummaryData?.analysis || "Analyzing...",
   );
   const aiHeadline = parseMarkdown(aiSummaryData?.headline);
   const aiTimestamp = aiSummaryData?.timestamp;
 
-  // Derive the most recent article timestamp for the masthead
+  // Derive the most recent article timestamp from current page data
   const latestArticleTime =
-    newsData.length > 0
+    items.length > 0
       ? new Date(
-          Math.max(...newsData.map((n) => n.datetime)) * 1000,
+          Math.max(...items.map((n) => n.datetime)) * 1000,
         ).toLocaleString(undefined, {
           month: "short",
           day: "numeric",
@@ -74,11 +89,26 @@ export default function V2NewsPage() {
         })
       : null;
 
+  // Build pagination buttons — show max 7 pages with ellipsis logic
+  const buildPageNumbers = (): (number | "ellipsis")[] => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages: (number | "ellipsis")[] = [1];
+    if (page > 3) pages.push("ellipsis");
+    const start = Math.max(2, page - 1);
+    const end = Math.min(totalPages - 1, page + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (page < totalPages - 2) pages.push("ellipsis");
+    pages.push(totalPages);
+    return pages;
+  };
+
   return (
     <div className="min-h-screen" style={{ background: "#09090b" }}>
       <V2Header />
 
-      {/* Moving Ticker — infinite marquee replacing static V2Ticker */}
+      {/* Moving Ticker — infinite marquee */}
       <V2MovingTicker benchmarks={benchmarkData} speed={35} />
 
       {/* Hero Split — editorial masthead (left) + AI card (right) */}
@@ -130,49 +160,30 @@ export default function V2NewsPage() {
       />
 
       <div className="max-w-[1600px] mx-auto px-8 py-8">
-        {/* Filter */}
+        {/* Summary bar */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-zinc-500 tabular-nums">
-            {filtered.length} article{filtered.length !== 1 ? "s" : ""}
-            {filter !== "all" && (
-              <span className="text-zinc-600">
-                {" "}
-                in <span className="text-zinc-400 capitalize">{filter}</span>
-              </span>
+            {total > 0 ? (
+              <>
+                Showing{" "}
+                <span className="text-zinc-300 font-medium">
+                  {rangeStart}–{rangeEnd}
+                </span>{" "}
+                of <span className="text-zinc-300 font-medium">{total}</span>{" "}
+                articles
+              </>
+            ) : loading ? (
+              "Loading articles…"
+            ) : (
+              "No articles found"
             )}
           </p>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-zinc-400 rounded-lg border border-white/[0.06] hover:border-white/[0.12] transition-colors">
-                <Funnel className="h-3.5 w-3.5" />
-                {filter === "all" ? "All" : filter}
-                <CaretDown className="h-3.5 w-3.5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-zinc-950 border-white/[0.06]"
-            >
-              {categories.map((c) => (
-                <DropdownMenuItem
-                  key={c}
-                  onClick={() => {
-                    setFilter(c);
-                    setPage(1);
-                  }}
-                  className="capitalize text-zinc-300 focus:text-white focus:bg-white/[0.06]"
-                >
-                  {c === "all" ? "All Categories" : c}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
         {/* News Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {Array.from({ length: 9 }).map((_, i) => (
+            {Array.from({ length: perPage }).map((_, i) => (
               <div
                 key={i}
                 className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden animate-pulse"
@@ -186,9 +197,9 @@ export default function V2NewsPage() {
               </div>
             ))}
           </div>
-        ) : current.length > 0 ? (
+        ) : items.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {current.map((item) => (
+            {items.map((item) => (
               <a
                 key={item.id}
                 href={item.url}
@@ -236,26 +247,29 @@ export default function V2NewsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-10">
-            {Array.from(
-              { length: Math.min(totalPages, 7) },
-              (_, i) => i + 1,
-            ).map((p) => (
-              <button
-                key={p}
-                onClick={() => {
-                  setPage(p);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className={`w-8 h-8 rounded-md text-xs font-medium transition-colors ${
-                  page === p
-                    ? "bg-white text-black"
-                    : "text-zinc-500 hover:text-white hover:bg-white/[0.06]"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
+          <div className="flex items-center justify-center gap-1.5 mt-10">
+            {buildPageNumbers().map((p, i) =>
+              p === "ellipsis" ? (
+                <span
+                  key={`ellipsis-${i}`}
+                  className="w-8 h-8 flex items-center justify-center text-xs text-zinc-600"
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => handlePageChange(p)}
+                  className={`w-8 h-8 rounded-md text-xs font-medium transition-colors ${
+                    page === p
+                      ? "bg-white text-black"
+                      : "text-zinc-500 hover:text-white hover:bg-white/[0.06]"
+                  }`}
+                >
+                  {p}
+                </button>
+              ),
+            )}
           </div>
         )}
       </div>
