@@ -349,173 +349,72 @@ function getGoalMeta(goal: GoalRow) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SVG HALF-RADIAL GAUGE
+   GOAL PROGRESS BAR — allocation-bar DNA
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function HalfRadialGauge({
+function GoalProgressBar({
   percentage,
   accent,
-  accentRgb,
-  size = 160,
+  compact = false,
 }: {
   percentage: number;
   accent: string;
-  accentRgb: string;
-  size?: number;
+  compact?: boolean;
 }) {
   const clampedPct = Math.min(Math.max(percentage, 0), 120);
   const displayPct = Math.min(clampedPct, 100);
-
-  const cx = size / 2;
-  const cy = size * 0.75;
-  const r = size * 0.42;
-  const strokeWidth = size * 0.065;
-
-  const polarToCartesian = (angleDeg: number) => {
-    const rad = (angleDeg * Math.PI) / 180;
-    return {
-      x: cx + r * Math.cos(rad),
-      y: cy - r * Math.sin(rad),
-    };
-  };
-
-  const bgStart = polarToCartesian(180);
-  const bgEnd = polarToCartesian(0);
-  const bgPath = `M ${bgStart.x} ${bgStart.y} A ${r} ${r} 0 0 1 ${bgEnd.x} ${bgEnd.y}`;
-
-  const progressAngle = 180 - displayPct * 1.8;
-  const pStart = polarToCartesian(180);
-  const pEnd = polarToCartesian(Math.max(progressAngle, 0));
-  const largeArc = displayPct > 50 ? 1 : 0;
-  const progressPath =
-    displayPct > 0.5
-      ? `M ${pStart.x} ${pStart.y} A ${r} ${r} 0 ${largeArc} 1 ${pEnd.x} ${pEnd.y}`
-      : "";
-
-  const ticks = [0, 25, 50, 75, 100];
-  const tickMarks = ticks.map((t) => {
-    const angle = 180 - t * 1.8;
-    const inner = {
-      x: cx + (r - strokeWidth * 1.8) * Math.cos((angle * Math.PI) / 180),
-      y: cy - (r - strokeWidth * 1.8) * Math.sin((angle * Math.PI) / 180),
-    };
-    const outer = {
-      x: cx + (r + strokeWidth * 0.6) * Math.cos((angle * Math.PI) / 180),
-      y: cy - (r + strokeWidth * 0.6) * Math.sin((angle * Math.PI) / 180),
-    };
-    return { t, inner, outer };
-  });
-
   const exceeded = clampedPct > 100;
-  // Use a unique ID suffix based on accentRgb + size to avoid SVG filter collisions
-  const uid = `${accentRgb.replace(/,/g, "-")}-${size}`;
+
+  const statusText = exceeded
+    ? "EXCEEDED"
+    : clampedPct >= 100
+      ? "COMPLETE"
+      : clampedPct >= 75
+        ? "ON TRACK"
+        : clampedPct >= 25
+          ? "IN PROGRESS"
+          : "GETTING STARTED";
+
+  const statusColor = exceeded
+    ? "#10b981"
+    : clampedPct >= 75
+      ? accent
+      : "rgba(255,255,255,0.35)";
 
   return (
-    <svg
-      viewBox={`0 0 ${size} ${size * 0.8}`}
-      className="w-full"
-      style={{ maxWidth: size }}
-    >
-      <defs>
-        <filter id={`glow-${uid}`} x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
-        <linearGradient
-          id={`grad-${uid}`}
-          gradientUnits="userSpaceOnUse"
-          x1={bgStart.x}
-          y1={bgStart.y}
-          x2={bgEnd.x}
-          y2={bgEnd.y}
+    <div className={compact ? "" : "py-1"}>
+      {/* Percentage + status row */}
+      <div className="flex items-center justify-between mb-2">
+        <span
+          className="text-lg font-bold text-white tabular-nums"
+          style={compact ? { fontSize: "14px" } : undefined}
         >
-          <stop offset="0%" stopColor={accent} stopOpacity="0.6" />
-          <stop offset="100%" stopColor={accent} stopOpacity="1" />
-        </linearGradient>
-      </defs>
+          {Math.round(clampedPct)}%
+        </span>
+        <span
+          className="text-[10px] font-medium uppercase tracking-[0.12em]"
+          style={{ color: statusColor }}
+        >
+          {statusText}
+        </span>
+      </div>
 
-      {tickMarks.map(({ t, inner, outer }) => (
-        <line
-          key={t}
-          x1={inner.x}
-          y1={inner.y}
-          x2={outer.x}
-          y2={outer.y}
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth={1}
-        />
-      ))}
-
-      <path
-        d={bgPath}
-        fill="none"
-        stroke="rgba(255,255,255,0.04)"
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-      />
-
-      {progressPath && (
-        <motion.path
-          d={progressPath}
-          fill="none"
-          stroke={`url(#grad-${uid})`}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          filter={`url(#glow-${uid})`}
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{
-            pathLength: { duration: 1.2, ease: "easeOut", delay: 0.2 },
-            opacity: { duration: 0.3 },
+      {/* Progress bar */}
+      <div
+        className={`${compact ? "h-1.5" : "h-2.5"} rounded-full overflow-hidden bg-white/[0.04]`}
+      >
+        <motion.div
+          className="h-full rounded-full"
+          style={{
+            background: `linear-gradient(90deg, ${accent}99 0%, ${accent} 100%)`,
+            boxShadow: displayPct > 5 ? `0 0 8px ${accent}40` : "none",
           }}
+          initial={{ width: "0%" }}
+          animate={{ width: `${displayPct}%` }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.15 }}
         />
-      )}
-
-      <text
-        x={cx}
-        y={cy - r * 0.25}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        className="tabular-nums"
-        style={{
-          fontSize: size * 0.17,
-          fontWeight: 700,
-          fill: "white",
-          fontFamily: "inherit",
-        }}
-      >
-        {Math.round(clampedPct)}%
-      </text>
-
-      <text
-        x={cx}
-        y={cy - r * 0.25 + size * 0.1}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        style={{
-          fontSize: size * 0.058,
-          fontWeight: 500,
-          fill: exceeded
-            ? "#10b981"
-            : clampedPct >= 75
-              ? accent
-              : "rgba(255,255,255,0.35)",
-          fontFamily: "inherit",
-          textTransform: "uppercase" as const,
-          letterSpacing: "0.12em",
-        }}
-      >
-        {exceeded
-          ? "EXCEEDED"
-          : clampedPct >= 100
-            ? "COMPLETE"
-            : clampedPct >= 75
-              ? "ON TRACK"
-              : clampedPct >= 25
-                ? "IN PROGRESS"
-                : "GETTING STARTED"}
-      </text>
-    </svg>
+      </div>
+    </div>
   );
 }
 
@@ -543,9 +442,6 @@ function PresetGoalCard({
   const meta = PRESET_META[type];
   const Icon = meta.PhosphorIcon;
   const accent = goal?.color || meta.accent;
-  const accentRgb = goal?.color
-    ? hexToRgb(goal.color) || meta.accentRgb
-    : meta.accentRgb;
   const hasTarget = goal && goal.targetValue > 0;
   const percentage = hasTarget ? (currentValue / goal.targetValue) * 100 : 0;
 
@@ -637,18 +533,13 @@ function PresetGoalCard({
 
         {hasTarget ? (
           <>
-            {/* Gauge */}
-            <div className="flex justify-center px-2 -mb-2">
-              <HalfRadialGauge
-                percentage={percentage}
-                accent={accent}
-                accentRgb={accentRgb}
-                size={140}
-              />
+            {/* Progress bar */}
+            <div className="mb-3">
+              <GoalProgressBar percentage={percentage} accent={accent} />
             </div>
 
             {/* Current → Target */}
-            <div className="flex items-center justify-between px-1 mt-1">
+            <div className="flex items-center justify-between px-1">
               <div>
                 <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
                   Current
@@ -774,7 +665,6 @@ function GoalCard({
 }) {
   const meta = getGoalMeta(goal);
   const accent = meta.accent;
-  const accentRgb = meta.accentRgb;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -931,18 +821,13 @@ function GoalCard({
           </div>
         </div>
 
-        {/* Gauge */}
-        <div className="flex justify-center px-2 -mb-2">
-          <HalfRadialGauge
-            percentage={percentage}
-            accent={accent}
-            accentRgb={accentRgb}
-            size={160}
-          />
+        {/* Progress bar */}
+        <div className="mb-3">
+          <GoalProgressBar percentage={percentage} accent={accent} />
         </div>
 
         {/* Current / Target */}
-        <div className="flex items-center justify-between px-1 mt-1">
+        <div className="flex items-center justify-between px-1">
           <div>
             <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
               Current
@@ -1384,22 +1269,19 @@ function AddGoalDialog({
             />
           )}
 
-          {/* Preview gauge */}
-          <div className="mt-4 flex justify-center">
-            <div className="w-32">
-              <HalfRadialGauge
-                percentage={
-                  analytics && parseFloat(form.targetValue) > 0
-                    ? (selectedMetric.getValue(analytics) /
-                        parseFloat(form.targetValue)) *
-                      100
-                    : 0
-                }
-                accent={selectedMetric.accent}
-                accentRgb={selectedMetric.accentRgb}
-                size={128}
-              />
-            </div>
+          {/* Preview bar */}
+          <div className="mt-4">
+            <GoalProgressBar
+              percentage={
+                analytics && parseFloat(form.targetValue) > 0
+                  ? (selectedMetric.getValue(analytics) /
+                      parseFloat(form.targetValue)) *
+                    100
+                  : 0
+              }
+              accent={selectedMetric.accent}
+              compact
+            />
           </div>
         </div>
       )}
