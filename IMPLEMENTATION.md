@@ -186,11 +186,145 @@
   - Updated `components/onboarding-flow.tsx` to use `api.portfolioGoals.createGoalsFromOnboarding`
   - Files: `convex/schema.ts`, new `convex/portfolioGoals.ts`, deleted `convex/goals.ts`, new `components/portfolio-goals.tsx`, `app/(webapp)/portfolio/[id]/page.tsx`, `components/vault.tsx`, `components/onboarding-flow.tsx`
 
-- [ ] **Step 16 — Global search**
-  - Convex: add search indexes to `portfolios`, `assets`, `userDocuments`, `userArticles`
-  - New `convex/search.ts` with `globalSearch` query, results limited to top 5
-  - Frontend: command palette (⌘K / Ctrl+K), categorized results, Framer Motion animation
+- [x] **Step 16 — Global search**
+  - Convex: added search indexes to `portfolios` (by name), `assets` (by name), `userDocuments` (by fileName), `userArticles` (by title)
+  - New `convex/search.ts` with `globalSearch` query — searches 6 categories in parallel:
+    - **Portfolios**: search by name (via search index), includes risk tolerance + time horizon + description in subtitle
+    - **Assets**: search by name (search index) + symbol/ticker (filter scan) + notes content (filter scan), deduplicated and merged with name matches prioritized
+    - **Documents**: search by fileName (search index) + document type (filter scan) + format (filter scan), merged with deduplication
+    - **Articles**: search by title (search index) + URL (filter scan) + notes content (filter scan), merged with deduplication
+    - **Market Data**: searches `marketCurrentData` by ticker + name, and `marketBenchmarks` by ticker + name, includes live price + change% in subtitle
+    - **Quick Actions**: static navigation items (Settings, News, Watchlist, Dashboard, Earnings, Research) with keyword-based fuzzy matching — e.g. typing "dark mode" surfaces Settings, "earnings" surfaces Earnings Calendar
+  - Frontend: new `components/command-palette.tsx` — portal-rendered command palette
+    - Triggered by ⌘K / Ctrl+K (global keyboard listener via `useCommandPalette` hook)
+    - Framer Motion scale-in entrance with dark glass backdrop (`bg-black/70 backdrop-blur-[6px]`)
+    - Monospace search input (`font-mono`) at top with real-time debounced search (180ms)
+    - Results grouped by category with colored accent bars: gold (portfolios), green (assets), blue (documents), amber (articles), purple (market data), slate (quick actions)
+    - Each result row: colored icon badge (shifts to duotone on selection) + title + subtitle + enter-key hint
+    - Full keyboard navigation: ↑↓ arrow keys, Enter to select, Escape to close
+    - Mouse hover updates selection, click navigates
+    - Loading state: skeleton rows with staggered pulse animation
+    - Empty state: "No results" with search term echo in monospace
+    - Idle state: compass icon with "Search across your workspace" hint
+    - Footer bar: keyboard shortcut legend (navigate / open / close) + result count in monospace
+    - External links (articles) open in new tab, internal links use `router.push`
+    - Body scroll lock while open, focus trap on input
+  - Header integration: replaced static search `<motion.button>` with `SearchNavButton` component — uses `NavItem`-style expand-on-hover pattern (icon only → expands to show "Search" label + `⌘K` kbd badge on hover)
+  - Mobile: search button in top bar opens the same command palette (works as full-width overlay at `12vh` from top)
   - Files: `convex/schema.ts`, new `convex/search.ts`, new `components/command-palette.tsx`, `components/header.tsx`
+
+### Phase 5: Command System (`@` Routing)
+
+> **Status**: Planned — builds on Step 16's command palette infrastructure. The palette is already a portal-rendered dialog with keyboard navigation and category rendering. Phase 5 extends it from "search and navigate" to "search, navigate, AND execute actions."
+
+- [ ] **Step 17 — Command parser + `@` mode switching**
+  - Detect `@` prefix in search input → switch palette into **command mode**
+  - Parse input as `@namespace [subcommand] [args]` (e.g. `@market AAPL`, `@settings theme dark`)
+  - When user types `@`, show all available namespaces as selectable cards (replacing search results)
+  - When a namespace is selected (click or type), filter to that namespace's subcommands
+  - Visual mode indicator: colored namespace badge appears in the input bar (e.g. `[@market]` in purple pill), input placeholder changes to namespace-specific hint
+  - Tab key auto-completes the current namespace/subcommand suggestion
+  - Backspace on empty subcommand exits back to namespace selector
+  - Files: `components/command-palette.tsx` (extend existing component)
+
+- [ ] **Step 18 — `@portfolio` namespace**
+  - **Subcommands**:
+    - `@portfolio list` — list all portfolios with value + change (quick nav to each)
+    - `@portfolio create` — opens Create Portfolio dialog inline or navigates to dashboard with dialog pre-opened
+    - `@portfolio [name]` — fuzzy search portfolios by name, select to navigate
+    - `@portfolio [name] summary` — triggers AI portfolio summary generation, shows loading → result inline in palette
+    - `@portfolio [name] analytics` — navigates to portfolio's Analytics tab
+    - `@portfolio [name] goals` — navigates to portfolio's Goals tab
+    - `@portfolio [name] holdings` — navigates to portfolio's Holdings tab
+  - Convex: may reuse existing `api.portfolios.getUserPorfolios` and `api.ai.generateAiPortfolioSummary`
+  - UI: results render as portfolio cards with value/change inline; summary results render as expandable markdown preview
+  - Files: `components/command-palette.tsx`, potentially new `lib/command-handlers.ts`
+
+- [ ] **Step 19 — `@market` namespace**
+  - **Subcommands**:
+    - `@market [TICKER]` — look up current price, change%, type, name from `marketCurrentData` table; if not found, attempt live fetch via market data service
+    - `@market [TICKER] price` — show just the price in a bold display format
+    - `@market [TICKER] chart` — navigate to watchlist page with ticker pre-selected (or open inline sparkline if data available in `marketHistoricData`)
+    - `@market [TICKER] add` — add ticker to watchlist (when watchlist feature is fully built)
+    - `@market benchmarks` — show all benchmark data (S&P 500, NASDAQ, etc.) with live prices + change%
+    - `@market insiders [TICKER]` — look up insider trading activity (requires new external API integration — SEC EDGAR or similar)
+  - Convex: reuse `api.marketData.getBenchmarkData`, `marketCurrentData` queries; new `api.marketData.lookupTicker` action for live API calls
+  - UI: price results render as large monospace numbers with green/red change indicators; benchmark results as a mini table
+  - External API dependency: insider trading data requires SEC EDGAR API or alternative (e.g. finnhub.io insider transactions endpoint)
+  - Files: `components/command-palette.tsx`, `convex/marketData.ts` (new queries), potentially new `convex/insiders.ts`
+
+- [ ] **Step 20 — `@news` namespace**
+  - **Subcommands**:
+    - `@news` / `@news latest` — show latest news headlines (from market data service), select to open article
+    - `@news search [term]` — search saved articles by term (reuses existing article search from Step 16)
+    - `@news summary` — show latest AI news summary (from `marketNewsSummary` table), or trigger generation if stale (> 24h)
+    - `@news sentiment` — generate market sentiment analysis via AI service; show inline result with sentiment score (bullish/neutral/bearish) + key factors
+    - `@news refresh` — trigger `api.ai.generateAiNewsSummary` action, show loading state → confirmation
+  - Convex: reuse `api.ai.getAiNewsSummary`, `api.ai.triggerAiNewsSummaryUpdate`; new `api.ai.generateSentimentAnalysis` action (calls AI service with sentiment-specific prompt)
+  - UI: news results render as article rows with source + timestamp; sentiment result renders as colored gauge (red → amber → green) with analysis text
+  - Files: `components/command-palette.tsx`, `convex/ai.ts` (new sentiment action)
+
+- [ ] **Step 21 — `@settings` namespace**
+  - **Subcommands**:
+    - `@settings` — navigate to settings page
+    - `@settings theme [dark|light]` — toggle theme immediately (calls `setTheme` from `next-themes` + persists via `api.users.updateUserPreferences`)
+    - `@settings currency [USD|EUR|GBP|...]` — change base currency
+    - `@settings language [en|...]` — change display language
+    - `@settings export [json]` — trigger data export (same as settings page export button)
+    - `@settings ai [default|openrouter|self-hosted]` — switch AI provider
+  - Convex: reuse `api.users.updateUserPreferences` mutation
+  - UI: toggle commands show immediate visual confirmation in the palette (e.g. "Theme → Dark ✓"); settings that require page context navigate to settings with the section pre-scrolled
+  - State management: theme toggle needs access to `next-themes` context; palette component will need a callback prop or context bridge for settings mutations
+  - Files: `components/command-palette.tsx`, potentially `lib/command-handlers.ts`
+
+- [ ] **Step 22 — `@watchlist` namespace**
+  - **Subcommands**:
+    - `@watchlist` — navigate to watchlist page
+    - `@watchlist add [TICKER]` — add a symbol to the watchlist (requires watchlist CRUD — currently the watchlist page is a stub with no backend)
+    - `@watchlist remove [TICKER]` — remove from watchlist
+    - `@watchlist list` — show all watched symbols with current prices
+  - **Prerequisite**: watchlist backend must be built first — need a `watchlist` table in schema with `userId`, `ticker`, `addedAt` fields, plus CRUD mutations
+  - Convex: new `convex/watchlist.ts` with `addToWatchlist`, `removeFromWatchlist`, `getWatchlist` queries/mutations; new `watchlist` table in schema
+  - Files: `convex/schema.ts`, new `convex/watchlist.ts`, `components/command-palette.tsx`, `app/(webapp)/watchlist/page.tsx` (full rebuild)
+
+- [ ] **Step 23 — `@ai` namespace**
+  - **Subcommands**:
+    - `@ai portfolio [name]` — generate AI portfolio analysis (same as `@portfolio [name] summary`)
+    - `@ai news` — generate AI news summary (same as `@news summary`)
+    - `@ai sentiment` — generate market sentiment analysis (same as `@news sentiment`)
+    - `@ai compare [portfolio1] [portfolio2]` — compare two portfolios side by side (new AI prompt)
+    - `@ai risk [portfolio]` — focused risk analysis for a portfolio
+    - `@ai rebalance [portfolio]` — AI-suggested rebalancing for a portfolio
+  - These are convenience aliases that route to the same underlying AI actions, plus new comparison/risk/rebalance prompts
+  - Convex: new action endpoints in `convex/ai.ts` for comparison, risk analysis, rebalance suggestions
+  - UI: results render as expandable markdown cards with copy-to-clipboard button; long-running actions show a pulsing "Generating..." state
+  - Files: `convex/ai.ts`, `components/command-palette.tsx`
+
+#### Command System Architecture Notes
+
+- **Parser**: Simple tokenizer — split input on first `@`, then split remainder on spaces. First token is namespace, rest is subcommand + args. No complex grammar needed.
+- **Handler registry**: `Map<string, CommandHandler>` where each handler receives `{ subcommand: string, args: string[], userId: Id<"users"> }` and returns `{ type: "results" | "action" | "navigation" | "inline", data: any }`.
+- **Result types**:
+  - `results` — render as standard search result rows (navigate on select)
+  - `action` — execute a mutation/action, show confirmation inline
+  - `navigation` — immediately navigate to a route
+  - `inline` — render rich content inline in the palette (markdown, charts, gauges)
+- **Loading states**: Each handler can be async. Show skeleton specific to the result type while loading.
+- **Error handling**: Errors render as a red-accent row in the palette with the error message + "Try again" action.
+- **Telemetry**: Log command usage to understand which commands are popular (PostHog events: `command_executed`, `command_error`).
+
+#### Files Touched Summary (Phase 5)
+
+| File | Change |
+|---|---|
+| `components/command-palette.tsx` | Command parser, namespace mode UI, handler dispatch, inline result rendering |
+| `lib/command-handlers.ts` | **NEW** — handler registry, individual namespace handlers |
+| `convex/schema.ts` | Add `watchlist` table (Step 22) |
+| `convex/watchlist.ts` | **NEW** — watchlist CRUD (Step 22) |
+| `convex/ai.ts` | New actions: sentiment analysis, portfolio comparison, risk analysis, rebalance suggestions (Steps 20, 23) |
+| `convex/marketData.ts` | New query for ticker lookup by partial match (Step 19) |
+| `convex/insiders.ts` | **NEW** — SEC EDGAR / finnhub insider trading integration (Step 19) |
+| `app/(webapp)/watchlist/page.tsx` | Full rebuild to use watchlist backend (Step 22) |
 
 ---
 
@@ -207,6 +341,11 @@ Step 10 ─── independent (shared component)
 Steps 11–14 ─── depend on Step 10 (use ResponsiveDialog)
 Step 15 ─── independent (schema change is standalone)
 Step 16 ─── independent (but do last — most complex)
+Step 17 ─── depends on Step 16 (extends command palette)
+Steps 18–23 ─── depend on Step 17 (use command parser + handler registry)
+Step 22 ─── requires watchlist backend (new schema table + CRUD)
+Step 19 (insiders) ─── requires external API key (SEC EDGAR or finnhub)
+Step 23 ─── depends on Steps 20 + 18 (reuses AI actions from both)
 ```
 
 ---
@@ -221,3 +360,4 @@ Step 16 ─── independent (but do last — most complex)
 | 2026-02-09 | 9 | News page header redesign — V2HeroSplit + V2MovingTicker, editorial masthead matching homepage DNA |
 | 2026-02-09 | 10, 11, 12, 13, 14 | Phase 3 complete — ResponsiveDialog base component, all 4 dialog redesigns migrated, surfaced `includeInNetworth`/`allowSubscriptions` schema fields, fixed delete portfolio crash |
 | 2026-02-09 | 15 | Phase 4 partial — Goals tab redesign: renamed `goals` → `portfolioGoals` table, multi-goal CRUD, SVG half-radial gauge cards, Add/Edit dialogs, summary bar, moved goals out of Vault into own tab |
+| 2026-02-09 | 16 | Global search — search indexes on 4 tables, `globalSearch` query (6 categories: portfolios, assets by name+symbol+notes, documents by fileName+type+format, articles by title+URL+notes, market data by ticker+name, quick actions with keyword matching), command palette component with ⌘K trigger, keyboard navigation, categorized results with colored accent bars, SearchNavButton expand-on-hover pattern in header |

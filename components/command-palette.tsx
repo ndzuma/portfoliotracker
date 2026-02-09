@@ -15,6 +15,11 @@ import {
   X,
   CircleNotch,
   Compass,
+  TrendUp,
+  GearSix,
+  Binoculars,
+  CalendarDots,
+  Flask,
 } from "@phosphor-icons/react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -54,6 +59,8 @@ const CATEGORY_META: Record<
   },
   document: { label: "Documents", icon: FileText, accentColor: "#3b82f6" },
   article: { label: "Articles", icon: Newspaper, accentColor: "#f59e0b" },
+  market: { label: "Market Data", icon: TrendUp, accentColor: "#a78bfa" },
+  action: { label: "Quick Actions", icon: Compass, accentColor: "#94a3b8" },
 };
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -61,6 +68,12 @@ const ICON_MAP: Record<string, React.ElementType> = {
   CurrencyCircleDollar,
   FileText,
   Newspaper,
+  TrendUp,
+  GearSix,
+  Binoculars,
+  CalendarDots,
+  Flask,
+  Compass,
 };
 
 // ─── Spring configs ──────────────────────────────────────────────
@@ -112,7 +125,7 @@ export function CommandPalette({
     api.search.globalSearch,
     userId && debouncedSearch.trim().length >= 2
       ? { searchTerm: debouncedSearch, userId }
-      : "skip"
+      : "skip",
   );
 
   const isSearching =
@@ -126,12 +139,21 @@ export function CommandPalette({
     const flat: (SearchResult & { globalIndex: number })[] = [];
     let globalIdx = 0;
 
-    const categoryOrder = ["portfolio", "asset", "document", "article"] as const;
+    const categoryOrder = [
+      "portfolio",
+      "asset",
+      "market",
+      "document",
+      "article",
+      "action",
+    ] as const;
     const resultMap: Record<string, SearchResult[]> = {
       portfolio: searchResults.portfolios || [],
       asset: searchResults.assets || [],
       document: searchResults.documents || [],
       article: searchResults.articles || [],
+      market: (searchResults as any).market || [],
+      action: (searchResults as any).actions || [],
     };
 
     for (const catKey of categoryOrder) {
@@ -201,7 +223,7 @@ export function CommandPalette({
         router.push(item.href);
       }
     },
-    [onOpenChange, router]
+    [onOpenChange, router],
   );
 
   // Keyboard navigation
@@ -211,13 +233,13 @@ export function CommandPalette({
         case "ArrowDown":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            prev < flatItems.length - 1 ? prev + 1 : 0
+            prev < flatItems.length - 1 ? prev + 1 : 0,
           );
           break;
         case "ArrowUp":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            prev > 0 ? prev - 1 : flatItems.length - 1
+            prev > 0 ? prev - 1 : flatItems.length - 1,
           );
           break;
         case "Enter":
@@ -232,14 +254,14 @@ export function CommandPalette({
           break;
       }
     },
-    [flatItems, selectedIndex, navigateTo, onOpenChange]
+    [flatItems, selectedIndex, navigateTo, onOpenChange],
   );
 
   // Scroll selected item into view
   useEffect(() => {
     if (!listRef.current) return;
     const selected = listRef.current.querySelector(
-      `[data-result-index="${selectedIndex}"]`
+      `[data-result-index="${selectedIndex}"]`,
     );
     selected?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [selectedIndex]);
@@ -385,7 +407,10 @@ export function CommandPalette({
                     className="p-3"
                   >
                     {[0, 1, 2].map((i) => (
-                      <div key={i} className="px-3 py-2.5 flex items-center gap-3">
+                      <div
+                        key={i}
+                        className="px-3 py-2.5 flex items-center gap-3"
+                      >
                         <div className="w-7 h-7 rounded-lg bg-white/[0.04] animate-pulse shrink-0" />
                         <div className="flex-1 space-y-1.5">
                           <div
@@ -442,7 +467,8 @@ export function CommandPalette({
                   >
                     {categories.map((cat, catIdx) => {
                       const catMeta =
-                        CATEGORY_META[cat.items[0]?.category] || CATEGORY_META.portfolio;
+                        CATEGORY_META[cat.items[0]?.category] ||
+                        CATEGORY_META.portfolio;
                       return (
                         <div key={cat.label}>
                           {/* Category header */}
@@ -613,7 +639,7 @@ export function CommandPalette({
         </motion.div>
       )}
     </AnimatePresence>,
-    document.body
+    document.body,
   );
 }
 
