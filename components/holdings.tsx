@@ -10,6 +10,7 @@ import {
   TrendUp,
   TrendDown,
 } from "@phosphor-icons/react";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +66,7 @@ function HoldingRow({
   onDelete: (id: string) => void;
 }) {
   const [txOpen, setTxOpen] = useState(false);
+  const { format, symbol } = useCurrency();
   const up = asset.change >= 0;
 
   const getLink = (a: Asset) => {
@@ -115,7 +117,7 @@ function HoldingRow({
         {/* Avg Buy */}
         <div className="hidden lg:block text-right min-w-[90px]">
           <p className="text-sm text-zinc-400">
-            ${asset.avgBuyPrice?.toFixed(2) || "0.00"}
+            {format(asset.avgBuyPrice || 0)}
           </p>
           <p className="text-[10px] text-zinc-600">avg buy</p>
         </div>
@@ -123,7 +125,7 @@ function HoldingRow({
         {/* Current Price */}
         <div className="hidden lg:block text-right min-w-[90px]">
           <p className="text-sm text-white font-medium">
-            ${asset.currentPrice?.toFixed(2) || "0.00"}
+            {format(asset.currentPrice || 0)}
           </p>
           <p className="text-[10px] text-zinc-600">current</p>
         </div>
@@ -131,10 +133,7 @@ function HoldingRow({
         {/* Value */}
         <div className="text-right min-w-[100px]">
           <p className="text-sm font-semibold text-white">
-            {asset.type === "cash" && asset.currency
-              ? `${asset.currency} `
-              : "$"}
-            {asset.currentValue.toLocaleString()}
+            {format(asset.currentValue)}
           </p>
           <p className="text-[10px] text-zinc-600">
             {asset.allocation?.toFixed(1)}% alloc
@@ -152,7 +151,9 @@ function HoldingRow({
           <p
             className={`text-[10px] ${up ? "text-emerald-500/60" : "text-red-500/60"}`}
           >
-            {up ? "+" : ""}${Math.abs(asset.change).toLocaleString()}
+            {up ? "+" : "-"}
+            {symbol}
+            {Math.abs(asset.change).toLocaleString()}
           </p>
         </div>
 
@@ -204,6 +205,12 @@ function HoldingRow({
   );
 }
 
+function SectionTotal({ assets }: { assets: Asset[] }) {
+  const { format } = useCurrency();
+  const total = assets.reduce((s, a) => s + a.currentValue, 0);
+  return <p className="text-xs text-zinc-500">{format(total)}</p>;
+}
+
 export function V2Holdings({ assets, onEdit, onDelete }: V2HoldingsProps) {
   // Group by type
   const grouped = assets.reduce<Record<string, Asset[]>>((acc, a) => {
@@ -248,12 +255,7 @@ export function V2Holdings({ assets, onEdit, onDelete }: V2HoldingsProps) {
                 ({grouped[type].length})
               </span>
             </h3>
-            <p className="text-xs text-zinc-500">
-              $
-              {grouped[type]
-                .reduce((s, a) => s + a.currentValue, 0)
-                .toLocaleString()}
-            </p>
+            <SectionTotal assets={grouped[type]} />
           </div>
 
           {/* Column headers */}

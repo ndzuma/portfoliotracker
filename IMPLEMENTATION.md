@@ -330,49 +330,95 @@
 
 ### Phase 6: Settings Revamp (Sectioned Control Room)
 
-> **Status**: Proposed — aligns Settings with the News/Home/Portfolio DNA and expands available controls.
+> **Status**: In Progress — aligns Settings with the News/Home/Portfolio DNA and expands available controls.
+> **Aesthetic**: Mission Control Minimalism — Bloomberg terminal meets modern control panel. Dense but legible, with monospace section headers, status dots, and armed/disarmed indicators.
+
+#### Schema Additions (Phase 6)
+
+All new fields are **optional** on `userPreferences` (non-breaking):
+- `marketRegion: optional(string)` — preferred market region
+- `aiSummaryFrequency: optional("12h" | "daily" | "weekly" | "monthly" | "manual")` — portfolio AI summary generation cadence
+- `earningsReminders: optional(boolean)` — earnings calendar reminders
+- `marketPulseEnabled: optional(boolean)` — AI Market Pulse notification toggle
+- `marketPulseChannel: optional("email" | "discord" | "telegram")` — notification delivery channel
+- `marketPulseWebhookUrl: optional(string)` — Discord webhook URL or Telegram bot URL
+
+New table for multi-currency conversion:
+- `fxRates: { base: string, rates: any, updatedAt: number }` — single EUR-based document, updated daily via cron
+
+#### Steps
 
 - [ ] **Step 24 — Settings page architecture + layout system**
   - New **sectioned grid** with asymmetric panels and ticker-strip subrows
-  - Add **Settings Pulse Strip** header (live status: last sync, alerts armed, default portfolio)
+  - Add **Settings Pulse Strip** header (live status: last sync, FX rate date, active currency, default portfolio)
   - Each section uses: title + muted description + compact rows with dividers
-  - Files: `app/settings/page.tsx`, new `components/settings/*`
+  - Shared primitives extracted: `Section`, `SettingRow`, `Toggle`, `StatusDot`
+  - Files: `app/(webapp)/settings/page.tsx`, new `components/settings/settings-primitives.tsx`
 
 - [ ] **Step 25 — Identity & Profile section**
-  - Profile essentials: display name, avatar, risk profile, time horizon
-  - Default portfolio selector + “include in net worth” toggle
+  - Profile essentials: display name, avatar (from Clerk), risk profile, time horizon
+  - Default portfolio selector + "include in net worth" toggle
   - Compact summary card with current configuration
-  - Files: `components/settings/identity-section.tsx` (new), `app/settings/page.tsx`
+  - Files: `components/settings/identity-section.tsx` (new), `app/(webapp)/settings/page.tsx`
 
 - [ ] **Step 26 — Data & Market Feeds section**
-  - Refresh cadence (15m / 1h / 4h / daily)
-  - Base currency selector
-  - Market region preference + benchmark defaults
+  - Base currency selector (searchable, 40+ currencies with flags — powered by `lib/currency.ts`)
+  - Market region preference (US, EU, Asia-Pacific, Africa, Global)
+  - Currency selector wired to `useCurrency` hook — changes trigger Convex-side FX conversion
   - Files: `components/settings/data-section.tsx` (new)
 
-- [ ] **Step 27 — Alerts & Signals section**
-  - Volatility threshold toggle + numeric input
-  - Earnings reminders + price movement alerts
-  - “Armed” indicator row in ticker-strip style
+- [ ] **Step 27 — Notifications & Alerts section**
+  - **AI Market Pulse** — daily/weekly AI-generated market summary delivered to your inbox, Discord, or Telegram
+    - Toggle: enable/disable Market Pulse
+    - Channel selector: Email / Discord / Telegram
+    - Webhook URL input (for Discord/Telegram — masked, with test button)
+    - Preview: "You'll receive a concise AI market brief every morning at 8:00 AM"
+  - Earnings calendar reminders toggle
+  - "Armed" indicator row in ticker-strip style showing active notification channels
   - Files: `components/settings/alerts-section.tsx` (new)
 
 - [ ] **Step 28 — Command & Search section**
   - ⌘K behavior (open on global, scope defaults)
-  - `@` command namespace toggles
+  - `@` command namespace toggles (depends on Phase 5 completion)
   - Quick action defaults (News/Portfolio/Watchlist priority)
   - Files: `components/settings/command-section.tsx` (new)
 
 - [ ] **Step 29 — AI & Research section**
-  - Auto-summaries toggle (news, portfolio)
-  - Sentiment preview toggle
-  - Feed curation controls (e.g., risk level, sector weight)
+  - Portfolio AI summary frequency selector: `12h` / `daily` / `weekly` / `monthly` / `manual trigger only`
+  - BYOAI provider config (moved from current settings — Default / OpenRouter / Self-Hosted)
+  - OpenRouter API key input (masked) + Self-Hosted tunnel config
   - Files: `components/settings/ai-section.tsx` (new)
 
 - [ ] **Step 30 — Danger / Advanced section**
-  - Data export (JSON)
+  - Data export (JSON) — moved from current settings
+  - CSV, PDF, Excel export (disabled, coming soon)
   - Clear cache / reset search index
-  - Delete account (destructive)
+  - Delete account (destructive, gated behind confirmation dialog with red border)
   - Files: `components/settings/advanced-section.tsx` (new)
+
+#### Files Touched Summary (Phase 6)
+
+| File | Action |
+|---|---|
+| `convex/schema.ts` | Edit — add `fxRates` table + new `userPreferences` fields |
+| `convex/users.ts` | Edit — handle new fields in `updateUserPreferences` |
+| `convex/fx.ts` | Create — pure `convert()` + `resolveAssetCurrency()` utility |
+| `convex/marketData.ts` | Edit — add `fetchFxRates` action, `storeFxRates` mutation, `getFxRates` query, `getFxRatesInternal` query; thread FX conversion into `getHistoricalData` + `calculatePortfolioValueAtDate` |
+| `convex/portfolios.ts` | Edit — thread FX conversion into `getUserPortfolios` + `getPortfolioById` via `loadFxContext` + `toBase` helpers |
+| `convex/crons.ts` | Edit — add daily `fetchFxRates` cron |
+| `lib/currency.ts` | Create — `formatMoney`, `formatCompact`, `formatPercent`, `currencySymbol`, `searchCurrencies` + `CURRENCIES` metadata (40+ currencies with flags/symbols/decimals) |
+| `hooks/useCurrency.ts` | Create — reads user's `currency` pref from Convex, returns `{ format, compact, percent, symbol, currency, loading }` |
+| `components/hero-split.tsx` | Edit — replace hardcoded `$` with `useCurrency` hook |
+| `components/portfolio-card.tsx` | Edit — replace hardcoded `$` with `useCurrency` hook |
+| `components/holdings.tsx` | Edit — replace hardcoded `$` with `useCurrency` hook |
+| `components/settings/settings-primitives.tsx` | Create — shared `Section`, `SettingRow`, `Toggle`, `StatusDot` |
+| `components/settings/identity-section.tsx` | Create — profile & identity settings |
+| `components/settings/data-section.tsx` | Create — currency, market region |
+| `components/settings/alerts-section.tsx` | Create — Market Pulse notifications, earnings reminders |
+| `components/settings/command-section.tsx` | Create — ⌘K and `@` command prefs |
+| `components/settings/ai-section.tsx` | Create — AI summary frequency, BYOAI provider |
+| `components/settings/advanced-section.tsx` | Create — export, cache, danger zone |
+| `app/(webapp)/settings/page.tsx` | Overwrite — rebuilt with pulse strip + all sections |
 
 ---
 
@@ -396,6 +442,179 @@ Step 19 (insiders) ─── requires external API key (SEC EDGAR or finnhub)
 Step 23 ─── depends on Steps 20 + 18 (reuses AI actions from both)
 ```
 
+### Phase 7: Internationalization (`next-intl`)
+
+> **Status**: Proposed — adds multi-language support using `next-intl` (App Router native, TypeScript-safe, ICU pluralization, number/date formatting).
+
+- [ ] **Step 31 — Install `next-intl` + configure routing & middleware**
+  - `pnpm add next-intl` — ~15KB, App Router native, maintained by Vercel-adjacent devs
+  - Create `i18n/request.ts` — next-intl request config (reads locale from cookie/header, fallback to `en`)
+  - Create `i18n/routing.ts` — supported locales list (`en`, `es`, `fr`, `de`, `ja`, `zh`, `pt`, `ar`), default locale `en`
+  - Update `middleware.ts` — integrate `createMiddleware` from `next-intl/middleware` with existing Clerk middleware (chain them)
+  - Update `next.config.mjs` — add `createNextIntlPlugin` wrapper
+  - Files: new `i18n/request.ts`, new `i18n/routing.ts`, `middleware.ts`, `next.config.mjs`
+
+- [ ] **Step 32 — Create English message file (full coverage)**
+  - Create `messages/en.json` — namespace-structured translations covering all UI areas:
+    - `common` — buttons (Save, Cancel, Delete, Edit, Close, Refresh), labels, empty states
+    - `nav` — header items (Dashboard, News, Settings, Search), mobile nav
+    - `dashboard` — Total Net Worth, Your Portfolios, Market Benchmarks, AI Market Intelligence
+    - `portfolio` — Holdings, Analytics, Goals, Vault, risk tolerance labels, time horizon labels
+    - `assets` — asset types (Stock, Crypto, Bond, etc.), Add Asset dialog steps, Edit Asset fields
+    - `goals` — goal types, status labels (GETTING STARTED → EXCEEDED), Add/Edit Goal dialogs
+    - `settings` — section titles, field labels, AI provider options, currency/language selectors
+    - `news` — headlines, sources, timestamps, AI summary labels
+    - `search` — command palette text, category labels, keyboard shortcuts
+    - `auth` — sign in/up, onboarding steps
+    - `errors` — validation messages, API errors, not found states
+    - `formats` — date patterns, number patterns (used by `next-intl`'s `formatNumber`/`formatDateTime`)
+  - Files: new `messages/en.json`
+
+- [ ] **Step 33 — Create starter translation files for 7 languages**
+  - Copy `en.json` structure to: `es.json`, `fr.json`, `de.json`, `ja.json`, `zh.json`, `pt.json`, `ar.json`
+  - Translate `common`, `nav`, and `dashboard` namespaces (highest-impact surface area)
+  - Leave other namespaces as English placeholders with `// TODO: translate` markers
+  - Arabic (`ar.json`) — add RTL metadata, ensure layout system respects `dir="rtl"` when active
+  - Files: new `messages/{es,fr,de,ja,zh,pt,ar}.json`
+
+- [ ] **Step 34 — Wire `NextIntlClientProvider` into app layout**
+  - Update `app/layout.tsx` — wrap with `NextIntlClientProvider`, pass `messages` and `locale`
+  - Set `<html lang={locale}>` dynamically based on user preference
+  - For `ar` locale, set `<html dir="rtl">` automatically
+  - Read locale from user preferences (`userPreferences.language`) via Convex, sync with next-intl
+  - Files: `app/layout.tsx`
+
+- [ ] **Step 35 — Migrate core components to `useTranslations`**
+  - Priority order (highest visibility first):
+    1. `components/header.tsx` — nav labels
+    2. `components/hero-split.tsx` — "Total Net Worth", "today across X portfolios"
+    3. `components/ticker.tsx` — market status labels
+    4. `components/ai-card.tsx` — "AI Market Intelligence", "Read Full Analysis", "Refresh"
+    5. `components/portfolio-card.tsx` — "today", asset count labels
+    6. `components/holdings.tsx` — column headers, type labels, "alloc", "avg buy", "current"
+    7. `components/tabs.tsx` — tab labels
+    8. `app/(webapp)/page.tsx` — "Your Portfolios", "Market Benchmarks", "active"
+    9. `app/(webapp)/portfolio/[id]/page.tsx` — section headers, stat labels
+    10. `app/(webapp)/news/page.tsx` — news page headers
+  - Use `useTranslations('namespace')` hook pattern — e.g. `const t = useTranslations('dashboard')`
+  - For pluralization: `t('portfolioCount', { count: portfolioCount })`
+  - For number formatting: integrate with `useCurrency` hook (currency-aware `formatNumber`)
+  - Files: all components listed above
+
+- [ ] **Step 36 — Migrate dialogs and forms to `useTranslations`**
+  - `components/add-asset-dialog.tsx` — step labels, field labels, type options, confirm text
+  - `components/edit-asset-dialog.tsx` — field labels, save/cancel
+  - `components/create-portfolio-dialog.tsx` — step labels, risk tolerance options, time horizon options
+  - `components/edit-portfolio-dialog.tsx` — field labels
+  - `components/portfolio-goals.tsx` — goal type labels, status labels, Add/Edit Goal dialogs
+  - `components/vault.tsx` — document/article labels, upload dialog
+  - `components/command-palette.tsx` — search placeholder, category labels, keyboard hints
+  - `components/transaction-dialog.tsx` — transaction type labels, field labels
+  - Files: all dialog components
+
+- [ ] **Step 37 — Language picker in settings**
+  - Searchable language selector (reuse combobox pattern from currency picker)
+  - Each option: flag emoji + native language name + English name (e.g. "🇯🇵 日本語 — Japanese")
+  - Preview: show a sample translated string live as user hovers options
+  - Saves to `userPreferences.language` in Convex
+  - On change: update next-intl locale cookie, trigger page reload for server components
+  - Files: `components/settings/language-section.tsx` (new), settings page
+
+### Phase 8: BYOAI Tunnel (Go CLI + Embedded Web UI)
+
+> **Status**: Proposed — enables users to connect their own AI (Ollama, LM Studio, etc.) to PulsePortfolio via an encrypted tunnel.
+
+#### Architecture Overview
+
+The BYOAI system has **three tiers**:
+1. **Default** — Uses PulsePortfolio's hosted AI service (OpenRouter → Grok). No config needed.
+2. **Bring Your Own Key** — User provides an OpenRouter API key. Backend proxies through their key instead.
+3. **Self-Hosted Tunnel** — User runs `pulse-tunnel` CLI on their machine. It opens a persistent WebSocket tunnel from their local Ollama/LM Studio to PulsePortfolio's backend. All AI requests route through the tunnel to the user's local model.
+
+#### Tunnel CLI (`pulse-tunnel`) — Go Binary
+
+- [ ] **Step 38 — Go module scaffolding + CLI entry point**
+  - Initialize `tunnel/` directory as a Go module (`go mod init github.com/pulseportfolio/pulse-tunnel`)
+  - CLI using Go `flag` package (no cobra dependency — keep binary small):
+    - `--token` — Auth token (from PulsePortfolio settings page)
+    - `--ollama-url` — Local Ollama endpoint (default: `http://localhost:11434`)
+    - `--backend-url` — PulsePortfolio backend WebSocket endpoint (default: `wss://tunnel.pulsefolio.net`)
+    - `--port` — Local web UI port (default: `9876`)
+    - `--headless` — Skip opening browser, run in terminal-only mode
+    - `--verbose` — Debug logging
+  - On start: validate token → discover local Ollama → open WebSocket tunnel → serve embedded web UI → auto-open browser
+  - Files: new `tunnel/cmd/pulse-tunnel/main.go`, new `tunnel/go.mod`
+
+- [ ] **Step 39 — WebSocket tunnel client**
+  - Persistent WebSocket connection to backend with:
+    - TLS encryption (standard `wss://`)
+    - Token-based auth in initial handshake headers
+    - Heartbeat ping/pong every 30s (detect dead connections)
+    - Exponential backoff reconnect (1s → 2s → 4s → ... → 60s max)
+    - Connection state machine: `CONNECTING` → `AUTHENTICATING` → `CONNECTED` → `DISCONNECTED`
+  - Message protocol (JSON over WebSocket):
+    - Backend → Tunnel: `{ type: "ai_request", id: "uuid", payload: { messages, model, temperature, max_tokens } }`
+    - Tunnel → Backend: `{ type: "ai_response", id: "uuid", payload: { content, model, tokens_used, processing_time_ms } }`
+    - Tunnel → Backend: `{ type: "ai_error", id: "uuid", error: "message" }`
+    - Bidirectional: `{ type: "ping" }` / `{ type: "pong" }`
+    - Tunnel → Backend: `{ type: "status", models: ["llama3.2", "mistral"], ollama_version: "0.6.1" }`
+  - Files: new `tunnel/internal/tunnel/client.go`
+
+- [ ] **Step 40 — Ollama proxy + API translation**
+  - Proxy handler: receives AI requests from WebSocket, forwards to local Ollama
+  - Translation layer (OpenAI Chat Completions format ↔ Ollama API):
+    - Maps `messages` array (role/content) to Ollama's `/api/chat` format
+    - Maps `model` names (e.g. "llama3.2:latest") to Ollama model tags
+    - Extracts token counts from Ollama response (`eval_count`, `prompt_eval_count`)
+    - Handles streaming responses (Ollama streams by default) — buffers and sends complete response
+  - Local Ollama discovery: `GET http://localhost:11434/api/tags` to list available models
+  - Health check: verify Ollama is running before establishing tunnel
+  - Files: new `tunnel/internal/proxy/handler.go`, new `tunnel/internal/proxy/translate.go`
+
+- [ ] **Step 41 — Embedded web dashboard**
+  - Go `embed` package to bundle a tiny HTML/CSS/JS dashboard into the binary
+  - Dashboard served on `localhost:9876` (configurable via `--port`)
+  - Features:
+    - **Connection status** — green/amber/red indicator with live state name
+    - **Token input** — paste tunnel token from settings page (saved to local config file)
+    - **Ollama config** — URL field, model selector (populated from Ollama's `/api/tags`)
+    - **Connection log** — scrolling log of tunnel events (connected, request proxied, errors)
+    - **Stats** — requests proxied, avg response time, uptime
+  - Design: dark theme matching PulsePortfolio DNA (zinc backgrounds, gold accents, monospace type)
+  - Auto-opens in default browser on start (unless `--headless`)
+  - Files: new `tunnel/internal/web/dashboard.html`, new `tunnel/internal/web/server.go`
+
+- [ ] **Step 42 — Auth, config persistence, and Makefile**
+  - Token auth: validate token against backend's `/tunnel/validate` endpoint on connect
+  - Config file: `~/.config/pulse-tunnel/config.json` — persists token, Ollama URL, port, last-used model
+  - Makefile targets: `build` (current OS), `build-all` (cross-compile for linux/darwin/windows × amd64/arm64), `release` (versioned binaries + checksums)
+  - README.md with: quick start, requirements (Go 1.22+, Ollama running), architecture diagram, troubleshooting
+  - Files: new `tunnel/internal/auth/token.go`, new `tunnel/internal/config/config.go`, new `tunnel/Makefile`, new `tunnel/README.md`
+
+#### Backend AI Service Changes (for tunnel routing)
+
+- [ ] **Step 43 — AI service tunnel endpoint + routing logic**
+  - New WebSocket endpoint in AI service: `/tunnel/connect` — accepts tunnel connections, validates tokens
+  - Tunnel registry: in-memory map of `tunnel_id → WebSocket connection`
+  - Modified request flow in `ai_client.py`:
+    1. Check user's `aiProvider` preference (from request header or lookup)
+    2. If `"default"` → route to OpenRouter (existing behavior)
+    3. If `"openrouter_byokey"` → route to OpenRouter with user's API key (from `openRouterApiKey`)
+    4. If `"self_hosted"` → look up tunnel by `tunnelId`, send request through WebSocket, await response
+  - Token generation: new endpoint `POST /tunnel/generate-token` — creates a signed JWT with `user_id` + `tunnel_id` claim
+  - Files: AI service `main.py`, `ai_client.py`, new `tunnel_manager.py`
+
+#### Frontend Settings UI (BYOAI)
+
+- [ ] **Step 44 — AI provider settings section**
+  - Three-option radio card selector:
+    - **PulsePortfolio AI** (default) — "Powered by Grok via OpenRouter. No setup needed."
+    - **Bring Your Own Key** — OpenRouter API key input (masked, with test connection button)
+    - **Self-Hosted** — Tunnel setup: shows tunnel token (generate/regenerate), connection status (live via Convex query), model selector (populated from tunnel's reported models), download link for `pulse-tunnel` binary
+  - Saves to `userPreferences.aiProvider`, `openRouterApiKey`, `tunnelId`
+  - Connection status indicator: green pulse when tunnel is connected, amber when reconnecting, red when offline
+  - Files: `components/settings/ai-section.tsx` (new)
+
 ---
 
 ## Changelog
@@ -409,3 +628,4 @@ Step 23 ─── depends on Steps 20 + 18 (reuses AI actions from both)
 | 2026-02-09 | 10, 11, 12, 13, 14 | Phase 3 complete — ResponsiveDialog base component, all 4 dialog redesigns migrated, surfaced `includeInNetworth`/`allowSubscriptions` schema fields, fixed delete portfolio crash |
 | 2026-02-09 | 15 | Phase 4 partial — Goals tab redesign: renamed `goals` → `portfolioGoals` table, multi-goal CRUD, SVG half-radial gauge cards, Add/Edit dialogs, summary bar, moved goals out of Vault into own tab |
 | 2026-02-09 | 16 | Global search — search indexes on 4 tables, `globalSearch` query (6 categories: portfolios, assets by name+symbol+notes, documents by fileName+type+format, articles by title+URL+notes, market data by ticker+name, quick actions with keyword matching), command palette component with ⌘K trigger, keyboard navigation, categorized results with colored accent bars, SearchNavButton expand-on-hover pattern in header |
+| 2026-02-10 | — | **Multi-currency conversion (server-side)** — `convex/fx.ts` (pure `convert` + `resolveAssetCurrency`, 6-line EUR cross-rate formula), `fxRates` table (single document, EUR-based, daily cron via `fetchFxRates` action → market-data `/fx` endpoint), `loadFxContext` helper reads user's base currency from `userPreferences` + FX rates in one call, threaded into `getUserPortfolios`, `getPortfolioById`, `getHistoricalData`, `calculatePortfolioValueAtDate` — every monetary value now converted from asset's native `currency` field to user's `baseCurrency`. Client side: `lib/currency.ts` (40+ currencies with metadata, `formatMoney`/`formatCompact`/`formatPercent`/`currencySymbol`/`searchCurrencies` via `Intl.NumberFormat` with formatter cache), `hooks/useCurrency.ts` (reads preference, returns `{ format, compact, percent, symbol, currency }`). Components updated: `hero-split.tsx`, `portfolio-card.tsx`, `holdings.tsx`. Schema: `userPreferences` extended with `marketRegion`, `aiSummaryFrequency`, `earningsReminders`, `marketPulseEnabled/Channel/WebhookUrl`. |

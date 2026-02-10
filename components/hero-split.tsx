@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpRight, ArrowDownRight } from "@phosphor-icons/react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface V2HeroSplitProps {
   leftContent: React.ReactNode;
@@ -44,7 +45,9 @@ export function NetWorthHero({
   changePercent,
   portfolioCount,
 }: NetWorthHeroProps) {
+  const { format, symbol } = useCurrency();
   const isPositive = change >= 0;
+
   return (
     <div>
       <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-4">
@@ -52,11 +55,7 @@ export function NetWorthHero({
       </p>
       <div className="flex items-end gap-5 flex-wrap">
         <h1 className="text-5xl lg:text-[68px] font-bold text-white tracking-tighter leading-none">
-          $
-          {value.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
+          {format(value)}
         </h1>
         <div
           className={`flex items-center gap-1.5 pb-1.5 ${isPositive ? "text-emerald-500" : "text-red-500"}`}
@@ -73,7 +72,8 @@ export function NetWorthHero({
         </div>
       </div>
       <p className="text-zinc-600 text-sm mt-3">
-        {isPositive ? "+" : ""}$
+        {isPositive ? "+" : "-"}
+        {symbol}
         {Math.abs(change).toLocaleString(undefined, {
           minimumFractionDigits: 2,
         })}{" "}

@@ -2,6 +2,12 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // FX rates — single document updated daily, EUR-based from ExchangeRatesAPI
+  fxRates: defineTable({
+    base: v.string(), // always "EUR"
+    rates: v.any(), // Record<string, number> — e.g. { USD: 1.19, GBP: 0.87, ZAR: 18.94 }
+    updatedAt: v.number(),
+  }),
   // user profiles
   users: defineTable({
     name: v.string(),
@@ -20,6 +26,24 @@ export default defineSchema({
     openRouterApiKey: v.optional(v.string()),
     tunnelId: v.optional(v.string()),
     selfHostedUrl: v.optional(v.string()),
+    // Phase 6 additions
+    marketRegion: v.optional(v.string()),
+    aiSummaryFrequency: v.optional(
+      v.union(
+        v.literal("12h"),
+        v.literal("daily"),
+        v.literal("weekly"),
+        v.literal("monthly"),
+        v.literal("manual"),
+      ),
+    ),
+    earningsReminders: v.optional(v.boolean()),
+    // AI Market Pulse notification preferences
+    marketPulseEnabled: v.optional(v.boolean()),
+    marketPulseChannel: v.optional(
+      v.union(v.literal("email"), v.literal("discord"), v.literal("telegram")),
+    ),
+    marketPulseWebhookUrl: v.optional(v.string()), // discord webhook or telegram bot URL
   }).index("byUser", ["userId"]),
   // development related
   flags: defineTable({

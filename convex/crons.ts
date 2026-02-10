@@ -31,7 +31,6 @@ crons.weekly(
   api.marketData.updateAllPortfolioSnapshots,
 );
 
-
 // Update benchmark data every x
 crons.interval(
   "update benchmark data",
@@ -39,11 +38,14 @@ crons.interval(
   api.marketData.updateBenchmarkData,
 );
 
+// Update FX rates daily (EUR-based, used for multi-currency conversion)
+crons.interval("update FX rates", { hours: 24 }, api.marketData.fetchFxRates);
+
 // Generate AI news summaries every 90 minutes
 crons.interval(
   "update AI news summaries",
   { minutes: 90 },
   api.ai.generateAiNewsSummary,
-)
+);
 
 export default crons;

@@ -1,6 +1,7 @@
 import { api, internal } from "./_generated/api";
 import { query, mutation } from "./_generated/server";
 import { GenericId, v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import {
   calculateReturns,
   getEarliestDate,
@@ -13,12 +14,48 @@ import {
   type Transaction,
   type DataSourceType,
 } from "./analytics";
+import { convert, resolveAssetCurrency, type FxRates } from "./fx";
+
+// ─── FX helpers (shared by all portfolio queries) ────────────────────────────
+async function loadFxContext(ctx: any, userId: any) {
+  // Load FX rates (single document)
+  const fxDoc = await ctx.db.query("fxRates").first();
+  const rates: FxRates = fxDoc?.rates ?? {};
+
+  // Load user's base currency from preferences
+  let baseCurrency = "USD";
+  if (userId) {
+    const prefs = await ctx.db
+      .query("userPreferences")
+      .withIndex("byUser", (q: any) => q.eq("userId", userId))
+      .first();
+    if (prefs?.currency) baseCurrency = prefs.currency;
+  }
+
+  return { rates, baseCurrency };
+}
+
+/** Convert an amount from an asset's native currency to the user's base currency */
+function toBase(
+  amount: number,
+  assetCurrency: string | undefined,
+  baseCurrency: string,
+  rates: FxRates,
+): number {
+  return convert(
+    amount,
+    resolveAssetCurrency(assetCurrency),
+    baseCurrency,
+    rates,
+  );
+}
 
 const aiPlaceholderSummary =
   "Strong tech performance (+18.2% MTD)** driving growth, but **underweight on dividends (2.3%)**. Consider adding **renewable energy stocks** and **international equities** (5-10%) to enhance diversification. Current **cash position (12%)** appropriate amid market volatility.";
 const aiPlaceholderHeadline = "Portfolio Diversification Analysis";
 
 // Get all portfolios for a user with computed fields
+// All monetary values are converted to the user's base currency.
 export const getUserPorfolios = query({
   args: {
     userId: v.optional(v.union(v.id("users"), v.string())),
@@ -28,6 +65,8 @@ export const getUserPorfolios = query({
     if (!args.userId) {
       return [];
     }
+
+    const { rates, baseCurrency } = await loadFxContext(ctx, args.userId);
 
     const portfolios = await ctx.db
       .query("portfolios")
@@ -56,12 +95,14 @@ export const getUserPorfolios = query({
 
         for (const asset of assets) {
           const txns = transactionsByAsset[asset._id] || [];
+          const assetCcy = asset.currency;
 
           const quantity = txns.reduce(
             (q, t) => q + (t.type === "buy" ? t.quantity : -t.quantity),
             0,
           );
-          const totalCost = txns.reduce(
+          // Cost basis: transactions are recorded in the asset's native currency
+          const totalCostNative = txns.reduce(
             (sum, t) => sum + (t.type === "buy" ? t.quantity * t.price : 0),
             0,
           );
@@ -77,10 +118,23 @@ export const getUserPorfolios = query({
               currentPrice = marketData.price;
             }
           }
-          const currentValue = quantity * currentPrice;
 
-          portfolioCostBasis += totalCost;
-          portfolioCurrentValue += currentValue;
+          // Convert from asset's native currency → user's base currency
+          const currentValueBase = toBase(
+            quantity * currentPrice,
+            assetCcy,
+            baseCurrency,
+            rates,
+          );
+          const totalCostBase = toBase(
+            totalCostNative,
+            assetCcy,
+            baseCurrency,
+            rates,
+          );
+
+          portfolioCostBasis += totalCostBase;
+          portfolioCurrentValue += currentValueBase;
         }
         const change = portfolioCurrentValue - portfolioCostBasis;
         const changePercent = portfolioCostBasis
@@ -94,6 +148,7 @@ export const getUserPorfolios = query({
           change,
           changePercent,
           assetsCount: assets.length,
+          baseCurrency, // include so the client knows which currency these values are in
         };
       }),
     );
@@ -134,6 +189,14 @@ export const getPortfolioById = query({
     portfolioId: v.union(v.id("portfolios"), v.string()),
   },
   handler: async (ctx, args) => {
+    // Get the portfolio first so we can look up the user for FX context
+    const portfolio = await ctx.db.get(args.portfolioId as Id<"portfolios">);
+    if (!portfolio) {
+      return null;
+    }
+
+    const { rates, baseCurrency } = await loadFxContext(ctx, portfolio.userId);
+
     const assets = await ctx.db
       .query("assets")
       .withIndex("byPortfolio", (q) => q.eq("portfolioId", args.portfolioId))
@@ -154,16 +217,17 @@ export const getPortfolioById = query({
 
     for (const asset of assets) {
       const txns = transactionsByAsset[asset._id] || [];
+      const assetCcy = asset.currency;
 
       const quantity = txns.reduce(
         (q, t) => q + (t.type === "buy" ? t.quantity : -t.quantity),
         0,
       );
-      const totalCost = txns.reduce(
+      const totalCostNative = txns.reduce(
         (sum, t) => sum + (t.type === "buy" ? t.quantity * t.price : 0),
         0,
       );
-      const averageBuyPrice = quantity ? totalCost / quantity : 0;
+      const averageBuyPriceNative = quantity ? totalCostNative / quantity : 0;
 
       // Check if there's a current price in marketCurrentData table
       let currentPrice = asset.currentPrice || 1;
@@ -176,32 +240,51 @@ export const getPortfolioById = query({
           currentPrice = marketData.price;
         }
       }
-      const currentValue = quantity * currentPrice;
 
-      asset.currentPrice = currentPrice;
+      // Convert from asset's native currency → user's base currency
+      const currentValueBase = toBase(
+        quantity * currentPrice,
+        assetCcy,
+        baseCurrency,
+        rates,
+      );
+      const totalCostBase = toBase(
+        totalCostNative,
+        assetCcy,
+        baseCurrency,
+        rates,
+      );
+      const avgBuyPriceBase = toBase(
+        averageBuyPriceNative,
+        assetCcy,
+        baseCurrency,
+        rates,
+      );
+      const currentPriceBase = toBase(
+        currentPrice,
+        assetCcy,
+        baseCurrency,
+        rates,
+      );
+
+      asset.currentPrice = currentPriceBase;
       asset.quantity = quantity;
-      asset.avgBuyPrice = averageBuyPrice;
-      asset.costBasis = totalCost;
-      asset.currentValue = currentValue;
-      asset.change = currentValue - totalCost;
-      asset.changePercent = totalCost
-        ? ((currentValue - totalCost) / totalCost) * 100
+      asset.avgBuyPrice = avgBuyPriceBase;
+      asset.costBasis = totalCostBase;
+      asset.currentValue = currentValueBase;
+      asset.change = currentValueBase - totalCostBase;
+      asset.changePercent = totalCostBase
+        ? ((currentValueBase - totalCostBase) / totalCostBase) * 100
         : 0;
 
-      portfolioCostBasis += totalCost;
-      portfolioCurrentValue += currentValue;
+      portfolioCostBasis += totalCostBase;
+      portfolioCurrentValue += currentValueBase;
     }
 
     for (const asset of assets) {
       asset.allocation = portfolioCurrentValue
         ? (asset.currentValue / portfolioCurrentValue) * 100
         : 0;
-    }
-
-    // Get the portfolio information — return null if deleted (avoids race condition on delete)
-    const portfolio = await ctx.db.get(args.portfolioId);
-    if (!portfolio) {
-      return null;
     }
 
     let aiHeadline = "";
@@ -241,6 +324,7 @@ export const getPortfolioById = query({
           100
         : 0 || 0,
       assets: assets,
+      baseCurrency,
     };
     return result;
   },

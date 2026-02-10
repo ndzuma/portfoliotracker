@@ -4,9 +4,12 @@ import {
   internalAction,
   internalMutation,
   internalQuery,
+  mutation,
   query,
 } from "./_generated/server";
-import { v, Id } from "convex/values";
+import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import { convert, resolveAssetCurrency, type FxRates } from "./fx";
 
 export const marketDataUrl =
   process.env.MARKET_DATA_SERVICE_URL ||
@@ -233,6 +236,7 @@ export const addHistoricalData = internalMutation({
 });
 
 // get HistoricalData for the charts
+// Values are converted to the user's base currency using current FX rates.
 export const getHistoricalData = query({
   args: {
     portfolioId: v.union(v.id("portfolios"), v.string()),
@@ -241,6 +245,23 @@ export const getHistoricalData = query({
     startDate: v.optional(v.string()), // YYYY-MM-DD format
   },
   handler: async (ctx, args) => {
+    // ── FX context ──────────────────────────────────────────────────────
+    const portfolio = await ctx.db.get(args.portfolioId as Id<"portfolios">);
+    if (!portfolio) return [];
+
+    const fxDoc = await ctx.db.query("fxRates").first();
+    const rates: FxRates = fxDoc?.rates ?? {};
+
+    let baseCurrency = "USD";
+    const portfolioUserId = portfolio.userId;
+    if (portfolioUserId) {
+      const prefs = await ctx.db
+        .query("userPreferences")
+        .withIndex("byUser", (q: any) => q.eq("userId", portfolioUserId))
+        .first();
+      if (prefs?.currency) baseCurrency = prefs.currency;
+    }
+
     // Determine data granularity and date range
     const today = new Date();
     const endDate = args.endDate ? new Date(args.endDate) : today;
@@ -276,6 +297,16 @@ export const getHistoricalData = query({
     if (assets.length === 0) {
       return [];
     }
+
+    // Build symbol → currency map for FX conversion during value calculation
+    const symbolCurrencyMap: Record<string, string> = {};
+    const assetIdCurrencyMap: Record<string, string> = {};
+    for (const asset of assets) {
+      const ccy = resolveAssetCurrency(asset.currency);
+      if (asset.symbol) symbolCurrencyMap[asset.symbol] = ccy;
+      assetIdCurrencyMap[asset._id] = ccy;
+    }
+
     const allTransactions: any[] = [];
     for (const asset of assets) {
       const transactions = await ctx.db
@@ -287,6 +318,7 @@ export const getHistoricalData = query({
           transactionId: transaction._id,
           name: asset.name,
           symbol: asset.symbol,
+          assetId: asset._id,
           date: transaction.date,
           quantity: transaction.quantity,
           price: transaction.price,
@@ -329,9 +361,21 @@ export const getHistoricalData = query({
 
       if (snapshots.length > 0) {
         // Use snapshots for historical data, but calculate today's value separately
+        // Note: snapshots were stored in mixed native currencies pre-FX.
+        // We apply a blanket conversion from USD→baseCurrency as an approximation
+        // until snapshots are recalculated with per-asset FX conversion.
+        const snapshotRate =
+          baseCurrency !== "USD"
+            ? (() => {
+                const fromRate = rates["USD"];
+                const toRate = baseCurrency === "EUR" ? 1 : rates[baseCurrency];
+                return fromRate && toRate ? toRate / fromRate : 1;
+              })()
+            : 1;
+
         const result = snapshots.map((snapshot) => ({
           date: new Date(snapshot.date).toISOString().split("T")[0],
-          value: snapshot.totalValue,
+          value: snapshot.totalValue * snapshotRate,
         }));
 
         // Add today's value if not already included (always calculate live)
@@ -344,6 +388,7 @@ export const getHistoricalData = query({
             {
               portfolioId: args.portfolioId as Id<"portfolios">,
               date: today.getTime(),
+              baseCurrency,
             },
           );
           result.push({
@@ -423,11 +468,17 @@ export const getHistoricalData = query({
         if (!transaction.symbol) {
           //if the asset has no symbol, calculate it if the transaction date is on or before the current date
           if (new Date(transaction.date) <= date) {
-            const assetValue =
+            const assetValueNative =
               transaction.quantity *
               transaction.price *
               (transaction.type === "buy" ? 1 : -1);
-            dailyValue += assetValue;
+            const assetCcy = assetIdCurrencyMap[transaction.assetId] || "USD";
+            dailyValue += convert(
+              assetValueNative,
+              assetCcy,
+              baseCurrency,
+              rates,
+            );
             calculatedAssets.push(transaction.transactionId);
           }
           continue;
@@ -477,7 +528,13 @@ export const getHistoricalData = query({
           quantityHeld += txn.type === "buy" ? txn.quantity : -txn.quantity;
           calculatedAssets.push(txn.transactionId);
         }
-        dailyValue += quantityHeld * priceRecord.close;
+        const assetCcy = symbolCurrencyMap[symbol] || "USD";
+        dailyValue += convert(
+          quantityHeld * priceRecord.close,
+          assetCcy,
+          baseCurrency,
+          rates,
+        );
       }
 
       result.push({
@@ -577,6 +634,7 @@ export const calculatePortfolioValueAtDate = internalQuery({
   args: {
     portfolioId: v.union(v.id("portfolios"), v.string()),
     date: v.number(),
+    baseCurrency: v.optional(v.string()), // if omitted, looks up user preference
   },
   handler: async (ctx, args) => {
     const assets = await ctx.db
@@ -584,10 +642,31 @@ export const calculatePortfolioValueAtDate = internalQuery({
       .withIndex("byPortfolio", (q) => q.eq("portfolioId", args.portfolioId))
       .collect();
 
+    // ── FX context ──────────────────────────────────────────────────────
+    const fxDoc = await ctx.db.query("fxRates").first();
+    const fxRates: FxRates = fxDoc?.rates ?? {};
+
+    let baseCurrency = args.baseCurrency || "USD";
+    if (!args.baseCurrency) {
+      const portfolio = await ctx.db.get(args.portfolioId as Id<"portfolios">);
+      if (portfolio) {
+        const portfolioUserId = portfolio.userId;
+        if (portfolioUserId) {
+          const prefs = await ctx.db
+            .query("userPreferences")
+            .withIndex("byUser", (q: any) => q.eq("userId", portfolioUserId))
+            .first();
+          if (prefs?.currency) baseCurrency = prefs.currency;
+        }
+      }
+    }
+
     let totalValue = 0;
     const targetDate = new Date(args.date);
 
     for (const asset of assets) {
+      const assetCcy = resolveAssetCurrency(asset.currency);
+
       if (!asset.symbol) {
         // Handle assets without symbols (cash, etc.)
         const transactions = await ctx.db
@@ -607,7 +686,12 @@ export const calculatePortfolioValueAtDate = internalQuery({
         }
 
         if (asset.currentPrice) {
-          totalValue += quantityHeld * asset.currentPrice;
+          totalValue += convert(
+            quantityHeld * asset.currentPrice,
+            assetCcy,
+            baseCurrency,
+            fxRates,
+          );
         }
       } else {
         // Handle assets with symbols
@@ -639,10 +723,20 @@ export const calculatePortfolioValueAtDate = internalQuery({
           .first();
 
         if (priceData && priceData.close != null) {
-          totalValue += quantityHeld * priceData.close;
+          totalValue += convert(
+            quantityHeld * priceData.close,
+            assetCcy,
+            baseCurrency,
+            fxRates,
+          );
         } else if (asset.currentPrice) {
           // Fallback to current price if no historical data
-          totalValue += quantityHeld * asset.currentPrice;
+          totalValue += convert(
+            quantityHeld * asset.currentPrice,
+            assetCcy,
+            baseCurrency,
+            fxRates,
+          );
         }
       }
     }
@@ -1219,5 +1313,79 @@ export const getBenchmarkData = query({
   handler: async (ctx) => {
     const benchmarks = await ctx.db.query("marketBenchmarks").collect();
     return benchmarks;
+  },
+});
+
+// ─── FX Rates ───────────────────────────────────────────────────────────────────
+// Fetches EUR-based rates from ExchangeRatesAPI via the market data service,
+// stores them in Convex. One document, updated daily.
+
+/** Store FX rates into the fxRates table (upsert — single document) */
+export const storeFxRates = internalMutation({
+  args: {
+    base: v.string(),
+    rates: v.any(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.query("fxRates").first();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        base: args.base,
+        rates: args.rates,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("fxRates", {
+        base: args.base,
+        rates: args.rates,
+        updatedAt: Date.now(),
+      });
+    }
+  },
+});
+
+/** Fetch FX rates from market data service and store in Convex */
+export const fetchFxRates = action({
+  handler: async (ctx) => {
+    const response = await fetch(`${marketDataUrl}/fx`);
+    if (!response.ok) {
+      console.error(`Failed to fetch FX rates: ${response.statusText}`);
+      return;
+    }
+
+    const json = await response.json();
+    const data = json.Data || json;
+
+    if (!data.rates || !data.base) {
+      console.error("Invalid FX response shape — missing rates or base");
+      return;
+    }
+
+    await ctx.runMutation(internal.marketData.storeFxRates, {
+      base: data.base,
+      rates: data.rates,
+    });
+
+    console.log(
+      `FX rates updated: ${Object.keys(data.rates).length} currencies, base=${data.base}`,
+    );
+  },
+});
+
+/** Read the current FX rates (for use in queries) */
+export const getFxRates = query({
+  handler: async (ctx) => {
+    const doc = await ctx.db.query("fxRates").first();
+    return doc || null;
+  },
+});
+
+/** Internal version for use in other queries */
+export const getFxRatesInternal = internalQuery({
+  handler: async (ctx) => {
+    const doc = await ctx.db.query("fxRates").first();
+    return doc
+      ? { base: doc.base, rates: doc.rates as Record<string, number> }
+      : null;
   },
 });

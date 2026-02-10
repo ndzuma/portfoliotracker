@@ -15,6 +15,7 @@ import type * as assets from "../assets.js";
 import type * as crons from "../crons.js";
 import type * as documents from "../documents.js";
 import type * as flags from "../flags.js";
+import type * as fx from "../fx.js";
 import type * as marketData from "../marketData.js";
 import type * as portfolioGoals from "../portfolioGoals.js";
 import type * as portfolios from "../portfolios.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   documents: typeof documents;
   flags: typeof flags;
+  fx: typeof fx;
   marketData: typeof marketData;
   portfolioGoals: typeof portfolioGoals;
   portfolios: typeof portfolios;

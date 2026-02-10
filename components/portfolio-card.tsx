@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight, ArrowDownRight } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
+import { useCurrency } from "@/hooks/useCurrency";
 
 /* ─── Sparkline Component ─── */
 function Spark({ up, className = "" }: { up: boolean; className?: string }) {
@@ -42,6 +43,7 @@ export function V2PortfolioCard({
   assetsCount,
   description,
 }: V2PortfolioCardProps) {
+  const { format, symbol } = useCurrency();
   const isPositive = change >= 0;
 
   return (
@@ -83,18 +85,15 @@ export function V2PortfolioCard({
 
           {/* Portfolio Value */}
           <p className="text-2xl font-bold text-white tracking-tight">
-            $
-            {value.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {format(value)}
           </p>
 
           {/* Daily Change */}
           <p
             className={`text-sm mt-1 ${isPositive ? "text-emerald-500" : "text-red-500"}`}
           >
-            {isPositive ? "+" : ""}$
+            {isPositive ? "+" : "-"}
+            {symbol}
             {Math.abs(change).toLocaleString(undefined, {
               minimumFractionDigits: 2,
             })}{" "}

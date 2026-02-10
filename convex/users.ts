@@ -77,6 +77,23 @@ export const updateUserPreferences = mutation({
     openRouterApiKey: v.optional(v.string()),
     tunnelId: v.optional(v.string()),
     selfHostedUrl: v.optional(v.string()),
+    // Phase 6 additions
+    marketRegion: v.optional(v.string()),
+    aiSummaryFrequency: v.optional(
+      v.union(
+        v.literal("12h"),
+        v.literal("daily"),
+        v.literal("weekly"),
+        v.literal("monthly"),
+        v.literal("manual"),
+      ),
+    ),
+    earningsReminders: v.optional(v.boolean()),
+    marketPulseEnabled: v.optional(v.boolean()),
+    marketPulseChannel: v.optional(
+      v.union(v.literal("email"), v.literal("discord"), v.literal("telegram")),
+    ),
+    marketPulseWebhookUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (!args.userId) {
@@ -102,30 +119,39 @@ export const updateUserPreferences = mutation({
         openRouterApiKey: args.openRouterApiKey || "",
         tunnelId: args.tunnelId || "",
         selfHostedUrl: args.selfHostedUrl || "",
+        marketRegion: args.marketRegion,
+        aiSummaryFrequency: args.aiSummaryFrequency,
+        earningsReminders: args.earningsReminders,
+        marketPulseEnabled: args.marketPulseEnabled,
+        marketPulseChannel: args.marketPulseChannel,
+        marketPulseWebhookUrl: args.marketPulseWebhookUrl,
       });
     } else {
-      // Update existing preferences
-      await ctx.db.patch(preferences._id, {
-        currency:
-          args.currency !== undefined ? args.currency : preferences.currency,
-        theme: args.theme !== undefined ? args.theme : preferences.theme,
-        language:
-          args.language !== undefined ? args.language : preferences.language,
-        aiProvider:
-          args.aiProvider !== undefined
-            ? args.aiProvider
-            : preferences.aiProvider,
-        openRouterApiKey:
-          args.openRouterApiKey !== undefined
-            ? args.openRouterApiKey
-            : preferences.openRouterApiKey,
-        tunnelId:
-          args.tunnelId !== undefined ? args.tunnelId : preferences.tunnelId,
-        selfHostedUrl:
-          args.selfHostedUrl !== undefined
-            ? args.selfHostedUrl
-            : preferences.selfHostedUrl,
-      });
+      // Update existing preferences — only patch fields that were explicitly passed
+      const updates: Record<string, any> = {};
+      if (args.currency !== undefined) updates.currency = args.currency;
+      if (args.theme !== undefined) updates.theme = args.theme;
+      if (args.language !== undefined) updates.language = args.language;
+      if (args.aiProvider !== undefined) updates.aiProvider = args.aiProvider;
+      if (args.openRouterApiKey !== undefined)
+        updates.openRouterApiKey = args.openRouterApiKey;
+      if (args.tunnelId !== undefined) updates.tunnelId = args.tunnelId;
+      if (args.selfHostedUrl !== undefined)
+        updates.selfHostedUrl = args.selfHostedUrl;
+      if (args.marketRegion !== undefined)
+        updates.marketRegion = args.marketRegion;
+      if (args.aiSummaryFrequency !== undefined)
+        updates.aiSummaryFrequency = args.aiSummaryFrequency;
+      if (args.earningsReminders !== undefined)
+        updates.earningsReminders = args.earningsReminders;
+      if (args.marketPulseEnabled !== undefined)
+        updates.marketPulseEnabled = args.marketPulseEnabled;
+      if (args.marketPulseChannel !== undefined)
+        updates.marketPulseChannel = args.marketPulseChannel;
+      if (args.marketPulseWebhookUrl !== undefined)
+        updates.marketPulseWebhookUrl = args.marketPulseWebhookUrl;
+
+      await ctx.db.patch(preferences._id, updates);
       return preferences._id;
     }
   },
