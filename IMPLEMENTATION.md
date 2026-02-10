@@ -328,6 +328,54 @@
 
 ---
 
+### Phase 6: Settings Revamp (Sectioned Control Room)
+
+> **Status**: Proposed — aligns Settings with the News/Home/Portfolio DNA and expands available controls.
+
+- [ ] **Step 24 — Settings page architecture + layout system**
+  - New **sectioned grid** with asymmetric panels and ticker-strip subrows
+  - Add **Settings Pulse Strip** header (live status: last sync, alerts armed, default portfolio)
+  - Each section uses: title + muted description + compact rows with dividers
+  - Files: `app/settings/page.tsx`, new `components/settings/*`
+
+- [ ] **Step 25 — Identity & Profile section**
+  - Profile essentials: display name, avatar, risk profile, time horizon
+  - Default portfolio selector + “include in net worth” toggle
+  - Compact summary card with current configuration
+  - Files: `components/settings/identity-section.tsx` (new), `app/settings/page.tsx`
+
+- [ ] **Step 26 — Data & Market Feeds section**
+  - Refresh cadence (15m / 1h / 4h / daily)
+  - Base currency selector
+  - Market region preference + benchmark defaults
+  - Files: `components/settings/data-section.tsx` (new)
+
+- [ ] **Step 27 — Alerts & Signals section**
+  - Volatility threshold toggle + numeric input
+  - Earnings reminders + price movement alerts
+  - “Armed” indicator row in ticker-strip style
+  - Files: `components/settings/alerts-section.tsx` (new)
+
+- [ ] **Step 28 — Command & Search section**
+  - ⌘K behavior (open on global, scope defaults)
+  - `@` command namespace toggles
+  - Quick action defaults (News/Portfolio/Watchlist priority)
+  - Files: `components/settings/command-section.tsx` (new)
+
+- [ ] **Step 29 — AI & Research section**
+  - Auto-summaries toggle (news, portfolio)
+  - Sentiment preview toggle
+  - Feed curation controls (e.g., risk level, sector weight)
+  - Files: `components/settings/ai-section.tsx` (new)
+
+- [ ] **Step 30 — Danger / Advanced section**
+  - Data export (JSON)
+  - Clear cache / reset search index
+  - Delete account (destructive)
+  - Files: `components/settings/advanced-section.tsx` (new)
+
+---
+
 ## Dependency Graph
 
 ```

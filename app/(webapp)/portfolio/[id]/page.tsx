@@ -233,7 +233,7 @@ export default function V2PortfolioDetail() {
               className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              Back to Portfolios
+              Back
             </Link>
             {portfolio && convexUser && (
               <>

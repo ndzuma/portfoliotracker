@@ -280,41 +280,6 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
           />
         </div>
       </div>
-
-      {/* Allocation */}
-      <div>
-        <SectionTitle>Asset Allocation</SectionTitle>
-        <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
-          <div className="flex flex-col gap-3">
-            {analytics.assetAllocation.byType.map((alloc: any, i: number) => {
-              const hue = (i * 360) / analytics.assetAllocation.byType.length;
-              return (
-                <div key={i} className="flex items-center gap-4">
-                  <div
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: `hsl(${hue}, 65%, 55%)` }}
-                  />
-                  <span className="text-sm text-zinc-300 capitalize flex-1">
-                    {alloc.type}
-                  </span>
-                  <div className="flex-[2] h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${alloc.percentage}%`,
-                        backgroundColor: `hsl(${hue}, 65%, 55%)`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm font-semibold text-white w-14 text-right">
-                    {alloc.percentage.toFixed(1)}%
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
