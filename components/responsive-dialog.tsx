@@ -13,6 +13,8 @@ interface ResponsiveDialogProps {
   steps?: string[];
   /** 0-indexed current step */
   currentStep?: number;
+  /** Callback when a step label is clicked — receives the step index */
+  onStepClick?: (stepIndex: number) => void;
   /** Main dialog body */
   children: React.ReactNode;
   /** Footer slot — typically navigation/action buttons */
@@ -29,6 +31,7 @@ export function ResponsiveDialog({
   title,
   steps,
   currentStep = 0,
+  onStepClick,
   children,
   footer,
   maxWidth = "460px",
@@ -144,22 +147,28 @@ export function ResponsiveDialog({
         {steps.map((label, i) => {
           const isActive = i === currentStep;
           const isDone = i < currentStep;
+          const isClickable = onStepClick && (isDone || isActive);
           return (
             <div
               key={label}
               className="flex-1 relative flex items-center justify-center"
             >
-              <div
+              <button
+                type="button"
+                disabled={!isClickable}
+                onClick={() => {
+                  if (isClickable) onStepClick(i);
+                }}
                 className={`w-full py-3.5 text-center text-[11px] font-medium uppercase tracking-[0.12em] transition-colors duration-200 select-none ${
                   isActive
                     ? "text-white"
                     : isDone
-                      ? "text-zinc-500"
+                      ? "text-zinc-500 hover:text-zinc-300"
                       : "text-zinc-700"
-                }`}
+                } ${isClickable ? "cursor-pointer" : "cursor-default"}`}
               >
                 {label}
-              </div>
+              </button>
               {/* Gold accent underline on active step — ticker-strip DNA */}
               {isActive && (
                 <motion.div

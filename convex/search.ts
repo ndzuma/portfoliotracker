@@ -24,6 +24,47 @@ const QUICK_ACTIONS = [
       "config",
       "configuration",
       "account",
+      "profile",
+      "manage",
+    ],
+  },
+  {
+    id: "nav-currency",
+    title: "Currency Settings",
+    subtitle: "Change base currency and FX conversion",
+    href: "/settings",
+    icon: "CurrencyCircleDollar" as const,
+    category: "action" as const,
+    keywords: [
+      "currency",
+      "fx",
+      "exchange",
+      "rate",
+      "convert",
+      "conversion",
+      "usd",
+      "eur",
+      "gbp",
+      "jpy",
+      "base currency",
+      "money",
+      "dollar",
+      "euro",
+      "pound",
+      "yen",
+      "rupee",
+      "franc",
+      "krona",
+      "peso",
+      "real",
+      "rand",
+      "naira",
+      "shilling",
+      "won",
+      "ringgit",
+      "baht",
+      "rupiah",
+      "lira",
     ],
   },
   {
@@ -203,10 +244,21 @@ export const globalSearch = query({
       return a.notes.toLowerCase().includes(termLower);
     });
 
+    // 2d. Search by currency code
+    const assetsByCurrency = flatAllAssets.filter((a) => {
+      if (!a.currency) return false;
+      return a.currency.toLowerCase().includes(termLower);
+    });
+
     // Merge and deduplicate assets (name matches first, then symbol, then notes)
     const seenAssetIds = new Set<string>();
     const mergedAssets = [];
-    for (const batch of [assetsByName, assetsBySymbol, assetsByNotes]) {
+    for (const batch of [
+      assetsByName,
+      assetsBySymbol,
+      assetsByNotes,
+      assetsByCurrency,
+    ]) {
       for (const a of batch) {
         if (!seenAssetIds.has(a._id)) {
           seenAssetIds.add(a._id);
@@ -219,6 +271,7 @@ export const globalSearch = query({
       const parts = [
         a.symbol,
         a.type,
+        a.currency && a.currency !== "USD" ? a.currency : null,
         portfolioNameMap.get(a.portfolioId) || "Portfolio",
       ].filter(Boolean);
       return {

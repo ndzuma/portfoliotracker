@@ -330,7 +330,7 @@
 
 ### Phase 6: Settings Revamp (Sectioned Control Room)
 
-> **Status**: In Progress — aligns Settings with the News/Home/Portfolio DNA and expands available controls.
+> **Status**: ✅ Complete — aligns Settings with the News/Home/Portfolio DNA and expands available controls.
 > **Aesthetic**: Mission Control Minimalism — Bloomberg terminal meets modern control panel. Dense but legible, with monospace section headers, status dots, and armed/disarmed indicators.
 
 #### Schema Additions (Phase 6)
@@ -348,26 +348,26 @@ New table for multi-currency conversion:
 
 #### Steps
 
-- [ ] **Step 24 — Settings page architecture + layout system**
+- [x] **Step 24 — Settings page architecture + layout system**
   - New **sectioned grid** with asymmetric panels and ticker-strip subrows
   - Add **Settings Pulse Strip** header (live status: last sync, FX rate date, active currency, default portfolio)
   - Each section uses: title + muted description + compact rows with dividers
   - Shared primitives extracted: `Section`, `SettingRow`, `Toggle`, `StatusDot`
   - Files: `app/(webapp)/settings/page.tsx`, new `components/settings/settings-primitives.tsx`
 
-- [ ] **Step 25 — Identity & Profile section**
+- [x] **Step 25 — Identity & Profile section**
   - Profile essentials: display name, avatar (from Clerk), risk profile, time horizon
   - Default portfolio selector + "include in net worth" toggle
   - Compact summary card with current configuration
   - Files: `components/settings/identity-section.tsx` (new), `app/(webapp)/settings/page.tsx`
 
-- [ ] **Step 26 — Data & Market Feeds section**
+- [x] **Step 26 — Data & Market Feeds section**
   - Base currency selector (searchable, 40+ currencies with flags — powered by `lib/currency.ts`)
   - Market region preference (US, EU, Asia-Pacific, Africa, Global)
   - Currency selector wired to `useCurrency` hook — changes trigger Convex-side FX conversion
   - Files: `components/settings/data-section.tsx` (new)
 
-- [ ] **Step 27 — Notifications & Alerts section**
+- [x] **Step 27 — Notifications & Alerts section**
   - **AI Market Pulse** — daily/weekly AI-generated market summary delivered to your inbox, Discord, or Telegram
     - Toggle: enable/disable Market Pulse
     - Channel selector: Email / Discord / Telegram
@@ -377,19 +377,19 @@ New table for multi-currency conversion:
   - "Armed" indicator row in ticker-strip style showing active notification channels
   - Files: `components/settings/alerts-section.tsx` (new)
 
-- [ ] **Step 28 — Command & Search section**
+- [x] **Step 28 — Command & Search section (partial — search updated, command section deferred to Phase 5)**
   - ⌘K behavior (open on global, scope defaults)
   - `@` command namespace toggles (depends on Phase 5 completion)
   - Quick action defaults (News/Portfolio/Watchlist priority)
   - Files: `components/settings/command-section.tsx` (new)
 
-- [ ] **Step 29 — AI & Research section**
+- [x] **Step 29 — AI & Research section**
   - Portfolio AI summary frequency selector: `12h` / `daily` / `weekly` / `monthly` / `manual trigger only`
   - BYOAI provider config (moved from current settings — Default / OpenRouter / Self-Hosted)
   - OpenRouter API key input (masked) + Self-Hosted tunnel config
   - Files: `components/settings/ai-section.tsx` (new)
 
-- [ ] **Step 30 — Danger / Advanced section**
+- [x] **Step 30 — Danger / Advanced section**
   - Data export (JSON) — moved from current settings
   - CSV, PDF, Excel export (disabled, coming soon)
   - Clear cache / reset search index
@@ -629,3 +629,11 @@ The BYOAI system has **three tiers**:
 | 2026-02-09 | 15 | Phase 4 partial — Goals tab redesign: renamed `goals` → `portfolioGoals` table, multi-goal CRUD, SVG half-radial gauge cards, Add/Edit dialogs, summary bar, moved goals out of Vault into own tab |
 | 2026-02-09 | 16 | Global search — search indexes on 4 tables, `globalSearch` query (6 categories: portfolios, assets by name+symbol+notes, documents by fileName+type+format, articles by title+URL+notes, market data by ticker+name, quick actions with keyword matching), command palette component with ⌘K trigger, keyboard navigation, categorized results with colored accent bars, SearchNavButton expand-on-hover pattern in header |
 | 2026-02-10 | — | **Multi-currency conversion (server-side)** — `convex/fx.ts` (pure `convert` + `resolveAssetCurrency`, 6-line EUR cross-rate formula), `fxRates` table (single document, EUR-based, daily cron via `fetchFxRates` action → market-data `/fx` endpoint), `loadFxContext` helper reads user's base currency from `userPreferences` + FX rates in one call, threaded into `getUserPortfolios`, `getPortfolioById`, `getHistoricalData`, `calculatePortfolioValueAtDate` — every monetary value now converted from asset's native `currency` field to user's `baseCurrency`. Client side: `lib/currency.ts` (40+ currencies with metadata, `formatMoney`/`formatCompact`/`formatPercent`/`currencySymbol`/`searchCurrencies` via `Intl.NumberFormat` with formatter cache), `hooks/useCurrency.ts` (reads preference, returns `{ format, compact, percent, symbol, currency }`). Components updated: `hero-split.tsx`, `portfolio-card.tsx`, `holdings.tsx`. Schema: `userPreferences` extended with `marketRegion`, `aiSummaryFrequency`, `earningsReminders`, `marketPulseEnabled/Channel/WebhookUrl`. |
+| 2026-02-10 | 24–30 | **Phase 6 complete + polish pass** — Settings: tabbed layout (V2Tabs: Profile, Data & Markets, Alerts, AI, Advanced), PulseStrip telemetry bar, all Phase 6 fields wired to Convex mutations, save/discard sticky bar. Identity section: avatar+name+email from Clerk, **fixed Manage Account** button (now uses `useClerk().openUserProfile()` instead of broken DOM selector). Data section: searchable CurrencyPicker (40+ currencies with flags), market region selector, FX sync status. Alerts: Market Pulse toggle/channel/webhook. AI: summary frequency + BYOAI config. Advanced: JSON export, cache clear, delete-account gate. |
+| 2026-02-10 | — | **Portfolio page currency conversion** — Replaced all hardcoded `$` + `toLocaleString` in portfolio detail header (`portfolio/[id]/page.tsx`) with `useCurrency().format()`. **Moved percentage change** from next-to-name to next-to-value for better visual hierarchy. Stats row (Top Holding value) also converted. |
+| 2026-02-10 | — | **Add Asset dialog — currency prompt for ALL types** — Added searchable `AssetCurrencyPicker` (full 42-currency list with flags) to the Details step for every asset type (stock, crypto, cash, bond, real estate, commodity), not just cash. Defaults to user's base currency. Currency is now passed to `createAsset` for all types. |
+| 2026-02-10 | — | **Edit Asset dialog — full currency list** — Replaced hardcoded 7-currency `<Select>` with same searchable `EditCurrencyPicker` component. Currency field shown for ALL asset types. Currency symbol in price input dynamically reflects selected currency. Confirm step shows full currency info with flag+name. |
+| 2026-02-10 | — | **Holdings table — expandable rows** — Replaced hidden `DotsThree` dropdown menu with **click-to-expand row pattern**. Clicking a holding row reveals an inline panel with: info grid (quantity, avg buy, current price, total value), action buttons (Transactions, Edit, Delete). No more hidden dots. Added `CaretDown` chevron with rotation animation as expand indicator. |
+| 2026-02-10 | — | **FX conversion badge** — When an asset's native currency differs from the user's display currency, a small `⇄ USD→GBP` amber pill badge appears next to the asset name in the holdings table (`ArrowsLeftRight` icon + currency codes). |
+| 2026-02-10 | — | **Portfolio Analytics accordion** — Refactored `V2Analytics` into 5 collapsible `AccordionSection` components (Performance Metrics, Rolling Returns, Best & Worst Periods, Risk Analysis, Benchmark Comparison). Only Performance Metrics is open by default. Each section has chevron with smooth rotation animation and height-based open/close via `motion/react`. |
+| 2026-02-10 | — | **Search updates** — Added `nav-currency` quick action to `convex/search.ts` with 30+ currency-related keywords (all major currency names/codes). Asset search now includes currency code matches (`assetsByCurrency` batch). Asset result subtitles now include non-USD currency codes. Command palette placeholder updated to mention currencies. |

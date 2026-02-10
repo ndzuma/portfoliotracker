@@ -327,7 +327,7 @@ export function CommandPalette({
                 type="text"
                 value={rawSearch}
                 onChange={(e) => setRawSearch(e.target.value)}
-                placeholder="Search portfolios, assets, documents..."
+                placeholder="Search portfolios, assets, currencies, documents..."
                 className="flex-1 bg-transparent border-0 outline-none text-sm text-white placeholder:text-zinc-600 py-3.5 font-mono"
                 autoComplete="off"
                 autoCorrect="off"
@@ -390,7 +390,7 @@ export function CommandPalette({
                         Search across your workspace
                       </p>
                       <p className="text-[11px] text-zinc-700 mt-1">
-                        Portfolios, assets, documents, and articles
+                        Portfolios, assets, currencies, documents, and articles
                       </p>
                     </div>
                   </motion.div>

@@ -2,23 +2,20 @@
 
 import { useState } from "react";
 import {
-  DotsThree,
   PencilSimple,
   Trash,
   ArrowSquareOut,
   Receipt,
   TrendUp,
   TrendDown,
+  CaretDown,
+  Plus,
+  ArrowsLeftRight,
 } from "@phosphor-icons/react";
 import { useCurrency } from "@/hooks/useCurrency";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { V2TransactionDialog } from "@/components/transaction-dialog";
 import type { Asset } from "@/components/types";
+import { motion, AnimatePresence } from "motion/react";
 
 interface V2HoldingsProps {
   assets: Asset[];
@@ -56,7 +53,32 @@ function AssetTypeIcon({ type }: { type: string }) {
   );
 }
 
-function HoldingRow({
+/* ─── FX Conversion Badge ─────────────────────────────────────────── */
+function FxBadge({
+  assetCurrency,
+  displayCurrency,
+}: {
+  assetCurrency: string;
+  displayCurrency: string;
+}) {
+  if (
+    !assetCurrency ||
+    !displayCurrency ||
+    assetCurrency.toUpperCase() === displayCurrency.toUpperCase()
+  ) {
+    return null;
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/8 border border-amber-500/15 text-[9px] font-semibold text-amber-500/80 uppercase tracking-wider whitespace-nowrap">
+      <ArrowsLeftRight className="h-2.5 w-2.5" />
+      {assetCurrency}→{displayCurrency}
+    </span>
+  );
+}
+
+/* ─── Expanded Row Panel ──────────────────────────────────────────── */
+function ExpandedPanel({
   asset,
   onEdit,
   onDelete,
@@ -66,7 +88,123 @@ function HoldingRow({
   onDelete: (id: string) => void;
 }) {
   const [txOpen, setTxOpen] = useState(false);
-  const { format, symbol } = useCurrency();
+  const { format } = useCurrency();
+
+  return (
+    <>
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: "auto", opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+        className="overflow-hidden"
+      >
+        <div className="px-5 pb-4 pt-1">
+          {/* Info Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] px-3 py-2.5">
+              <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
+                Quantity
+              </p>
+              <p className="text-sm font-semibold text-white tabular-nums">
+                {asset.type === "cash"
+                  ? "Cash"
+                  : asset.type === "real estate"
+                    ? "1 property"
+                    : `${(asset.quantity || 0).toLocaleString()} ${asset.type === "crypto" ? "units" : "shares"}`}
+              </p>
+            </div>
+            <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] px-3 py-2.5">
+              <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
+                Avg Buy Price
+              </p>
+              <p className="text-sm font-semibold text-white tabular-nums">
+                {format(asset.avgBuyPrice || 0)}
+              </p>
+            </div>
+            <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] px-3 py-2.5">
+              <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
+                Current Price
+              </p>
+              <p className="text-sm font-semibold text-white tabular-nums">
+                {format(asset.currentPrice || 0)}
+              </p>
+            </div>
+            <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] px-3 py-2.5">
+              <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
+                Total Value
+              </p>
+              <p className="text-sm font-semibold text-white tabular-nums">
+                {format(asset.currentValue)}
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setTxOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-white/[0.06] bg-white/[0.03] text-zinc-300 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.1] transition-all"
+            >
+              <Receipt className="h-3.5 w-3.5" />
+              Transactions
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(asset);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-white/[0.06] bg-white/[0.03] text-zinc-300 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.1] transition-all"
+            >
+              <PencilSimple className="h-3.5 w-3.5" />
+              Edit
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm("Are you sure you want to delete this asset?")) {
+                  onDelete(asset._id);
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-red-500/10 bg-red-500/5 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 transition-all ml-auto"
+            >
+              <Trash className="h-3.5 w-3.5" />
+              Delete
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      <V2TransactionDialog
+        isOpen={txOpen}
+        onOpenChange={setTxOpen}
+        assetId={asset._id}
+        assetName={asset.name}
+        assetType={asset.type}
+        assetSymbol={asset.symbol}
+      />
+    </>
+  );
+}
+
+/* ─── Holding Row (click-to-expand) ───────────────────────────────── */
+function HoldingRow({
+  asset,
+  onEdit,
+  onDelete,
+  isExpanded,
+  onToggle,
+}: {
+  asset: Asset;
+  onEdit: (a: Asset) => void;
+  onDelete: (id: string) => void;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const { format, symbol, currency: displayCurrency } = useCurrency();
   const up = asset.change >= 0;
 
   const getLink = (a: Asset) => {
@@ -77,13 +215,22 @@ function HoldingRow({
     return null;
   };
   const link = getLink(asset);
+  const assetCurrency = asset.currency || "USD";
+  const isConverted =
+    assetCurrency.toUpperCase() !== displayCurrency.toUpperCase();
 
   return (
-    <>
-      <div className="group flex items-center gap-4 py-3.5 px-5 hover:bg-white/[0.02] transition-colors border-b border-white/[0.04] last:border-b-0">
+    <div className={`transition-colors ${isExpanded ? "bg-white/[0.02]" : ""}`}>
+      {/* Main row — clickable */}
+      <button
+        onClick={onToggle}
+        className={`w-full flex items-center gap-4 py-3.5 px-5 text-left hover:bg-white/[0.03] transition-colors border-b cursor-pointer ${
+          isExpanded ? "border-white/[0.03]" : "border-white/[0.04]"
+        }`}
+      >
         <AssetTypeIcon type={asset.type} />
 
-        {/* Name + Symbol */}
+        {/* Name + Symbol + FX badge */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-white truncate">
@@ -95,15 +242,22 @@ function HoldingRow({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-zinc-600 hover:text-zinc-400 transition-colors"
+                onClick={(e) => e.stopPropagation()}
               >
                 <ArrowSquareOut className="h-3 w-3" />
               </a>
+            )}
+            {isConverted && (
+              <FxBadge
+                assetCurrency={assetCurrency}
+                displayCurrency={displayCurrency}
+              />
             )}
           </div>
           <p className="text-xs text-zinc-600 truncate">{asset.name}</p>
         </div>
 
-        {/* Quantity */}
+        {/* Quantity — hidden on small */}
         <div className="hidden md:block text-right min-w-[80px]">
           <p className="text-xs text-zinc-500">
             {asset.type === "cash"
@@ -112,22 +266,6 @@ function HoldingRow({
                 ? "1 property"
                 : `${asset.quantity || 0} ${asset.type === "crypto" ? "units" : "shares"}`}
           </p>
-        </div>
-
-        {/* Avg Buy */}
-        <div className="hidden lg:block text-right min-w-[90px]">
-          <p className="text-sm text-zinc-400">
-            {format(asset.avgBuyPrice || 0)}
-          </p>
-          <p className="text-[10px] text-zinc-600">avg buy</p>
-        </div>
-
-        {/* Current Price */}
-        <div className="hidden lg:block text-right min-w-[90px]">
-          <p className="text-sm text-white font-medium">
-            {format(asset.currentPrice || 0)}
-          </p>
-          <p className="text-[10px] text-zinc-600">current</p>
         </div>
 
         {/* Value */}
@@ -141,7 +279,7 @@ function HoldingRow({
         </div>
 
         {/* Change */}
-        <div className="text-right min-w-[100px]">
+        <div className="text-right min-w-[90px]">
           <p
             className={`text-sm font-medium ${up ? "text-emerald-500" : "text-red-500"}`}
           >
@@ -157,51 +295,25 @@ function HoldingRow({
           </p>
         </div>
 
-        {/* Actions */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-md text-zinc-600 hover:text-white hover:bg-white/[0.06] opacity-0 group-hover:opacity-100 transition-all">
-              <DotsThree className="h-4 w-4" weight="bold" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="bg-zinc-950 border-white/[0.06]"
-          >
-            <DropdownMenuItem
-              onClick={() => setTxOpen(true)}
-              className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
-            >
-              <Receipt className="h-3.5 w-3.5 mr-2" />
-              Transactions
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onEdit(asset)}
-              className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
-            >
-              <PencilSimple className="h-3.5 w-3.5 mr-2" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(asset._id)}
-              className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
-            >
-              <Trash className="h-3.5 w-3.5 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+        {/* Expand chevron */}
+        <motion.div
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="shrink-0"
+        >
+          <CaretDown
+            className={`h-3.5 w-3.5 transition-colors ${isExpanded ? "text-zinc-400" : "text-zinc-700"}`}
+          />
+        </motion.div>
+      </button>
 
-      <V2TransactionDialog
-        isOpen={txOpen}
-        onOpenChange={setTxOpen}
-        assetId={asset._id}
-        assetName={asset.name}
-        assetType={asset.type}
-        assetSymbol={asset.symbol}
-      />
-    </>
+      {/* Expanded panel */}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <ExpandedPanel asset={asset} onEdit={onEdit} onDelete={onDelete} />
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -212,6 +324,12 @@ function SectionTotal({ assets }: { assets: Asset[] }) {
 }
 
 export function V2Holdings({ assets, onEdit, onDelete }: V2HoldingsProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpand = (id: string) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
   // Group by type
   const grouped = assets.reduce<Record<string, Asset[]>>((acc, a) => {
     acc[a.type] = acc[a.type] || [];
@@ -263,13 +381,9 @@ export function V2Holdings({ assets, onEdit, onDelete }: V2HoldingsProps) {
             <div className="w-8" />
             <div className="flex-1">Asset</div>
             <div className="hidden md:block text-right min-w-[80px]">Qty</div>
-            <div className="hidden lg:block text-right min-w-[90px]">
-              Avg Buy
-            </div>
-            <div className="hidden lg:block text-right min-w-[90px]">Price</div>
             <div className="text-right min-w-[100px]">Value</div>
-            <div className="text-right min-w-[100px]">Change</div>
-            <div className="w-8" />
+            <div className="text-right min-w-[90px]">Change</div>
+            <div className="w-3.5" />
           </div>
 
           {/* Rows */}
@@ -279,6 +393,8 @@ export function V2Holdings({ assets, onEdit, onDelete }: V2HoldingsProps) {
               asset={asset}
               onEdit={onEdit}
               onDelete={onDelete}
+              isExpanded={expandedId === asset._id}
+              onToggle={() => toggleExpand(asset._id)}
             />
           ))}
         </div>

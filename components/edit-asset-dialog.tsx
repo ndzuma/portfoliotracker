@@ -1,16 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,12 +16,22 @@ import {
   Buildings,
   Diamond,
   Cube,
+  MagnifyingGlass,
+  CaretDown,
+  Check,
 } from "@phosphor-icons/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import type { Asset } from "@/components/types";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { useCurrency } from "@/hooks/useCurrency";
+import {
+  CURRENCIES,
+  searchCurrencies,
+  currencySymbol,
+  formatMoney,
+} from "@/lib/currency";
 
 interface V2EditAssetDialogProps {
   isOpen: boolean;
@@ -71,6 +75,196 @@ const TYPE_META: Record<
   other: { icon: Cube, color: "text-zinc-400", bgColor: "bg-zinc-500/10" },
 };
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   PORTAL CURRENCY PICKER — renders dropdown via portal so it escapes
+   the dialog's overflow clipping.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function PortalCurrencyPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const filtered = searchCurrencies(query);
+  const selected = CURRENCIES.find((c) => c.code === value);
+
+  // Position dropdown beneath trigger
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPos({
+      top: rect.bottom + 6,
+      left: rect.left,
+      width: Math.max(rect.width, 280),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      updatePosition();
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+      return () => {
+        window.removeEventListener("scroll", updatePosition, true);
+        window.removeEventListener("resize", updatePosition);
+      };
+    }
+  }, [open, updatePosition]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (
+        triggerRef.current &&
+        !triggerRef.current.contains(e.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Focus search input
+  useEffect(() => {
+    if (open && inputRef.current) {
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, [open]);
+
+  const handleSelect = useCallback(
+    (code: string) => {
+      onChange(code);
+      setOpen(false);
+      setQuery("");
+    },
+    [onChange],
+  );
+
+  const dropdown =
+    mounted && open
+      ? createPortal(
+          <div
+            ref={dropdownRef}
+            className="fixed rounded-xl border border-white/[0.08] bg-zinc-950 shadow-2xl shadow-black/60 overflow-hidden"
+            style={{
+              top: pos.top,
+              left: pos.left,
+              width: pos.width,
+              zIndex: 99999,
+            }}
+          >
+            {/* Search */}
+            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06]">
+              <MagnifyingGlass className="h-3.5 w-3.5 text-zinc-600 shrink-0" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search currencies…"
+                className="bg-transparent text-xs text-zinc-300 placeholder:text-zinc-700 outline-none w-full"
+              />
+            </div>
+
+            {/* List */}
+            <div className="max-h-[220px] overflow-y-auto overflow-x-hidden scrollbar-hide">
+              {filtered.length === 0 ? (
+                <div className="px-3 py-4 text-center text-[11px] text-zinc-600">
+                  No currencies found
+                </div>
+              ) : (
+                filtered.map((c) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => handleSelect(c.code)}
+                    className={`
+                      flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors
+                      hover:bg-white/[0.04]
+                      ${c.code === value ? "bg-white/[0.04]" : ""}
+                    `}
+                  >
+                    <span className="text-sm w-6 text-center shrink-0">
+                      {c.flag}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold tracking-wide ${
+                        c.code === value ? "text-white" : "text-zinc-400"
+                      }`}
+                    >
+                      {c.code}
+                    </span>
+                    <span className="text-[11px] text-zinc-600 flex-1 truncate">
+                      {c.name}
+                    </span>
+                    <span className="text-[11px] text-zinc-700 shrink-0 w-5 text-right">
+                      {c.symbol}
+                    </span>
+                    {c.code === value && (
+                      <Check className="h-3 w-3 text-emerald-500 shrink-0" />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`
+          flex items-center gap-2 bg-zinc-900 border text-zinc-300 text-sm
+          pl-3 pr-2 py-2 rounded-lg cursor-pointer w-full h-10
+          hover:border-white/[0.12] hover:text-white transition-colors
+          ${open ? "border-white/[0.2] ring-1 ring-white/10" : "border-white/[0.06]"}
+        `}
+      >
+        {selected && (
+          <span className="text-base leading-none">{selected.flag}</span>
+        )}
+        <span className="flex-1 text-left font-medium text-sm">{value}</span>
+        {selected && (
+          <span className="text-zinc-600 text-xs truncate">
+            {selected.name}
+          </span>
+        )}
+        <CaretDown
+          className={`h-3 w-3 text-zinc-600 transition-transform ml-1 shrink-0 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {dropdown}
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EDIT ASSET DIALOG
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 export function V2EditAssetDialog({
   isOpen,
   onOpenChange,
@@ -80,6 +274,7 @@ export function V2EditAssetDialog({
   const [stepIdx, setStepIdx] = useState(0);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(asset);
   const updateAsset = useMutation(api.assets.updateAsset);
+  const { currency: baseCurrency } = useCurrency();
 
   // Sync when asset prop changes (new asset selected for editing)
   if (
@@ -103,8 +298,7 @@ export function V2EditAssetDialog({
       symbol: editingAsset.symbol,
       type: editingAsset.type,
       currentPrice: editingAsset.currentPrice,
-      currency:
-        editingAsset.type === "cash" ? editingAsset.currency : undefined,
+      currency: editingAsset.currency || baseCurrency,
       notes: (editingAsset as any).notes,
     });
     onOpenChange(false);
@@ -118,11 +312,30 @@ export function V2EditAssetDialog({
     if (stepIdx > 0) setStepIdx(stepIdx - 1);
   };
 
+  // Clickable step navigation — allow jumping to completed or current steps
+  const handleStepClick = (idx: number) => {
+    if (idx <= stepIdx) {
+      setStepIdx(idx);
+    }
+  };
+
   if (!editingAsset) return null;
 
   const canProceed = editingAsset.name.trim();
   const meta = TYPE_META[editingAsset.type] || TYPE_META.other;
   const TypeIcon = meta.icon;
+  const assetCurrency = editingAsset.currency || baseCurrency;
+
+  // Currency-aware formatting — uses the asset's own currency
+  const assetCurrSym = currencySymbol(assetCurrency);
+  const fmtAsset = (amount: number) => formatMoney(amount, assetCurrency);
+
+  // Get currency info for confirm screen
+  const currencyInfo = CURRENCIES.find((c) => c.code === assetCurrency);
+
+  // Computed values
+  const currentValue =
+    (editingAsset.quantity || 0) * (editingAsset.currentPrice || 0);
 
   // ─── Footer ───────────────────────────────────────────────────
   const footer = (
@@ -177,6 +390,7 @@ export function V2EditAssetDialog({
       title="Edit Asset"
       steps={[...STEPS]}
       currentStep={stepIdx}
+      onStepClick={handleStepClick}
       footer={footer}
       maxWidth="480px"
     >
@@ -200,6 +414,7 @@ export function V2EditAssetDialog({
             </div>
           </div>
 
+          {/* Name */}
           <div className="flex flex-col gap-2">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
               Asset Name
@@ -214,6 +429,7 @@ export function V2EditAssetDialog({
             />
           </div>
 
+          {/* Symbol — stocks & crypto only */}
           {(editingAsset.type === "stock" ||
             editingAsset.type === "crypto") && (
             <div className="flex flex-col gap-2">
@@ -235,6 +451,24 @@ export function V2EditAssetDialog({
               />
             </div>
           )}
+
+          {/* Currency — portal picker for ALL asset types */}
+          <div className="flex flex-col gap-2">
+            <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
+              Currency
+            </Label>
+            <PortalCurrencyPicker
+              value={assetCurrency}
+              onChange={(v) =>
+                setEditingAsset({ ...editingAsset, currency: v })
+              }
+            />
+            <p className="text-xs text-zinc-600">
+              {editingAsset.type === "cash"
+                ? "The currency denomination for this cash holding"
+                : "The currency this asset is denominated in"}
+            </p>
+          </div>
         </div>
       )}
 
@@ -242,35 +476,13 @@ export function V2EditAssetDialog({
       {stepIdx === 1 && (
         <div className="flex flex-col gap-5 pb-4">
           {editingAsset.type === "cash" ? (
-            <div className="flex flex-col gap-2">
-              <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Currency
-              </Label>
-              <Select
-                value={editingAsset.currency || "USD"}
-                onValueChange={(v) =>
-                  setEditingAsset({ ...editingAsset, currency: v })
-                }
-              >
-                <SelectTrigger className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-950 border-white/[0.08]">
-                  {["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF"].map(
-                    (c) => (
-                      <SelectItem
-                        key={c}
-                        value={c}
-                        className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
-                      >
-                        {c}
-                      </SelectItem>
-                    ),
-                  )}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-zinc-600">
-                The currency denomination for this cash holding
+            <div className="rounded-lg border border-white/[0.06] bg-zinc-900/20 px-4 py-3">
+              <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.12em] mb-2">
+                Cash Holding
+              </p>
+              <p className="text-sm text-zinc-400">
+                Cash assets use their quantity as the value. Price is managed
+                through transactions.
               </p>
             </div>
           ) : (
@@ -280,7 +492,7 @@ export function V2EditAssetDialog({
               </Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">
-                  $
+                  {assetCurrSym}
                 </span>
                 <Input
                   type="number"
@@ -302,22 +514,17 @@ export function V2EditAssetDialog({
             </div>
           )}
 
-          {/* Context info */}
+          {/* Context info — current value */}
           <div className="rounded-lg border border-white/[0.06] bg-zinc-900/20 px-4 py-3">
             <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.12em] mb-2">
               Current Value
             </p>
             <p className="text-lg font-semibold text-white tabular-nums">
-              $
-              {(
-                (editingAsset.quantity || 0) * (editingAsset.currentPrice || 0)
-              ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {fmtAsset(currentValue)}
             </p>
             <p className="text-[11px] text-zinc-600 mt-1">
-              {editingAsset.quantity || 0} units × $
-              {(editingAsset.currentPrice || 0).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
+              {editingAsset.quantity || 0} units ×{" "}
+              {fmtAsset(editingAsset.currentPrice || 0)}
             </p>
           </div>
         </div>
@@ -379,19 +586,28 @@ export function V2EditAssetDialog({
                     },
                   ]
                 : []),
-              ...(editingAsset.type === "cash"
+              {
+                label: "Currency",
+                value: currencyInfo
+                  ? `${currencyInfo.flag} ${currencyInfo.code} — ${currencyInfo.name}`
+                  : assetCurrency,
+              },
+              ...(editingAsset.type !== "cash"
                 ? [
                     {
-                      label: "Currency",
-                      value: editingAsset.currency || "USD",
+                      label: "Current Price",
+                      value: fmtAsset(editingAsset.currentPrice || 0),
                     },
                   ]
-                : [
+                : []),
+              ...(editingAsset.type !== "cash"
+                ? [
                     {
-                      label: "Current Price",
-                      value: `$${(editingAsset.currentPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                      label: "Current Value",
+                      value: fmtAsset(currentValue),
                     },
-                  ]),
+                  ]
+                : []),
               ...((editingAsset as any).notes
                 ? [{ label: "Notes", value: (editingAsset as any).notes }]
                 : []),

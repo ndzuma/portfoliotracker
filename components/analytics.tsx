@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { isFeatureEnabled } from "@/lib/featureFlags";
+import { motion, AnimatePresence } from "motion/react";
 import {
   TrendUp,
   TrendDown,
@@ -12,6 +14,7 @@ import {
   ChartBar,
   Warning,
   Lightning,
+  CaretDown,
 } from "@phosphor-icons/react";
 
 interface V2AnalyticsProps {
@@ -56,8 +59,61 @@ function StatBlock({
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-sm font-semibold text-white mb-4">{children}</h3>;
+/* ─── Accordion Section ─────────────────────────────────────────── */
+function AccordionSection({
+  title,
+  icon: Icon,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  icon: any;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-zinc-950/40 overflow-hidden">
+      <button
+        onClick={() => setIsOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors group"
+      >
+        <div className="flex items-center gap-2.5">
+          <Icon
+            className={`h-4 w-4 transition-colors ${isOpen ? "text-white" : "text-zinc-500 group-hover:text-zinc-400"}`}
+          />
+          <span
+            className={`text-sm font-semibold tracking-tight transition-colors ${isOpen ? "text-white" : "text-zinc-400 group-hover:text-zinc-300"}`}
+          >
+            {title}
+          </span>
+        </div>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
+          <CaretDown
+            className={`h-4 w-4 transition-colors ${isOpen ? "text-zinc-400" : "text-zinc-600 group-hover:text-zinc-500"}`}
+          />
+        </motion.div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-5 pt-1">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
@@ -77,15 +133,16 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
 
   if (!analytics) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => (
+      <div className="flex flex-col gap-4">
+        {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5 animate-pulse"
+            className="rounded-xl border border-white/[0.06] bg-zinc-950/40 overflow-hidden"
           >
-            <div className="h-3 bg-white/[0.04] rounded w-20 mb-3" />
-            <div className="h-6 bg-white/[0.04] rounded w-24 mb-2" />
-            <div className="h-2 bg-white/[0.04] rounded w-32" />
+            <div className="flex items-center gap-2.5 px-5 py-4">
+              <div className="w-4 h-4 rounded bg-white/[0.04] animate-pulse" />
+              <div className="h-4 bg-white/[0.04] rounded w-32 animate-pulse" />
+            </div>
           </div>
         ))}
       </div>
@@ -100,10 +157,13 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
         : "High";
 
   return (
-    <div className="flex flex-col gap-10">
-      {/* Performance */}
-      <div>
-        <SectionTitle>Performance Metrics</SectionTitle>
+    <div className="flex flex-col gap-4">
+      {/* ─── Performance Metrics (open by default) ─── */}
+      <AccordionSection
+        title="Performance Metrics"
+        icon={TrendUp}
+        defaultOpen={true}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatBlock
             icon={TrendUp}
@@ -131,11 +191,10 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
             accent={analytics.performanceMetrics.alpha > 0 ? "green" : "red"}
           />
         </div>
-      </div>
+      </AccordionSection>
 
-      {/* Rolling Returns */}
-      <div>
-        <SectionTitle>Rolling Returns</SectionTitle>
+      {/* ─── Rolling Returns ─── */}
+      <AccordionSection title="Rolling Returns" icon={ChartBar}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatBlock
             icon={TrendUp}
@@ -156,11 +215,10 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
             sub="Annualized 5-year"
           />
         </div>
-      </div>
+      </AccordionSection>
 
-      {/* Best / Worst */}
-      <div>
-        <SectionTitle>Best & Worst Periods</SectionTitle>
+      {/* ─── Best & Worst Periods ─── */}
+      <AccordionSection title="Best & Worst Periods" icon={Crosshair}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatBlock
             icon={TrendUp}
@@ -195,11 +253,10 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
             accent="red"
           />
         </div>
-      </div>
+      </AccordionSection>
 
-      {/* Risk */}
-      <div>
-        <SectionTitle>Risk Analysis</SectionTitle>
+      {/* ─── Risk Analysis ─── */}
+      <AccordionSection title="Risk Analysis" icon={Shield}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
             <div className="flex items-center gap-2 mb-3">
@@ -243,11 +300,10 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
             accent="amber"
           />
         </div>
-      </div>
+      </AccordionSection>
 
-      {/* Benchmark Comparison */}
-      <div>
-        <SectionTitle>Benchmark Comparison (vs SPY)</SectionTitle>
+      {/* ─── Benchmark Comparison ─── */}
+      <AccordionSection title="Benchmark Comparison (vs SPY)" icon={Pulse}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatBlock
             icon={Pulse}
@@ -279,7 +335,7 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
             }
           />
         </div>
-      </div>
+      </AccordionSection>
     </div>
   );
 }

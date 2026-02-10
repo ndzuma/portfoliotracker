@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Section, SettingRow } from "./settings-primitives";
@@ -13,6 +13,7 @@ import {
 
 export function IdentitySection() {
   const { user: clerkUser } = useUser();
+  const clerk = useClerk();
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: clerkUser?.id || "",
@@ -87,23 +88,13 @@ export function IdentitySection() {
         </div>
 
         {/* Manage profile link → Clerk */}
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            // Open Clerk user profile modal
-            if (typeof window !== "undefined") {
-              const btn = document.querySelector(
-                "[data-clerk-user-button]",
-              ) as HTMLElement | null;
-              btn?.click();
-            }
-          }}
+        <button
+          onClick={() => clerk.openUserProfile()}
           className="flex items-center gap-1 text-[11px] text-zinc-600 hover:text-zinc-300 transition-colors shrink-0 mt-1"
         >
           Manage
           <ArrowSquareOut className="h-3 w-3" />
-        </a>
+        </button>
       </div>
 
       {/* Settings rows */}

@@ -29,12 +29,14 @@ import { Id } from "@/convex/_generated/dataModel";
 import type { Asset } from "@/components/types";
 import { useUser } from "@clerk/nextjs";
 import { parseMarkdown } from "@/lib/markdown-parser";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export default function V2PortfolioDetail() {
   const { user } = useUser();
   const router = useRouter();
   const routeParams = useParams();
   const portfolioId = routeParams.id as string;
+  const { format, symbol: currSymbol, compact } = useCurrency();
   const [activeTab, setActiveTab] = useState("holdings");
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
@@ -105,9 +107,7 @@ export default function V2PortfolioDetail() {
   };
 
   const handleDeleteAsset = (id: string) => {
-    if (confirm("Are you sure you want to delete this asset?")) {
-      deleteAsset({ assetId: id as Id<"assets"> });
-    }
+    deleteAsset({ assetId: id as Id<"assets"> });
   };
 
   const handleDeletePortfolio = async () => {
@@ -268,38 +268,35 @@ export default function V2PortfolioDetail() {
         <V2HeroSplit
           leftContent={
             <div>
-              <div className="flex items-end gap-6 flex-wrap mb-3">
-                <h1 className="text-4xl lg:text-[56px] font-bold text-white tracking-tighter leading-none">
-                  {portfolio?.name || "Loading..."}
-                </h1>
+              <h1 className="text-4xl lg:text-[56px] font-bold text-white tracking-tighter leading-none mb-3">
+                {portfolio?.name || "Loading..."}
+              </h1>
+              <div className="flex items-end gap-4 flex-wrap mb-2">
+                <p className="text-2xl lg:text-3xl text-zinc-400">
+                  {format(portfolio?.currentValue || 0)}
+                </p>
                 <div
-                  className={`flex items-center gap-1.5 pb-2 ${(portfolio?.change || 0) >= 0 ? "text-emerald-500" : "text-red-500"}`}
+                  className={`flex items-center gap-1.5 pb-0.5 ${isPositive ? "text-emerald-500" : "text-red-500"}`}
                 >
-                  {(portfolio?.change || 0) >= 0 ? (
-                    <ArrowUpRight className="h-5 w-5" />
+                  {isPositive ? (
+                    <ArrowUpRight className="h-4.5 w-4.5" />
                   ) : (
-                    <ArrowDownRight className="h-5 w-5" />
+                    <ArrowDownRight className="h-4.5 w-4.5" />
                   )}
-                  <span className="text-xl font-semibold">
-                    {(portfolio?.change || 0) >= 0 ? "+" : ""}
+                  <span className="text-lg font-semibold">
+                    {isPositive ? "+" : ""}
                     {portfolio?.changePercent?.toFixed(2) || "0.00"}%
                   </span>
                 </div>
               </div>
-              <p className="text-2xl lg:text-3xl text-zinc-400 mb-2">
-                $
-                {portfolio?.currentValue?.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }) || "0.00"}
-              </p>
               {portfolio?.description && (
                 <p className="text-sm text-zinc-600 mb-3">
                   {portfolio.description}
                 </p>
               )}
               <p className="text-zinc-600 text-sm">
-                {(portfolio?.change || 0) >= 0 ? "+" : ""}$
+                {isPositive ? "+" : "-"}
+                {currSymbol}
                 {Math.abs(portfolio?.change || 0).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                 })}{" "}
@@ -354,7 +351,7 @@ export default function V2PortfolioDetail() {
               </p>
               {topHolding && (
                 <p className="text-xs text-zinc-600">
-                  ${topHolding.currentValue.toLocaleString()}
+                  {format(topHolding.currentValue)}
                 </p>
               )}
             </div>
