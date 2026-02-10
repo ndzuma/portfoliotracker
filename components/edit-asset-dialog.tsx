@@ -31,7 +31,9 @@ import {
   searchCurrencies,
   currencySymbol,
   formatMoney,
+  type CurrencyMeta,
 } from "@/lib/currency";
+import { useAvailableCurrencies } from "@/hooks/useCurrency";
 
 interface V2EditAssetDialogProps {
   isOpen: boolean;
@@ -83,9 +85,11 @@ const TYPE_META: Record<
 function PortalCurrencyPicker({
   value,
   onChange,
+  currencies,
 }: {
   value: string;
   onChange: (code: string) => void;
+  currencies?: CurrencyMeta[];
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -99,8 +103,9 @@ function PortalCurrencyPicker({
     setMounted(true);
   }, []);
 
-  const filtered = searchCurrencies(query);
-  const selected = CURRENCIES.find((c) => c.code === value);
+  const list = currencies ?? CURRENCIES;
+  const filtered = searchCurrencies(query, list);
+  const selected = list.find((c) => c.code === value);
 
   // Position dropdown beneath trigger
   const updatePosition = useCallback(() => {
@@ -275,6 +280,7 @@ export function V2EditAssetDialog({
   const [editingAsset, setEditingAsset] = useState<Asset | null>(asset);
   const updateAsset = useMutation(api.assets.updateAsset);
   const { currency: baseCurrency } = useCurrency();
+  const { currencies: dynamicCurrencies } = useAvailableCurrencies();
 
   // Sync when asset prop changes (new asset selected for editing)
   if (
@@ -462,6 +468,7 @@ export function V2EditAssetDialog({
               onChange={(v) =>
                 setEditingAsset({ ...editingAsset, currency: v })
               }
+              currencies={dynamicCurrencies}
             />
             <p className="text-xs text-zinc-600">
               {editingAsset.type === "cash"

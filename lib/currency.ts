@@ -24,44 +24,253 @@ export const CURRENCIES: CurrencyMeta[] = [
   { code: "GBP", symbol: "£", name: "British Pound", flag: "🇬🇧", decimals: 2 },
   { code: "JPY", symbol: "¥", name: "Japanese Yen", flag: "🇯🇵", decimals: 0 },
   { code: "CHF", symbol: "Fr", name: "Swiss Franc", flag: "🇨🇭", decimals: 2 },
-  { code: "CAD", symbol: "C$", name: "Canadian Dollar", flag: "🇨🇦", decimals: 2 },
-  { code: "AUD", symbol: "A$", name: "Australian Dollar", flag: "🇦🇺", decimals: 2 },
-  { code: "NZD", symbol: "NZ$", name: "New Zealand Dollar", flag: "🇳🇿", decimals: 2 },
+  {
+    code: "CAD",
+    symbol: "C$",
+    name: "Canadian Dollar",
+    flag: "🇨🇦",
+    decimals: 2,
+  },
+  {
+    code: "AUD",
+    symbol: "A$",
+    name: "Australian Dollar",
+    flag: "🇦🇺",
+    decimals: 2,
+  },
+  {
+    code: "NZD",
+    symbol: "NZ$",
+    name: "New Zealand Dollar",
+    flag: "🇳🇿",
+    decimals: 2,
+  },
   { code: "CNY", symbol: "¥", name: "Chinese Yuan", flag: "🇨🇳", decimals: 2 },
   { code: "INR", symbol: "₹", name: "Indian Rupee", flag: "🇮🇳", decimals: 2 },
-  { code: "KRW", symbol: "₩", name: "South Korean Won", flag: "🇰🇷", decimals: 0 },
-  { code: "SGD", symbol: "S$", name: "Singapore Dollar", flag: "🇸🇬", decimals: 2 },
-  { code: "HKD", symbol: "HK$", name: "Hong Kong Dollar", flag: "🇭🇰", decimals: 2 },
+  {
+    code: "KRW",
+    symbol: "₩",
+    name: "South Korean Won",
+    flag: "🇰🇷",
+    decimals: 0,
+  },
+  {
+    code: "SGD",
+    symbol: "S$",
+    name: "Singapore Dollar",
+    flag: "🇸🇬",
+    decimals: 2,
+  },
+  {
+    code: "HKD",
+    symbol: "HK$",
+    name: "Hong Kong Dollar",
+    flag: "🇭🇰",
+    decimals: 2,
+  },
   { code: "SEK", symbol: "kr", name: "Swedish Krona", flag: "🇸🇪", decimals: 2 },
-  { code: "NOK", symbol: "kr", name: "Norwegian Krone", flag: "🇳🇴", decimals: 2 },
+  {
+    code: "NOK",
+    symbol: "kr",
+    name: "Norwegian Krone",
+    flag: "🇳🇴",
+    decimals: 2,
+  },
   { code: "DKK", symbol: "kr", name: "Danish Krone", flag: "🇩🇰", decimals: 2 },
   { code: "PLN", symbol: "zł", name: "Polish Złoty", flag: "🇵🇱", decimals: 2 },
-  { code: "ZAR", symbol: "R", name: "South African Rand", flag: "🇿🇦", decimals: 2 },
-  { code: "BRL", symbol: "R$", name: "Brazilian Real", flag: "🇧🇷", decimals: 2 },
+  {
+    code: "ZAR",
+    symbol: "R",
+    name: "South African Rand",
+    flag: "🇿🇦",
+    decimals: 2,
+  },
+  {
+    code: "BRL",
+    symbol: "R$",
+    name: "Brazilian Real",
+    flag: "🇧🇷",
+    decimals: 2,
+  },
   { code: "MXN", symbol: "MX$", name: "Mexican Peso", flag: "🇲🇽", decimals: 2 },
   { code: "TRY", symbol: "₺", name: "Turkish Lira", flag: "🇹🇷", decimals: 2 },
   { code: "RUB", symbol: "₽", name: "Russian Ruble", flag: "🇷🇺", decimals: 2 },
   { code: "THB", symbol: "฿", name: "Thai Baht", flag: "🇹🇭", decimals: 2 },
-  { code: "IDR", symbol: "Rp", name: "Indonesian Rupiah", flag: "🇮🇩", decimals: 0 },
-  { code: "MYR", symbol: "RM", name: "Malaysian Ringgit", flag: "🇲🇾", decimals: 2 },
-  { code: "PHP", symbol: "₱", name: "Philippine Peso", flag: "🇵🇭", decimals: 2 },
-  { code: "TWD", symbol: "NT$", name: "Taiwan Dollar", flag: "🇹🇼", decimals: 0 },
+  {
+    code: "IDR",
+    symbol: "Rp",
+    name: "Indonesian Rupiah",
+    flag: "🇮🇩",
+    decimals: 0,
+  },
+  {
+    code: "MYR",
+    symbol: "RM",
+    name: "Malaysian Ringgit",
+    flag: "🇲🇾",
+    decimals: 2,
+  },
+  {
+    code: "PHP",
+    symbol: "₱",
+    name: "Philippine Peso",
+    flag: "🇵🇭",
+    decimals: 2,
+  },
+  {
+    code: "TWD",
+    symbol: "NT$",
+    name: "Taiwan Dollar",
+    flag: "🇹🇼",
+    decimals: 0,
+  },
   { code: "AED", symbol: "د.إ", name: "UAE Dirham", flag: "🇦🇪", decimals: 2 },
   { code: "SAR", symbol: "﷼", name: "Saudi Riyal", flag: "🇸🇦", decimals: 2 },
   { code: "ILS", symbol: "₪", name: "Israeli Shekel", flag: "🇮🇱", decimals: 2 },
   { code: "NGN", symbol: "₦", name: "Nigerian Naira", flag: "🇳🇬", decimals: 2 },
-  { code: "KES", symbol: "KSh", name: "Kenyan Shilling", flag: "🇰🇪", decimals: 2 },
-  { code: "EGP", symbol: "E£", name: "Egyptian Pound", flag: "🇪🇬", decimals: 2 },
+  {
+    code: "KES",
+    symbol: "KSh",
+    name: "Kenyan Shilling",
+    flag: "🇰🇪",
+    decimals: 2,
+  },
+  {
+    code: "EGP",
+    symbol: "E£",
+    name: "Egyptian Pound",
+    flag: "🇪🇬",
+    decimals: 2,
+  },
   { code: "CZK", symbol: "Kč", name: "Czech Koruna", flag: "🇨🇿", decimals: 2 },
-  { code: "HUF", symbol: "Ft", name: "Hungarian Forint", flag: "🇭🇺", decimals: 0 },
+  {
+    code: "HUF",
+    symbol: "Ft",
+    name: "Hungarian Forint",
+    flag: "🇭🇺",
+    decimals: 0,
+  },
   { code: "RON", symbol: "lei", name: "Romanian Leu", flag: "🇷🇴", decimals: 2 },
   { code: "CLP", symbol: "CL$", name: "Chilean Peso", flag: "🇨🇱", decimals: 0 },
-  { code: "COP", symbol: "CO$", name: "Colombian Peso", flag: "🇨🇴", decimals: 0 },
-  { code: "ARS", symbol: "AR$", name: "Argentine Peso", flag: "🇦🇷", decimals: 2 },
-  { code: "PKR", symbol: "₨", name: "Pakistani Rupee", flag: "🇵🇰", decimals: 2 },
-  { code: "BDT", symbol: "৳", name: "Bangladeshi Taka", flag: "🇧🇩", decimals: 2 },
-  { code: "VND", symbol: "₫", name: "Vietnamese Dong", flag: "🇻🇳", decimals: 0 },
+  {
+    code: "COP",
+    symbol: "CO$",
+    name: "Colombian Peso",
+    flag: "🇨🇴",
+    decimals: 0,
+  },
+  {
+    code: "ARS",
+    symbol: "AR$",
+    name: "Argentine Peso",
+    flag: "🇦🇷",
+    decimals: 2,
+  },
+  {
+    code: "PKR",
+    symbol: "₨",
+    name: "Pakistani Rupee",
+    flag: "🇵🇰",
+    decimals: 2,
+  },
+  {
+    code: "BDT",
+    symbol: "৳",
+    name: "Bangladeshi Taka",
+    flag: "🇧🇩",
+    decimals: 2,
+  },
+  {
+    code: "VND",
+    symbol: "₫",
+    name: "Vietnamese Dong",
+    flag: "🇻🇳",
+    decimals: 0,
+  },
 ];
+
+// ─── Enriched code lookup (O(1) access) ──────────────────────────────────────
+const CURRENCY_MAP = new Map<string, CurrencyMeta>(
+  CURRENCIES.map((c) => [c.code, c]),
+);
+
+// ─── Dynamic currency list builder ───────────────────────────────────────────
+
+/**
+ * Get metadata for a single currency code.
+ * Checks the enriched set first, then falls back to Intl-generated metadata.
+ *
+ * @example getCurrencyMeta("GBP") → { code: "GBP", symbol: "£", name: "British Pound", flag: "🇬🇧", decimals: 2 }
+ * @example getCurrencyMeta("XOF") → { code: "XOF", symbol: "CFA", name: "West African CFA Franc", flag: "🏳️", decimals: 0 }
+ */
+export function getCurrencyMeta(code: string): CurrencyMeta {
+  const existing = CURRENCY_MAP.get(code);
+  if (existing) return existing;
+
+  // Auto-generate metadata via Intl APIs
+  let name = code;
+  try {
+    const dn = new Intl.DisplayNames(["en"], { type: "currency" });
+    name = dn.of(code) ?? code;
+  } catch {
+    // Intl.DisplayNames not available or code unknown — use the raw code
+  }
+
+  let symbol = code;
+  try {
+    const parts = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+    }).formatToParts(0);
+    symbol = parts.find((p) => p.type === "currency")?.value ?? code;
+  } catch {
+    // Unknown currency code — symbol stays as the raw code
+  }
+
+  // Detect zero-decimal currencies (JPY, KRW, etc.)
+  let decimals = 2;
+  try {
+    const fmt = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+    });
+    const resolved = fmt.resolvedOptions();
+    decimals = resolved.minimumFractionDigits ?? 2;
+  } catch {
+    // Default to 2
+  }
+
+  return { code, symbol, name, flag: "🏳️", decimals };
+}
+
+/**
+ * Build a full currency list by merging the hardcoded enriched set with
+ * backend-available currency codes from the fxRates table.
+ *
+ * - Enriched entries (with flags, curated symbols) come first in their original order.
+ * - Any codes from `backendCodes` not in the enriched set are appended alphabetically
+ *   with auto-generated metadata via `getCurrencyMeta()`.
+ *
+ * @param backendCodes — currency codes available from the backend (e.g. from `getAvailableCurrencies`)
+ * @returns merged `CurrencyMeta[]`
+ */
+export function buildCurrencyList(backendCodes: string[]): CurrencyMeta[] {
+  if (!backendCodes || backendCodes.length === 0) return CURRENCIES;
+
+  const enrichedCodes = new Set(CURRENCIES.map((c) => c.code));
+  const extras: CurrencyMeta[] = [];
+
+  for (const code of backendCodes) {
+    if (!enrichedCodes.has(code)) {
+      extras.push(getCurrencyMeta(code));
+    }
+  }
+
+  // Sort extras alphabetically by code
+  extras.sort((a, b) => a.code.localeCompare(b.code));
+
+  return [...CURRENCIES, ...extras];
+}
 
 // ─── Formatter cache (avoid re-creating Intl objects) ────────────────────────
 const formatterCache = new Map<string, Intl.NumberFormat>();
@@ -70,7 +279,7 @@ function getFormatter(currency: string, compact = false): Intl.NumberFormat {
   const key = `${currency}-${compact ? "c" : "f"}`;
   let fmt = formatterCache.get(key);
   if (!fmt) {
-    const meta = CURRENCIES.find((c) => c.code === currency);
+    const meta = getCurrencyMeta(currency);
     fmt = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
@@ -123,28 +332,22 @@ export function formatPercent(value: number, decimals = 2): string {
  * @example currencySymbol("ZAR") → "R"
  */
 export function currencySymbol(code: string): string {
-  const meta = CURRENCIES.find((c) => c.code === code);
-  if (meta) return meta.symbol;
-  // Fallback: use Intl to extract symbol
-  try {
-    const parts = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: code,
-    }).formatToParts(0);
-    return parts.find((p) => p.type === "currency")?.value ?? code;
-  } catch {
-    return code;
-  }
+  return getCurrencyMeta(code).symbol;
 }
 
 /**
  * Search currencies by code, name, or symbol.
- * Used by currency picker components.
+ * Accepts an optional custom list (e.g. from `buildCurrencyList`).
+ * Falls back to the hardcoded `CURRENCIES` when no list is provided.
  */
-export function searchCurrencies(query: string): CurrencyMeta[] {
-  if (!query) return CURRENCIES;
+export function searchCurrencies(
+  query: string,
+  currencies?: CurrencyMeta[],
+): CurrencyMeta[] {
+  const list = currencies ?? CURRENCIES;
+  if (!query) return list;
   const q = query.toLowerCase();
-  return CURRENCIES.filter(
+  return list.filter(
     (c) =>
       c.code.toLowerCase().includes(q) ||
       c.name.toLowerCase().includes(q) ||

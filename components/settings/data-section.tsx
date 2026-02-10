@@ -17,6 +17,7 @@ import {
   searchCurrencies,
   type CurrencyMeta,
 } from "@/lib/currency";
+import { useAvailableCurrencies } from "@/hooks/useCurrency";
 
 /* ─── Market Region Options ─── */
 const MARKET_REGIONS = [
@@ -55,17 +56,20 @@ function fxAge(updatedAt: number | undefined): {
 function CurrencyPicker({
   value,
   onChange,
+  currencies,
 }: {
   value: string;
   onChange: (code: string) => void;
+  currencies?: CurrencyMeta[];
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = searchCurrencies(query);
-  const selected = CURRENCIES.find((c) => c.code === value);
+  const list = currencies ?? CURRENCIES;
+  const filtered = searchCurrencies(query, list);
+  const selected = list.find((c) => c.code === value);
 
   // Close on outside click
   useEffect(() => {
@@ -209,6 +213,7 @@ export function DataSection({
   marketRegion,
   onMarketRegionChange,
 }: DataSectionProps) {
+  const { currencies: dynamicCurrencies } = useAvailableCurrencies();
   const fxRates = useQuery(api.marketData.getFxRates);
   const fx = fxAge(fxRates?.updatedAt);
 
@@ -229,7 +234,11 @@ export function DataSection({
         label="Base Currency"
         description="All portfolio values are converted to this currency"
       >
-        <CurrencyPicker value={currency} onChange={onCurrencyChange} />
+        <CurrencyPicker
+          value={currency}
+          onChange={onCurrencyChange}
+          currencies={dynamicCurrencies}
+        />
       </SettingRow>
 
       {/* Market Region */}

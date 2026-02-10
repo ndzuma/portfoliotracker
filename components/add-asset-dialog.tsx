@@ -22,12 +22,13 @@ import {
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { useCurrency } from "@/hooks/useCurrency";
+import { useCurrency, useAvailableCurrencies } from "@/hooks/useCurrency";
 import {
   CURRENCIES,
   searchCurrencies,
   currencySymbol,
   formatMoney,
+  type CurrencyMeta,
 } from "@/lib/currency";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -104,9 +105,11 @@ const STEPS = ["Type", "Details", "Purchase", "Notes", "Confirm"] as const;
 function PortalCurrencyPicker({
   value,
   onChange,
+  currencies,
 }: {
   value: string;
   onChange: (code: string) => void;
+  currencies?: CurrencyMeta[];
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -120,8 +123,9 @@ function PortalCurrencyPicker({
     setMounted(true);
   }, []);
 
-  const filtered = searchCurrencies(query);
-  const selected = CURRENCIES.find((c) => c.code === value);
+  const list = currencies ?? CURRENCIES;
+  const filtered = searchCurrencies(query, list);
+  const selected = list.find((c) => c.code === value);
 
   // Position the dropdown beneath the trigger
   const updatePosition = useCallback(() => {
@@ -292,6 +296,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
   const [open, setOpen] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const { currency: baseCurrency, format: fmtBase } = useCurrency();
+  const { currencies: dynamicCurrencies } = useAvailableCurrencies();
   const [form, setForm] = useState({
     symbol: "",
     name: "",
@@ -587,6 +592,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
               <PortalCurrencyPicker
                 value={form.currency}
                 onChange={(v) => setForm({ ...form, currency: v })}
+                currencies={dynamicCurrencies}
               />
               <p className="text-xs text-zinc-600">
                 {form.type === "cash"

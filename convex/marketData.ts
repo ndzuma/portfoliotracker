@@ -1389,3 +1389,22 @@ export const getFxRatesInternal = internalQuery({
       : null;
   },
 });
+
+/**
+ * Returns all currency codes available for conversion.
+ * Extracts keys from the fxRates document (EUR-based pairs)
+ * and includes "EUR" itself (the base, which isn't in the rates map).
+ */
+export const getAvailableCurrencies = query({
+  handler: async (ctx) => {
+    const doc = await ctx.db.query("fxRates").first();
+    if (!doc || !doc.rates) return [];
+    const rates = doc.rates as Record<string, number>;
+    const codes = Object.keys(rates);
+    // EUR is the base currency and won't appear as a key in rates
+    if (!codes.includes("EUR")) {
+      codes.unshift("EUR");
+    }
+    return codes.sort();
+  },
+});

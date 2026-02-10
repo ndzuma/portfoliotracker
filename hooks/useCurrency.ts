@@ -4,7 +4,15 @@ import { useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import { useCallback, useMemo } from "react";
 import { api } from "@/convex/_generated/api";
-import { formatMoney, formatCompact, formatPercent, currencySymbol } from "@/lib/currency";
+import {
+  formatMoney,
+  formatCompact,
+  formatPercent,
+  currencySymbol,
+  buildCurrencyList,
+  CURRENCIES,
+  type CurrencyMeta,
+} from "@/lib/currency";
 
 /**
  * useCurrency — reads the user's base currency from Convex preferences
@@ -63,4 +71,34 @@ export function useCurrency() {
     /** True while preferences are still loading */
     loading,
   } as const;
+}
+
+/**
+ * useAvailableCurrencies — fetches all currency codes available from the
+ * backend fxRates table and merges them with the enriched hardcoded metadata.
+ *
+ * Returns 160+ currencies when backend data is available, falling back to
+ * the 42-currency hardcoded list while loading or when no FX data exists.
+ *
+ * @example
+ * const { currencies, loading } = useAvailableCurrencies();
+ * // currencies = [{ code: "USD", symbol: "$", name: "US Dollar", ... }, ...]
+ */
+export function useAvailableCurrencies(): {
+  currencies: CurrencyMeta[];
+  loading: boolean;
+} {
+  const backendCodes = useQuery(api.marketData.getAvailableCurrencies);
+
+  const currencies = useMemo(() => {
+    if (!backendCodes || backendCodes.length === 0) return CURRENCIES;
+    return buildCurrencyList(backendCodes);
+  }, [backendCodes]);
+
+  return {
+    /** Full merged currency list — enriched entries first, then auto-generated */
+    currencies,
+    /** True while the backend query is still in flight */
+    loading: backendCodes === undefined,
+  };
 }
