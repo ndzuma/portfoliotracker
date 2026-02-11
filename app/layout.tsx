@@ -10,6 +10,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { AuthenticatedWrapper } from "./auth-wrapper";
 import { PostHogProvider } from "./PostHogProvider";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://app.pulsefolio.net"),
@@ -39,31 +41,36 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <PostHogProvider>
-          <ThemeProvider defaultTheme="system" storageKey="portfolio-theme">
-            <ClerkProvider
-              signInUrl="/sign-in"
-              signUpUrl="/sign-up"
-              signInForceRedirectUrl="/"
-              signUpForceRedirectUrl="/onboarding"
-            >
-              <ConvexClientProvider>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <AuthenticatedWrapper>{children}</AuthenticatedWrapper>
-                </Suspense>
-                <Toaster position="bottom-right" richColors />
-              </ConvexClientProvider>
-            </ClerkProvider>
-          </ThemeProvider>
-        </PostHogProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <PostHogProvider>
+            <ThemeProvider defaultTheme="system" storageKey="portfolio-theme">
+              <ClerkProvider
+                signInUrl="/sign-in"
+                signUpUrl="/sign-up"
+                signInForceRedirectUrl="/"
+                signUpForceRedirectUrl="/onboarding"
+              >
+                <ConvexClientProvider>
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <AuthenticatedWrapper>{children}</AuthenticatedWrapper>
+                  </Suspense>
+                  <Toaster position="bottom-right" richColors />
+                </ConvexClientProvider>
+              </ClerkProvider>
+            </ThemeProvider>
+          </PostHogProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
