@@ -34,7 +34,7 @@ This plan addresses 6 interconnected workstreams that bring consistency to the p
 
 ## Execution Steps
 
-### Step 1 — Dynamic Currency List from Backend
+### Step 1 — Dynamic Currency List from Backend ✅
 
 > **Why first**: Every other workstream (transactions, edit asset, add asset, settings) depends on having a full currency list. The current `lib/currency.ts` hardcodes 42 currencies, but the `fxRates` table from ExchangeRatesAPI stores 160+ EUR-based pairs. Users need access to all of them.
 
@@ -64,7 +64,7 @@ This plan addresses 6 interconnected workstreams that bring consistency to the p
 
 ---
 
-### Step 2 — Wire Dynamic Currencies into Pickers
+### Step 2 — Wire Dynamic Currencies into Pickers ✅
 
 > **Why now**: With the dynamic list available, wire it into every currency picker so all subsequent work (transactions, settings) uses the full list.
 
@@ -86,33 +86,31 @@ This plan addresses 6 interconnected workstreams that bring consistency to the p
 
 ---
 
-### Step 3 — Transaction Schema & Backend Updates
+### Step 3 — Transaction Backend: FX-Aware Stats & Enrichment ✅
 
-> **Why now**: Before rebuilding the dialog, the backend needs to support currency-aware transactions.
+> **Why now**: Before rebuilding the dialog, the backend needs to return currency-aware data. Transactions don't need their own `currency` field — they inherit the currency from their parent asset (via `assets.currency`). The backend just needs to surface that currency and provide converted totals when the user's display currency differs.
 
-**Schema**:
-- `convex/schema.ts` — Add `currency: v.optional(v.string())` to the `transactions` table definition. This records the currency the transaction was made in (falls back to asset's currency → `"USD"`).
+**No schema changes** — the existing `transactions` table is unchanged. Assets already store `currency: v.optional(v.string())`.
 
-**Transaction CRUD**:
+**Transaction queries**:
 - `convex/transactions.ts`:
-  - `createTransaction` — Accept optional `currency` arg, store it on the transaction document.
-  - `updateTransaction` — Accept optional `currency` arg, patch if provided.
-  - `getAssetTransactions` — Return transactions as-is (currency field now included).
-  - `getAssetTransactionStats` — Add FX-aware totals:
-    - Accept optional `displayCurrency` and use `convex/fx.ts` `convert()` to produce `convertedTotalBuyAmount`, `convertedTotalSellAmount`, `convertedAvgBuyPrice` alongside the original-currency values.
-    - Load `fxRates` doc internally for conversion.
-    - Return both original and converted stats so the frontend can show dual amounts.
-  - `getPortfolioTransactions` — Enrich with asset currency info (already has `assetName`, add `assetCurrency`).
+  - `getAssetTransactionStats` — All existing stats (`totalBuyAmount`, `totalSellAmount`, `avgBuyPrice`, `totalFees`, `totalDividends`, `netAmount`, etc.) remain **in the asset's original currency** — nothing changes there. Additions:
+    - Look up the parent asset to get its `currency` (default `"USD"`).
+    - Accept an optional `displayCurrency` arg (the user's base currency).
+    - Return `assetCurrency` in the response so the frontend knows what currency the raw numbers are in.
+    - When `displayCurrency` is provided and differs from `assetCurrency`, load `fxRates` doc internally and use `convex/fx.ts` `convert()` to produce a single extra field: `convertedNetValue` (the net investment total converted to the user's display currency). This is the only converted value — everything else stays original.
+    - If currencies match or FX data is unavailable, `convertedNetValue` is omitted / `null`.
+  - `getPortfolioTransactions` — Already enriches with `assetName`, `assetSymbol`, `assetType`. Add `assetCurrency` (from `asset.currency || "USD"`) to each enriched transaction.
+  - `getAssetTransactions` — No changes needed (returns raw transaction data; the frontend will know the asset's currency from the dialog props).
 
 **Files touched**:
 | File | Action |
 |---|---|
-| `convex/schema.ts` | Edit — add `currency` to `transactions` table |
-| `convex/transactions.ts` | Edit — accept/store/return currency, add FX-aware stats |
+| `convex/transactions.ts` | Edit — FX-aware stats, enrich with `assetCurrency` |
 
 ---
 
-### Step 4 — Transaction Dialog Rebuild
+### Step 4 — Transaction Dialog Rebuild ✅
 
 > **Why now**: Backend is ready, currency list is dynamic. Time to tear down the old `<Dialog>`-based implementation and rebuild with `ResponsiveDialog`.
 
@@ -126,9 +124,9 @@ This plan addresses 6 interconnected workstreams that bring consistency to the p
 
 1. **List View** (default when opened):
    - Header: asset name/symbol + "Add" button (same as current but in `ResponsiveDialog` frame).
-   - Stats bar: 4-cell ticker-strip grid showing Quantity, Avg Buy Price, Total Invested, Transaction Count.
-     - When asset currency ≠ user's display currency: each monetary stat shows original amount on primary line, converted amount on secondary line with `FxBadge` (reuse pattern from `holdings.tsx`).
-   - Transaction rows: each shows type icon + badge, date, original amount (e.g. `€150.00`), and when currencies differ, a muted secondary line with converted amount (e.g. `≈ $163.50`).
+   - Stats bar: 4-cell ticker-strip grid showing Quantity, Avg Buy Price, Total Invested, Transaction Count — all in the asset's original currency.
+     - When asset currency ≠ user's display currency: a subtle summary row beneath the stats shows `convertedNetValue` (e.g. `≈ $12,340.00 in USD`) with the `FxBadge` (reuse pattern from `holdings.tsx`).
+   - Transaction rows: each shows type icon + badge, date, amounts in asset's original currency (e.g. `€150.00`). No per-row conversion — the single converted total in the stats bar is sufficient context.
    - Hover-reveal edit/delete actions (matching current pattern).
 
 2. **Type Step**: 3-card grid (Buy/Sell/Dividend) — auto-advances on click (matching add-asset pattern).
@@ -136,14 +134,14 @@ This plan addresses 6 interconnected workstreams that bring consistency to the p
 3. **Details Step**:
    - Currency indicator showing the asset's currency (read-only, informational — transactions are always in asset currency).
    - Date, Quantity (not for dividends), Price per unit (with asset currency symbol prefix), Fees, Notes.
-   - Live "Total" summary panel in asset currency + converted equivalent if currencies differ.
+   - Live "Total" summary panel in asset currency. When currencies differ, a muted secondary line shows the converted equivalent.
 
-4. **Confirm Step**: Row-based summary with dual-currency display where applicable.
+4. **Confirm Step**: Row-based summary in asset's original currency. When currencies differ, the total row includes a secondary converted value.
 
 **Currency logic**:
-- Transaction `currency` defaults to asset's `currency` (or `"USD"`).
-- `useCurrency()` provides the user's display currency for conversion display.
-- FX conversion display is informational only — the actual stored values are in the asset's original currency.
+- Transactions are always recorded and displayed in the **asset's currency** (from `asset.currency`, defaulting to `"USD"`).
+- `useCurrency()` provides the user's display currency for informational conversion display.
+- FX conversion display is informational only — the actual stored values are always in the asset's original currency.
 
 **Props**: Same interface as current (`isOpen`, `onOpenChange`, `assetId`, `assetName`, `assetType`, `assetSymbol`) plus new optional `assetCurrency?: string`.
 
@@ -165,7 +163,7 @@ This plan addresses 6 interconnected workstreams that bring consistency to the p
   - Returns `undefined` while loading, `true`/`false` when resolved.
   - Memoizes the user email lookup.
 
-**No gate component** — pages that are behind flags simply check the flag and return `notFound()` from Next.js (or redirect), pushing the user to the 404 catch-all. The page should not render at all — users shouldn't know it exists.
+**No gate component** — pages that are behind flags simply check the flag and render `null` / redirect, pushing the user to the 404 catch-all. The page should not render at all — users shouldn't know it exists.
 
 **Files touched**:
 | File | Action |
@@ -179,24 +177,15 @@ This plan addresses 6 interconnected workstreams that bring consistency to the p
 > **Why now**: Earnings, Watchlist, and Research need gating. Research doesn't even have a page yet.
 
 **Earnings**:
-- `app/(webapp)/earnings/page.tsx` — Import `useFeatureFlag("earnings-calendar")`. If flag is `false`, call `notFound()` (from `next/navigation`). If `undefined` (loading), render nothing or a minimal skeleton. Otherwise render the page.
+- `app/(webapp)/earnings/page.tsx` — Import `useFeatureFlag("earnings-calendar")`. If flag is `false`, redirect to 404. If `undefined` (loading), render nothing. Otherwise render the page.
 
 **Watchlist**:
 - `app/(webapp)/watchlist/page.tsx` — Same pattern with `useFeatureFlag("watchlist")`.
 
 **Research**:
-- `app/(webapp)/research/page.tsx` — **Create** a minimal placeholder page (matching DNA: dark bg, monospace header, gold accent) wrapped in `useFeatureFlag("research")`. When flag is off → `notFound()`.
+- `app/(webapp)/research/page.tsx` — **Create** a minimal placeholder page wrapped in `useFeatureFlag("research")`. When flag is off → redirect to 404.
 
-**Important**: Since these are client components using hooks, they can't call `notFound()` directly (that's a server function). Instead, use `redirect("/404")` or render `null` and let the layout handle it. Alternatively, use a pattern like:
-```tsx
-if (flagValue === false) {
-  // Use Next.js router to push to 404
-  router.replace("/404");
-  return null;
-}
-```
-
-Or wrap in a layout-level server component check if possible.
+**Important**: Since these are client components using hooks, they can't call `notFound()` directly (that's a server function). Instead, use `router.replace("/404")` and render `null`, or use `redirect()` from a useEffect. The key is that the page never renders — users are pushed to the catch-all 404 as if the route doesn't exist.
 
 **Files touched**:
 | File | Action |
@@ -291,8 +280,8 @@ Or wrap in a layout-level server component check if possible.
 
 | File | Steps | Action |
 |---|---|---|
-| `convex/schema.ts` | 3, 7 | Edit — transaction currency field + multi-channel notifications |
-| `convex/transactions.ts` | 3 | Edit — currency-aware CRUD + FX stats |
+| `convex/schema.ts` | 7 | Edit — multi-channel notification fields |
+| `convex/transactions.ts` | 3 | Edit — FX-aware stats, enrich with `assetCurrency` |
 | `convex/marketData.ts` | 1 | Edit — add `getAvailableCurrencies` query |
 | `convex/users.ts` | 7 | Edit — multi-channel notification prefs |
 | `lib/currency.ts` | 1 | Edit — `buildCurrencyList()`, `getCurrencyMeta()` |

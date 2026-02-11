@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { convert, resolveAssetCurrency, type FxRates } from "./fx";
 
 // Create a new transaction
 export const createTransaction = mutation({
@@ -123,12 +124,21 @@ export const deleteTransaction = mutation({
   },
 });
 
-// Get transaction statistics for an asset
+// Get transaction statistics for an asset — FX-aware
+// All raw stats (totalBuyAmount, avgBuyPrice, etc.) remain in the asset's
+// original currency. When `displayCurrency` is provided and differs from the
+// asset's currency, a single `convertedNetValue` field is added showing the
+// net investment total converted to the user's display currency.
 export const getAssetTransactionStats = query({
   args: {
     assetId: v.id("assets"),
+    displayCurrency: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // ── Look up the parent asset to resolve its native currency ──────
+    const asset = await ctx.db.get(args.assetId);
+    const assetCurrency = resolveAssetCurrency(asset?.currency);
+
     const transactions = await ctx.db
       .query("transactions")
       .withIndex("byAsset", (q) => q.eq("assetId", args.assetId))
@@ -169,6 +179,28 @@ export const getAssetTransactionStats = query({
       avgBuyPrice = totalBuyAmount / totalBuys;
     }
 
+    const netAmount =
+      totalSellAmount + totalDividends - totalBuyAmount - totalFees;
+
+    // ── FX conversion: produce convertedNetValue when currencies differ ──
+    let convertedNetValue: number | null = null;
+
+    const displayCurrency = args.displayCurrency?.toUpperCase();
+    if (displayCurrency && displayCurrency !== assetCurrency) {
+      const fxDoc = await ctx.db.query("fxRates").first();
+      const rates: FxRates = fxDoc?.rates ?? {};
+      const converted = convert(
+        netAmount,
+        assetCurrency,
+        displayCurrency,
+        rates,
+      );
+      // Only set if actual conversion happened (convert returns original on failure)
+      if (converted !== netAmount || netAmount === 0) {
+        convertedNetValue = converted;
+      }
+    }
+
     return {
       totalBuys,
       totalBuyAmount,
@@ -179,13 +211,17 @@ export const getAssetTransactionStats = query({
       avgBuyPrice,
       currentQuantity,
       totalTransactions: transactions.length,
-      netAmount: totalSellAmount + totalDividends - totalBuyAmount - totalFees,
+      netAmount,
+      /** The asset's native currency code (e.g. "EUR", "USD", "GBP") */
+      assetCurrency,
+      /** Net investment value converted to the user's display currency, or null when currencies match / FX unavailable */
+      convertedNetValue,
       transactions: transactions.sort((a, b) => b.date - a.date).slice(0, 5), // Return 5 most recent transactions
     };
   },
 });
 
-// Get all transactions for a specific portfolio
+// Get all transactions for a specific portfolio — enriched with asset metadata
 export const getPortfolioTransactions = query({
   args: {
     portfolioId: v.id("portfolios"),
@@ -208,13 +244,14 @@ export const getPortfolioTransactions = query({
         .withIndex("byAsset", (q) => q.eq("assetId", assetId))
         .collect();
 
-      // Add asset information to each transaction
+      // Add asset information to each transaction — including native currency
       const assetInfo = assets.find((a) => a._id === assetId);
       const enrichedTransactions = transactions.map((t) => ({
         ...t,
         assetName: assetInfo?.name || "Unknown Asset",
         assetSymbol: assetInfo?.symbol,
         assetType: assetInfo?.type,
+        assetCurrency: resolveAssetCurrency(assetInfo?.currency),
       }));
 
       allTransactions = [...allTransactions, ...enrichedTransactions];

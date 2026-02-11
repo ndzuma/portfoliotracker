@@ -185,6 +185,7 @@ function ExpandedPanel({
         assetName={asset.name}
         assetType={asset.type}
         assetSymbol={asset.symbol}
+        assetCurrency={asset.currency || "USD"}
       />
     </>
   );
