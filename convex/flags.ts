@@ -35,7 +35,7 @@ export const getFlags = internalQuery({
       key: flag.key,
       description: "-",
       enabled: false,
-      environments: [],
+      environments: ["dev", "prod"],
       //targeting: ["all"],
     }));
   },
