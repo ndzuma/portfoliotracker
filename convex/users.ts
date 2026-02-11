@@ -94,6 +94,18 @@ export const updateUserPreferences = mutation({
       v.union(v.literal("email"), v.literal("discord"), v.literal("telegram")),
     ),
     marketPulseWebhookUrl: v.optional(v.string()),
+    // V2 multi-channel fields
+    marketPulseChannels: v.optional(
+      v.array(
+        v.union(
+          v.literal("email"),
+          v.literal("discord"),
+          v.literal("telegram"),
+        ),
+      ),
+    ),
+    discordWebhookUrl: v.optional(v.string()),
+    telegramWebhookUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (!args.userId) {
@@ -125,6 +137,9 @@ export const updateUserPreferences = mutation({
         marketPulseEnabled: args.marketPulseEnabled,
         marketPulseChannel: args.marketPulseChannel,
         marketPulseWebhookUrl: args.marketPulseWebhookUrl,
+        marketPulseChannels: args.marketPulseChannels,
+        discordWebhookUrl: args.discordWebhookUrl,
+        telegramWebhookUrl: args.telegramWebhookUrl,
       });
     } else {
       // Update existing preferences — only patch fields that were explicitly passed
@@ -150,6 +165,12 @@ export const updateUserPreferences = mutation({
         updates.marketPulseChannel = args.marketPulseChannel;
       if (args.marketPulseWebhookUrl !== undefined)
         updates.marketPulseWebhookUrl = args.marketPulseWebhookUrl;
+      if (args.marketPulseChannels !== undefined)
+        updates.marketPulseChannels = args.marketPulseChannels;
+      if (args.discordWebhookUrl !== undefined)
+        updates.discordWebhookUrl = args.discordWebhookUrl;
+      if (args.telegramWebhookUrl !== undefined)
+        updates.telegramWebhookUrl = args.telegramWebhookUrl;
 
       await ctx.db.patch(preferences._id, updates);
       return preferences._id;

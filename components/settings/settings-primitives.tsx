@@ -258,7 +258,19 @@ export function PulseStrip() {
         : "Hosted";
 
   const marketPulseActive = userPreferences?.marketPulseEnabled ?? false;
-  const marketPulseChannel = userPreferences?.marketPulseChannel || "—";
+  const marketPulseChannels = (userPreferences as any)?.marketPulseChannels as
+    | string[]
+    | undefined;
+  const marketPulseLabel = marketPulseActive
+    ? marketPulseChannels && marketPulseChannels.length > 0
+      ? marketPulseChannels
+          .map((c: string) => c.charAt(0).toUpperCase() + c.slice(1))
+          .join(", ")
+      : userPreferences?.marketPulseChannel
+        ? userPreferences.marketPulseChannel.charAt(0).toUpperCase() +
+          userPreferences.marketPulseChannel.slice(1)
+        : "On"
+    : "Off";
 
   const earningsOn = userPreferences?.earningsReminders ?? false;
 
@@ -300,10 +312,7 @@ export function PulseStrip() {
     },
     {
       label: "Market Pulse",
-      value: marketPulseActive
-        ? marketPulseChannel.charAt(0).toUpperCase() +
-          marketPulseChannel.slice(1)
-        : "Off",
+      value: marketPulseLabel,
       status: marketPulseActive ? "live" : "off",
     },
   ];

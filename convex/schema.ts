@@ -40,10 +40,23 @@ export default defineSchema({
     earningsReminders: v.optional(v.boolean()),
     // AI Market Pulse notification preferences
     marketPulseEnabled: v.optional(v.boolean()),
+    // Legacy single-channel fields (kept for backward compat with existing documents)
     marketPulseChannel: v.optional(
       v.union(v.literal("email"), v.literal("discord"), v.literal("telegram")),
     ),
-    marketPulseWebhookUrl: v.optional(v.string()), // discord webhook or telegram bot URL
+    marketPulseWebhookUrl: v.optional(v.string()),
+    // V2 multi-channel notification fields
+    marketPulseChannels: v.optional(
+      v.array(
+        v.union(
+          v.literal("email"),
+          v.literal("discord"),
+          v.literal("telegram"),
+        ),
+      ),
+    ),
+    discordWebhookUrl: v.optional(v.string()),
+    telegramWebhookUrl: v.optional(v.string()),
   }).index("byUser", ["userId"]),
   // development related
   flags: defineTable({

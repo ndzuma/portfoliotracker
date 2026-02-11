@@ -20,9 +20,11 @@ import { DataSection } from "@/components/settings/data-section";
 import { AlertsSection } from "@/components/settings/alerts-section";
 import { AiSection } from "@/components/settings/ai-section";
 import { AdvancedSection } from "@/components/settings/advanced-section";
+import { HelpSection } from "@/components/settings/help-section";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 
 type AiSummaryFrequency = "12h" | "daily" | "weekly" | "monthly" | "manual";
-type MarketPulseChannel = "email" | "discord" | "telegram";
+type ChannelType = "email" | "discord" | "telegram";
 
 export default function V2SettingsPage() {
   const { user } = useUser();
@@ -37,6 +39,9 @@ export default function V2SettingsPage() {
     key: "byoai",
     userEmail: user?.emailAddresses?.[0]?.emailAddress,
   });
+  const notificationsEnabled = useFeatureFlag("notifications");
+  const aiSummariesEnabled = useFeatureFlag("ai-summaries");
+  const earningsRemindersEnabled = useFeatureFlag("earnings-reminders");
 
   const { setTheme } = useTheme();
 
@@ -55,7 +60,7 @@ export default function V2SettingsPage() {
     userId ? { userId } : "skip",
   );
 
-  // ── Local state for ALL Phase 6 fields ──
+  // ── Local state for ALL fields ──
   const [currency, setCurrency] = useState("USD");
   const [marketRegion, setMarketRegion] = useState("GLOBAL");
   const [darkMode, setDarkMode] = useState(true);
@@ -68,11 +73,18 @@ export default function V2SettingsPage() {
   const [aiSummaryFrequency, setAiSummaryFrequency] =
     useState<AiSummaryFrequency>("manual");
 
-  // Notification fields
+  // Notification fields — V2 multi-channel
   const [earningsReminders, setEarningsReminders] = useState(false);
   const [marketPulseEnabled, setMarketPulseEnabled] = useState(false);
+  const [marketPulseChannels, setMarketPulseChannels] = useState<ChannelType[]>(
+    [],
+  );
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
+  const [telegramWebhookUrl, setTelegramWebhookUrl] = useState("");
+
+  // Legacy single-channel fields (for backward compat on save)
   const [marketPulseChannel, setMarketPulseChannel] =
-    useState<MarketPulseChannel>("email");
+    useState<ChannelType>("email");
   const [marketPulseWebhookUrl, setMarketPulseWebhookUrl] = useState("");
 
   // UI state
@@ -95,8 +107,39 @@ export default function V2SettingsPage() {
       );
       setEarningsReminders(userPreferences.earningsReminders ?? false);
       setMarketPulseEnabled(userPreferences.marketPulseEnabled ?? false);
+
+      // V2 multi-channel: hydrate from new fields, fall back to legacy single-channel
+      const channels = (userPreferences as any).marketPulseChannels as
+        | ChannelType[]
+        | undefined;
+      if (channels && channels.length > 0) {
+        setMarketPulseChannels(channels);
+      } else if (userPreferences.marketPulseChannel) {
+        // Migrate legacy single channel to array
+        setMarketPulseChannels([
+          userPreferences.marketPulseChannel as ChannelType,
+        ]);
+      } else {
+        setMarketPulseChannels([]);
+      }
+
+      // Per-channel webhook URLs
+      setDiscordWebhookUrl(
+        (userPreferences as any).discordWebhookUrl ||
+          (userPreferences.marketPulseChannel === "discord"
+            ? userPreferences.marketPulseWebhookUrl || ""
+            : ""),
+      );
+      setTelegramWebhookUrl(
+        (userPreferences as any).telegramWebhookUrl ||
+          (userPreferences.marketPulseChannel === "telegram"
+            ? userPreferences.marketPulseWebhookUrl || ""
+            : ""),
+      );
+
+      // Keep legacy in sync
       setMarketPulseChannel(
-        (userPreferences.marketPulseChannel as MarketPulseChannel) || "email",
+        (userPreferences.marketPulseChannel as ChannelType) || "email",
       );
       setMarketPulseWebhookUrl(userPreferences.marketPulseWebhookUrl || "");
     }
@@ -104,12 +147,21 @@ export default function V2SettingsPage() {
 
   const markChanged = () => setHasChanges(true);
 
-  // ── Save ALL Phase 6 fields to Convex ──
+  // ── Save ALL fields to Convex ──
   const handleSave = async () => {
     setIsSaving(true);
     setTheme(darkMode ? "dark" : "light");
     try {
       if (userId) {
+        // Derive legacy single-channel from multi-channel for backward compat
+        const primaryChannel = marketPulseChannels[0] || "email";
+        const primaryWebhookUrl =
+          primaryChannel === "discord"
+            ? discordWebhookUrl
+            : primaryChannel === "telegram"
+              ? telegramWebhookUrl
+              : "";
+
         await updatePreferences({
           userId,
           currency,
@@ -122,8 +174,13 @@ export default function V2SettingsPage() {
           aiSummaryFrequency,
           earningsReminders,
           marketPulseEnabled,
-          marketPulseChannel,
-          marketPulseWebhookUrl,
+          // Legacy single-channel (backward compat)
+          marketPulseChannel: primaryChannel,
+          marketPulseWebhookUrl: primaryWebhookUrl,
+          // V2 multi-channel
+          marketPulseChannels,
+          discordWebhookUrl,
+          telegramWebhookUrl,
         });
       }
       toast.success("Settings saved");
@@ -150,8 +207,25 @@ export default function V2SettingsPage() {
       );
       setEarningsReminders(userPreferences.earningsReminders ?? false);
       setMarketPulseEnabled(userPreferences.marketPulseEnabled ?? false);
+
+      const channels = (userPreferences as any).marketPulseChannels as
+        | ChannelType[]
+        | undefined;
+      if (channels && channels.length > 0) {
+        setMarketPulseChannels(channels);
+      } else if (userPreferences.marketPulseChannel) {
+        setMarketPulseChannels([
+          userPreferences.marketPulseChannel as ChannelType,
+        ]);
+      } else {
+        setMarketPulseChannels([]);
+      }
+
+      setDiscordWebhookUrl((userPreferences as any).discordWebhookUrl || "");
+      setTelegramWebhookUrl((userPreferences as any).telegramWebhookUrl || "");
+
       setMarketPulseChannel(
-        (userPreferences.marketPulseChannel as MarketPulseChannel) || "email",
+        (userPreferences.marketPulseChannel as ChannelType) || "email",
       );
       setMarketPulseWebhookUrl(userPreferences.marketPulseWebhookUrl || "");
       setTheme(userPreferences.theme === "dark" ? "dark" : "light");
@@ -197,6 +271,7 @@ export default function V2SettingsPage() {
     { id: "alerts", label: "Alerts" },
     { id: "ai", label: "AI" },
     { id: "advanced", label: "Advanced" },
+    { id: "help", label: "Help" },
   ];
 
   return (
@@ -312,28 +387,53 @@ export default function V2SettingsPage() {
               transition={{ duration: 0.2 }}
               className="flex flex-col gap-5"
             >
-              <AlertsSection
-                marketPulseEnabled={marketPulseEnabled}
-                onMarketPulseEnabledChange={(v) => {
-                  setMarketPulseEnabled(v);
-                  markChanged();
-                }}
-                marketPulseChannel={marketPulseChannel}
-                onMarketPulseChannelChange={(v) => {
-                  setMarketPulseChannel(v);
-                  markChanged();
-                }}
-                marketPulseWebhookUrl={marketPulseWebhookUrl}
-                onMarketPulseWebhookUrlChange={(v) => {
-                  setMarketPulseWebhookUrl(v);
-                  markChanged();
-                }}
-                earningsReminders={earningsReminders}
-                onEarningsRemindersChange={(v) => {
-                  setEarningsReminders(v);
-                  markChanged();
-                }}
-              />
+              {notificationsEnabled === false ? (
+                /* Flag disabled — show coming-soon message */
+                <Section
+                  title="Notifications & Alerts"
+                  description="Coming soon"
+                  status="off"
+                >
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-zinc-600">
+                      Notifications are coming soon.
+                    </p>
+                    <p className="text-xs text-zinc-700 mt-1">
+                      Multi-channel alerts for Market Pulse and earnings
+                      reminders are in development.
+                    </p>
+                  </div>
+                </Section>
+              ) : (
+                <AlertsSection
+                  marketPulseEnabled={marketPulseEnabled}
+                  onMarketPulseEnabledChange={(v) => {
+                    setMarketPulseEnabled(v);
+                    markChanged();
+                  }}
+                  marketPulseChannels={marketPulseChannels}
+                  onMarketPulseChannelsChange={(v) => {
+                    setMarketPulseChannels(v);
+                    markChanged();
+                  }}
+                  discordWebhookUrl={discordWebhookUrl}
+                  onDiscordWebhookUrlChange={(v) => {
+                    setDiscordWebhookUrl(v);
+                    markChanged();
+                  }}
+                  telegramWebhookUrl={telegramWebhookUrl}
+                  onTelegramWebhookUrlChange={(v) => {
+                    setTelegramWebhookUrl(v);
+                    markChanged();
+                  }}
+                  earningsReminders={earningsReminders}
+                  onEarningsRemindersChange={(v) => {
+                    setEarningsReminders(v);
+                    markChanged();
+                  }}
+                  earningsRemindersEnabled={earningsRemindersEnabled !== false}
+                />
+              )}
             </motion.div>
           )}
 
@@ -373,6 +473,7 @@ export default function V2SettingsPage() {
                   markChanged();
                 }}
                 byoaiEnabled={!!byoaiEnabled}
+                aiSummariesEnabled={aiSummariesEnabled !== false}
               />
             </motion.div>
           )}
@@ -390,6 +491,19 @@ export default function V2SettingsPage() {
                 onExport={handleExport}
                 isExporting={isExporting}
               />
+            </motion.div>
+          )}
+
+          {/* ─── HELP TAB ─── */}
+          {activeTab === "help" && (
+            <motion.div
+              key="help"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-5"
+            >
+              <HelpSection />
             </motion.div>
           )}
         </div>

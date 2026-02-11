@@ -7,11 +7,7 @@ import {
   Clock,
   Brain,
 } from "@phosphor-icons/react";
-import {
-  Section,
-  SettingRow,
-  StatusDot,
-} from "./settings-primitives";
+import { Section, SettingRow, StatusDot } from "./settings-primitives";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -49,6 +45,8 @@ interface AiSectionProps {
   selfHostedUrl: string;
   onSelfHostedUrlChange: (v: string) => void;
   byoaiEnabled: boolean;
+  /** When false, the AI Summaries frequency selector is replaced with a coming-soon message */
+  aiSummariesEnabled?: boolean;
 }
 
 export function AiSection({
@@ -63,6 +61,7 @@ export function AiSection({
   selfHostedUrl,
   onSelfHostedUrlChange,
   byoaiEnabled,
+  aiSummariesEnabled = true,
 }: AiSectionProps) {
   const selectedFreq = FREQUENCY_OPTIONS.find(
     (f) => f.value === aiSummaryFrequency,
@@ -78,81 +77,95 @@ export function AiSection({
   return (
     <>
       {/* ── Portfolio AI Summary Frequency ── */}
-      <Section
-        title="AI Summaries"
-        description="Portfolio analysis schedule"
-        status={
-          aiSummaryFrequency !== "manual" ? "live" : "off"
-        }
-      >
-        <SettingRow
-          label="Summary Frequency"
-          description="How often AI generates portfolio analysis reports"
+      {aiSummariesEnabled ? (
+        <Section
+          title="AI Summaries"
+          description="Portfolio analysis schedule"
+          status={aiSummaryFrequency !== "manual" ? "live" : "off"}
         >
-          <div className="flex items-center gap-2">
-            <Clock
-              className={`h-3.5 w-3.5 ${aiSummaryFrequency !== "manual" ? "text-emerald-500" : "text-zinc-600"}`}
-            />
-            <Select
-              value={aiSummaryFrequency}
-              onValueChange={(v) =>
-                onAiSummaryFrequencyChange(v as AiSummaryFrequency)
-              }
-            >
-              <SelectTrigger className="w-[160px] bg-zinc-900 border-white/[0.06] text-white h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-950 border-white/[0.08]">
-                {FREQUENCY_OPTIONS.map((opt) => (
-                  <SelectItem
-                    key={opt.value}
-                    value={opt.value}
-                    className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
-                  >
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </SettingRow>
-
-        {/* Frequency description */}
-        {selectedFreq && (
-          <div className="py-3 border-b border-white/[0.03] last:border-b-0">
-            <div className="rounded-lg border border-white/[0.04] bg-white/[0.01] px-4 py-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Brain className="h-3 w-3 text-zinc-600" />
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">
-                  Schedule
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                {aiSummaryFrequency === "manual" ? (
-                  <>
-                    AI summaries are generated only when you manually trigger
-                    them from a portfolio page.
-                  </>
-                ) : (
-                  <>
-                    Your portfolios will be analyzed{" "}
-                    <span className="text-zinc-300 font-medium">
-                      {selectedFreq.description.toLowerCase()}
-                    </span>
-                    . Each summary includes performance insights, risk analysis,
-                    and actionable recommendations.
-                  </>
-                )}
-              </p>
+          <SettingRow
+            label="Summary Frequency"
+            description="How often AI generates portfolio analysis reports"
+          >
+            <div className="flex items-center gap-2">
+              <Clock
+                className={`h-3.5 w-3.5 ${aiSummaryFrequency !== "manual" ? "text-emerald-500" : "text-zinc-600"}`}
+              />
+              <Select
+                value={aiSummaryFrequency}
+                onValueChange={(v) =>
+                  onAiSummaryFrequencyChange(v as AiSummaryFrequency)
+                }
+              >
+                <SelectTrigger className="w-[160px] bg-zinc-900 border-white/[0.06] text-white h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-950 border-white/[0.08]">
+                  {FREQUENCY_OPTIONS.map((opt) => (
+                    <SelectItem
+                      key={opt.value}
+                      value={opt.value}
+                      className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
+                    >
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </SettingRow>
+
+          {/* Frequency description */}
+          {selectedFreq && (
+            <div className="py-3 border-b border-white/[0.03] last:border-b-0">
+              <div className="rounded-lg border border-white/[0.04] bg-white/[0.01] px-4 py-3">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Brain className="h-3 w-3 text-zinc-600" />
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">
+                    Schedule
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  {aiSummaryFrequency === "manual" ? (
+                    <>
+                      AI summaries are generated only when you manually trigger
+                      them from a portfolio page.
+                    </>
+                  ) : (
+                    <>
+                      Your portfolios will be analyzed{" "}
+                      <span className="text-zinc-300 font-medium">
+                        {selectedFreq.description.toLowerCase()}
+                      </span>
+                      . Each summary includes performance insights, risk
+                      analysis, and actionable recommendations.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+        </Section>
+      ) : (
+        <Section title="AI Summaries" description="Coming soon" status="off">
+          <div className="py-6 text-center">
+            <p className="text-sm text-zinc-600">
+              Scheduled AI summaries are coming soon.
+            </p>
+            <p className="text-xs text-zinc-700 mt-1">
+              You can still generate on-demand summaries from any portfolio
+              page.
+            </p>
           </div>
-        )}
-      </Section>
+        </Section>
+      )}
 
       {/* ── BYOAI Provider ── */}
       <Section
         title="AI Provider"
-        description={byoaiEnabled ? "Model & routing config" : "Using hosted AI"}
+        description={
+          byoaiEnabled ? "Model & routing config" : "Using hosted AI"
+        }
         status={
           aiProvider === "openrouter" || aiProvider === "self-hosted"
             ? "amber"
@@ -164,10 +177,7 @@ export function AiSection({
           description="Choose how AI features are powered"
         >
           {byoaiEnabled ? (
-            <Select
-              value={aiProvider}
-              onValueChange={onAiProviderChange}
-            >
+            <Select value={aiProvider} onValueChange={onAiProviderChange}>
               <SelectTrigger className="w-[160px] bg-zinc-900 border-white/[0.06] text-white h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
