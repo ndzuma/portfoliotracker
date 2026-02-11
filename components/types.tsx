@@ -25,6 +25,7 @@ export interface Asset {
   currentPrice: number;
   currentValue: number;
   currency?: string;
+  notes?: string;
 }
 
 export interface Portfolio {

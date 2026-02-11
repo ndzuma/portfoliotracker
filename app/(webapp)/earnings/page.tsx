@@ -1,5 +1,6 @@
 "use client";
 
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,8 +10,17 @@ import {
   TrendUp,
   CurrencyDollar,
 } from "@phosphor-icons/react";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 
 export default function EarningsPage() {
+  const enabled = useFeatureFlag("earnings");
+
+  // Still loading — render nothing
+  if (enabled === undefined) return null;
+
+  // Flag disabled — trigger Next.js not-found boundary
+  if (enabled === false) notFound();
+
   // Sample earnings data
   const upcomingEarnings = [
     {

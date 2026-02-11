@@ -153,7 +153,7 @@ This plan addresses 6 interconnected workstreams that bring consistency to the p
 
 ---
 
-### Step 5 — Feature Flag Infrastructure
+### Step 5 — Feature Flag Infrastructure ✅
 
 > **Why now**: Before touching settings and pages, we need a clean hook and gate pattern.
 
@@ -172,7 +172,7 @@ This plan addresses 6 interconnected workstreams that bring consistency to the p
 
 ---
 
-### Step 6 — Feature Flags on Pages
+### Step 6 — Feature Flags on Pages ✅
 
 > **Why now**: Earnings, Watchlist, and Research need gating. Research doesn't even have a page yet.
 

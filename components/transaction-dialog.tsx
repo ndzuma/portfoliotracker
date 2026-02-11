@@ -513,6 +513,14 @@ export function V2TransactionDialog({
                       <p className="text-[11px] text-zinc-600">
                         {formatDate(tx.date)}
                       </p>
+                      {tx.notes && (
+                        <p
+                          className="text-[10px] text-zinc-700 mt-0.5 truncate max-w-[180px]"
+                          title={tx.notes}
+                        >
+                          {tx.notes}
+                        </p>
+                      )}
                     </div>
 
                     {/* Amounts — in asset's native currency */}

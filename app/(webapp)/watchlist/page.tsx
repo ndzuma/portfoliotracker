@@ -1,10 +1,20 @@
 "use client";
 
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookmarkSimple, Plus, MagnifyingGlass } from "@phosphor-icons/react";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 
 export default function WatchlistPage() {
+  const enabled = useFeatureFlag("watchlist");
+
+  // Still loading — render nothing
+  if (enabled === undefined) return null;
+
+  // Flag disabled — trigger Next.js not-found boundary
+  if (enabled === false) notFound();
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-6">

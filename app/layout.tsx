@@ -12,6 +12,7 @@ import { AuthenticatedWrapper } from "./auth-wrapper";
 import { PostHogProvider } from "./PostHogProvider";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://app.pulsefolio.net"),
   title: "PulsePortfolio App - Manage Your Investments",
   description:
     "Monitor stocks, crypto, real estate, and more with powerful tools for investors. Track multiple portfolios and get AI-powered insights to optimize your investments.",

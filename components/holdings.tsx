@@ -10,6 +10,7 @@ import {
   TrendDown,
   CaretDown,
   Plus,
+  NoteBlank,
   ArrowsLeftRight,
 } from "@phosphor-icons/react";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -139,6 +140,16 @@ function ExpandedPanel({
               </p>
             </div>
           </div>
+
+          {/* Notes — shown when asset has notes */}
+          {asset.notes && (
+            <div className="flex items-start gap-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] px-3 py-2.5 mb-4">
+              <NoteBlank className="h-3.5 w-3.5 text-zinc-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-zinc-400 leading-relaxed whitespace-pre-wrap break-words">
+                {asset.notes}
+              </p>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
