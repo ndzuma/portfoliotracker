@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { query, action, mutation, internalMutation } from "./_generated/server";
+import { query, action, mutation, internalQuery } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { DESTRUCTION } from "node:dns/promises";
 
 export const getFlag = query({
   args: { key: v.string(), userEmail: v.optional(v.string()) },
@@ -17,13 +18,26 @@ export const getFlag = query({
 
     if (!flag || !flag.enabled) return false;
 
-    // Check if flag is enabled for current environment
-    if (!flag.environments?.includes(currentEnv)) return false;
-
+    // Check if flag is enabled for current environment - nb: default to all
+    //if (!flag.environments?.includes(currentEnv)) return false;
     // Targeting logic
     if (flag.targeting?.includes("beta") && !userEmail) return false;
     if (userEmail && flag.targeting?.includes(userEmail)) return true;
     return flag.targeting?.includes("all") ?? true;
+  },
+});
+
+export const getFlags = internalQuery({
+  handler: async (ctx) => {
+    const flags = await ctx.db.query("flags").collect();
+    // strip sensitive information
+    return flags.map((flag) => ({
+      key: flag.key,
+      description: "-",
+      enabled: false,
+      environments: [],
+      //targeting: ["all"],
+    }));
   },
 });
 
