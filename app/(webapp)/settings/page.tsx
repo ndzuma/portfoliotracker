@@ -16,6 +16,7 @@ import {
   SettingsToggle,
 } from "@/components/settings/settings-primitives";
 import { IdentitySection } from "@/components/settings/identity-section";
+import { LanguageSection } from "@/components/settings/language-section";
 import { DataSection } from "@/components/settings/data-section";
 import { AlertsSection } from "@/components/settings/alerts-section";
 import { AiSection } from "@/components/settings/ai-section";
@@ -328,6 +329,9 @@ export default function V2SettingsPage() {
               className="flex flex-col gap-5"
             >
               <IdentitySection />
+
+              {/* Language */}
+              <LanguageSection />
 
               {/* Appearance */}
               {appearanceEnabled && (

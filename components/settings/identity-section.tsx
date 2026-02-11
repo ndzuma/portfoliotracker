@@ -18,11 +18,6 @@ export function IdentitySection() {
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: clerkUser?.id || "",
   });
-  const userId = convexUser?._id;
-  const userPreferences = useQuery(
-    api.users.getUserPreferences,
-    userId ? { userId } : "skip",
-  );
 
   const displayName = clerkUser?.fullName || convexUser?.name || "—";
   const email =
@@ -34,9 +29,6 @@ export function IdentitySection() {
         month: "long",
       })
     : "—";
-
-  const language = userPreferences?.language || "en";
-  const languageLabel = language === "en" ? "English" : language.toUpperCase();
 
   return (
     <Section
@@ -112,15 +104,6 @@ export function IdentitySection() {
         description="Used for notifications and account recovery"
       >
         <span className="text-xs text-zinc-500">{email}</span>
-      </SettingRow>
-
-      <SettingRow
-        label="Language"
-        description="Display language for the interface"
-      >
-        <span className="text-xs text-zinc-400 font-medium bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/[0.04]">
-          {languageLabel}
-        </span>
       </SettingRow>
     </Section>
   );

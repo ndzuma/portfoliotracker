@@ -231,28 +231,33 @@
 
 ---
 
-### Step 37 — Language picker in settings
+### Step 37 — Language picker in settings ✅
 
-> **Status**: Pending — depends on Steps 34–35
+> **Status**: Complete
 
-- [ ] Create `components/settings/language-section.tsx`:
-  - Searchable language selector (reuse combobox/popover pattern from existing currency picker in `add-asset-dialog.tsx`)
-  - Each option: flag emoji + native language name + English name
-    - `🇬🇧 English`
-    - `🇵🇹 Português — Portuguese`
-  - Live preview: show a sample translated string that changes as user selects a language (e.g., "Total Net Worth" → "Património Líquido Total")
-  - On selection: write to `userPreferences.language` via Convex `updateUserPreferences` mutation → `useLocaleSync` hook catches the change → updates cookie → page reloads in new language
-  - Aesthetic: matches existing settings section style (zinc-950/60 card, white/[0.06] borders, 11px uppercase tracking labels)
+- [x] Create `components/settings/language-section.tsx`:
+  - Searchable language dropdown (same DNA as `CurrencyPicker` in `data-section.tsx` — popover, motion spring, dark chrome)
+  - `LANGUAGES` metadata array with `code`, `flag`, `native`, `english`, `preview` fields
+  - Each option renders: flag emoji + native name + English name (when different) + italic preview phrase ("Total Net Worth" / "Património Líquido Total")
+  - Footer hint: "Page will reload on change" — sets user expectation
+  - **Instant-apply** on selection: calls `updateUserPreferences({ userId, language })` immediately (not batched with "Save Changes" flow)
+  - `useLocaleSync` hook detects the Convex change → updates `NEXT_LOCALE` cookie → page reloads in new language
+  - Fallback: 3-second timeout that force-sets cookie + reloads if `useLocaleSync` doesn't fire
+  - "Switching…" state with spinning `ArrowsClockwise` icon during the transition
+  - Coverage indicator: flag strip showing all supported locales with `StatusDot` for the active language
+  - Uses `useTranslations('settings')` for section title and description labels
 
-- [ ] Update `app/(webapp)/settings/page.tsx`:
-  - Import and render `LanguageSection` within the Profile tab
-  - Position after Identity section
+- [x] Update `app/(webapp)/settings/page.tsx`:
+  - Imported `LanguageSection` from `@/components/settings/language-section`
+  - Rendered in Profile tab between `IdentitySection` and Appearance section
 
-- [ ] Update `components/settings/identity-section.tsx`:
-  - Remove the static language display row (it'll be handled by the dedicated Language section)
-  - Or keep it as a read-only indicator that links/scrolls to the Language section
+- [x] Update `components/settings/identity-section.tsx`:
+  - Removed static "Language" `SettingRow` (replaced by dedicated `LanguageSection`)
+  - Removed unused `userId` and `userPreferences` query (no longer needed)
 
 **Files**: `components/settings/language-section.tsx` (new), `app/(webapp)/settings/page.tsx`, `components/settings/identity-section.tsx`
+
+**Build**: ✅ `next build` passes — 13 static pages generated, no regressions.
 
 ---
 
@@ -263,12 +268,12 @@ Step 31 ✅ ─── next-intl config, routing, middleware
 Step 32 ✅ ─── English message catalog (depends on nothing)
 Step 33 ✅ ─── Portuguese message catalog (depends on Step 32 for key structure)
 Step 34 ✅ ─── Layout provider + locale sync hook (depends on Steps 31–33)
-Step 35 ⬜ ─── Core component migration (depends on Step 34)
+Step 35 ✅ ─── Core component migration (depends on Step 34)
 Step 36 ⬜ ─── Dialog/form migration (depends on Step 34, parallel with Step 35)
-Step 37 ⬜ ─── Language picker UI (depends on Steps 34–35)
+Step 37 ✅ ─── Language picker UI (depends on Steps 34–35)
 ```
 
-Steps 35 and 36 can be done in parallel once Step 34 is complete. Step 37 depends on the component migration being done so the language switch has visible effect.
+Step 36 is the only remaining step. Steps 35 and 37 are complete, so the language switch already has visible effect across all core components and pages. Step 36 will extend coverage to dialogs and forms.
 
 ---
 
@@ -295,3 +300,4 @@ No code changes needed beyond these 4 files.
 | 2025-07-17 | 33 | Portuguese (PT-PT) message catalog — `messages/pt.json`, 471 lines, 100% key parity with English, European Portuguese vocabulary throughout |
 | 2025-07-17 | 34 | Layout provider + locale sync hook — `app/layout.tsx` made async, wraps all children with `NextIntlClientProvider` (locale + messages from server), `<html lang>` dynamic. `hooks/useLocaleSync.ts` bridges Convex `userPreferences.language` → `NEXT_LOCALE` cookie with reload, sign-out cleanup, loop guard. Wired into `app/auth-wrapper.tsx`. Build clean, zero regressions. |
 | 2025-07-17 | 35 | Core component migration — 8 components + 2 pages wired to `useTranslations()`. Header nav labels resolved via `t(item.id)` from `nav` namespace. `NetWorthHero` uses ICU plural `todayAcrossPortfolios` with `{change, count}`. Holdings uses `TYPE_LABEL_KEYS` map → translated asset type labels, column headers, expanded panel, action buttons, quantity units. Dashboard page: tab labels, portfolio count, empty states, market benchmarks. Portfolio detail: tab labels, stat labels (Holdings, Top Holding, YTD Return, Volatility), Back, Delete Portfolio, Access Denied, Performance, AI label. News page: title, subtitle, Live Feed, `updated` with `{time}`, `showingArticles` with `{start, end, total}`, loading/empty states. 6 new keys added to both `en.json` and `pt.json`. JSON parity verified: 429 keys. Build clean. |
+| 2025-07-17 | 37 | Language picker — `components/settings/language-section.tsx` created with searchable dropdown (CurrencyPicker DNA), flag emoji + native name + English name + preview phrase per language. Instant-apply: calls `updateUserPreferences` mutation directly on selection (not batched with Save), `useLocaleSync` detects change → cookie update → page reload. "Switching…" spinner state with 3s fallback reload guard. Coverage indicator strip with flag emojis + active locale `StatusDot`. Wired into settings Profile tab. Removed static Language row + unused queries from `identity-section.tsx`. Build clean. |
