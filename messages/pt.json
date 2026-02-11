@@ -146,6 +146,7 @@
     "quantity": "Quantidade",
     "avgBuyPrice": "Preço Médio Compra",
     "currentPrice": "Preço Atual",
+    "currentValue": "Valor Atual",
     "totalValue": "Valor Total",
     "change": "Variação",
     "value": "Valor",
@@ -648,7 +649,9 @@
     "failedToUpdate": "Falha ao atualizar",
     "transactionDeleted": "Eliminada",
     "failedToDelete": "Falha ao eliminar",
-    "amount": "Montante"
+    "amount": "Montante",
+    "currency": "Moeda",
+    "avgBuy": "Média Compra"
   },
   "dialogs": {
     "createPortfolio": {
@@ -731,10 +734,10 @@
     },
     "editAsset": {
       "title": "Editar Ativo",
-      "stepDetails": "Detalhes",
+      "stepAssetInfo": "Info do Ativo",
       "stepPricing": "Preço",
       "stepNotes": "Notas",
-      "stepReview": "Revisão",
+      "stepConfirm": "Confirmar",
       "saveChanges": "Guardar Alterações",
       "assetTypeReadOnly": "Tipo de ativo (só leitura)",
       "cashHolding": "Posição de Liquidez",
@@ -743,7 +746,11 @@
       "reviewAssetDetails": "Rever Detalhes do Ativo",
       "confirmBeforeSaving": "Confirme as suas alterações antes de guardar",
       "notesHelper": "Opcional — registe o seu raciocínio ou contexto sobre este ativo",
-      "notesPlaceholder": "Tese de investimento, notas de pesquisa, lembretes…"
+      "notesPlaceholder": "Tese de investimento, notas de pesquisa, lembretes…",
+      "currencyHelperCash": "A moeda de denominação desta posição de liquidez",
+      "currencyHelperOther": "A moeda em que este ativo é denominado",
+      "stockSymbolPlaceholder": "ex.: AAPL",
+      "cryptoSymbolPlaceholder": "ex.: BTC"
     }
   },
   "onboarding": {

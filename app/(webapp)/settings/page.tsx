@@ -43,6 +43,7 @@ export default function V2SettingsPage() {
   const notificationsEnabled = useFeatureFlag("notifications");
   const aiSummariesEnabled = useFeatureFlag("ai-summaries");
   const earningsRemindersEnabled = useFeatureFlag("earnings-reminders");
+  const localizationEnabled = useFeatureFlag("localization");
 
   const { setTheme } = useTheme();
 
@@ -330,8 +331,8 @@ export default function V2SettingsPage() {
             >
               <IdentitySection />
 
-              {/* Language */}
-              <LanguageSection />
+              {/* Language — gated behind "localization" feature flag */}
+              {localizationEnabled && <LanguageSection />}
 
               {/* Appearance */}
               {appearanceEnabled && (
