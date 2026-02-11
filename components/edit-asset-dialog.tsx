@@ -34,6 +34,7 @@ import {
   type CurrencyMeta,
 } from "@/lib/currency";
 import { useAvailableCurrencies } from "@/hooks/useCurrency";
+import { useTranslations } from "next-intl";
 
 interface V2EditAssetDialogProps {
   isOpen: boolean;
@@ -42,7 +43,23 @@ interface V2EditAssetDialogProps {
   onAssetUpdated: () => void;
 }
 
-const STEPS = ["Asset Info", "Pricing", "Notes", "Confirm"] as const;
+const STEP_KEYS = [
+  "stepAssetInfo",
+  "stepPricing",
+  "stepNotes",
+  "stepConfirm",
+] as const;
+
+/** Maps DB asset type values → assets.* translation keys */
+const TYPE_LABEL_KEYS: Record<string, string> = {
+  stock: "stock",
+  crypto: "crypto",
+  cash: "cash",
+  bond: "bond",
+  "real estate": "realEstate",
+  commodity: "commodity",
+  other: "other",
+};
 
 const TYPE_META: Record<
   string,
@@ -276,11 +293,17 @@ export function V2EditAssetDialog({
   asset,
   onAssetUpdated,
 }: V2EditAssetDialogProps) {
+  const tc = useTranslations("common");
+  const ta = useTranslations("assets");
+  const td = useTranslations("dialogs.editAsset");
+
   const [stepIdx, setStepIdx] = useState(0);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(asset);
   const updateAsset = useMutation(api.assets.updateAsset);
   const { currency: baseCurrency } = useCurrency();
   const { currencies: dynamicCurrencies } = useAvailableCurrencies();
+
+  const STEPS = STEP_KEYS.map((k) => td(k));
 
   // Sync when asset prop changes (new asset selected for editing)
   if (
@@ -358,7 +381,7 @@ export function V2EditAssetDialog({
         className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
       >
         {stepIdx > 0 && <ArrowLeft className="h-3.5 w-3.5" />}
-        {stepIdx === 0 ? "Cancel" : "Back"}
+        {stepIdx === 0 ? tc("cancel") : tc("back")}
       </button>
       <button
         onClick={() => {
@@ -374,11 +397,11 @@ export function V2EditAssetDialog({
         {stepIdx === STEPS.length - 1 ? (
           <>
             <FloppyDisk className="h-3.5 w-3.5" />
-            Save Changes
+            {td("saveChanges")}
           </>
         ) : (
           <>
-            Continue
+            {tc("continue")}
             <ArrowRight className="h-3.5 w-3.5" />
           </>
         )}
@@ -393,7 +416,7 @@ export function V2EditAssetDialog({
         onOpenChange(v);
         if (!v) reset();
       }}
-      title="Edit Asset"
+      title={td("title")}
       steps={[...STEPS]}
       currentStep={stepIdx}
       onStepClick={handleStepClick}
@@ -412,10 +435,10 @@ export function V2EditAssetDialog({
             </div>
             <div>
               <p className="text-sm font-medium text-white capitalize">
-                {editingAsset.type}
+                {ta(TYPE_LABEL_KEYS[editingAsset.type] || "other")}
               </p>
               <p className="text-[11px] text-zinc-600">
-                Asset type (read-only)
+                {td("assetTypeReadOnly")}
               </p>
             </div>
           </div>
@@ -423,7 +446,7 @@ export function V2EditAssetDialog({
           {/* Name */}
           <div className="flex flex-col gap-2">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Asset Name
+              {ta("name")}
             </Label>
             <Input
               value={editingAsset.name}
@@ -440,7 +463,7 @@ export function V2EditAssetDialog({
             editingAsset.type === "crypto") && (
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Symbol
+                {ta("symbol")}
               </Label>
               <Input
                 value={editingAsset.symbol || ""}
@@ -452,7 +475,9 @@ export function V2EditAssetDialog({
                 }
                 className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
                 placeholder={
-                  editingAsset.type === "stock" ? "e.g., AAPL" : "e.g., BTC"
+                  editingAsset.type === "stock"
+                    ? td("stockSymbolPlaceholder")
+                    : td("cryptoSymbolPlaceholder")
                 }
               />
             </div>
@@ -461,7 +486,7 @@ export function V2EditAssetDialog({
           {/* Currency — portal picker for ALL asset types */}
           <div className="flex flex-col gap-2">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Currency
+              {ta("currency")}
             </Label>
             <PortalCurrencyPicker
               value={assetCurrency}
@@ -472,8 +497,8 @@ export function V2EditAssetDialog({
             />
             <p className="text-xs text-zinc-600">
               {editingAsset.type === "cash"
-                ? "The currency denomination for this cash holding"
-                : "The currency this asset is denominated in"}
+                ? td("currencyHelperCash")
+                : td("currencyHelperOther")}
             </p>
           </div>
         </div>
@@ -485,17 +510,14 @@ export function V2EditAssetDialog({
           {editingAsset.type === "cash" ? (
             <div className="rounded-lg border border-white/[0.06] bg-zinc-900/20 px-4 py-3">
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.12em] mb-2">
-                Cash Holding
+                {td("cashHolding")}
               </p>
-              <p className="text-sm text-zinc-400">
-                Cash assets use their quantity as the value. Price is managed
-                through transactions.
-              </p>
+              <p className="text-sm text-zinc-400">{td("cashDescription")}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Current Price
+                {ta("currentPrice")}
               </Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">
@@ -516,7 +538,7 @@ export function V2EditAssetDialog({
                 />
               </div>
               <p className="text-xs text-zinc-600">
-                Override the current market price for this asset
+                {td("overridePriceHelper")}
               </p>
             </div>
           )}
@@ -524,13 +546,13 @@ export function V2EditAssetDialog({
           {/* Context info — current value */}
           <div className="rounded-lg border border-white/[0.06] bg-zinc-900/20 px-4 py-3">
             <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.12em] mb-2">
-              Current Value
+              {ta("currentValue")}
             </p>
             <p className="text-lg font-semibold text-white tabular-nums">
               {fmtAsset(currentValue)}
             </p>
             <p className="text-[11px] text-zinc-600 mt-1">
-              {editingAsset.quantity || 0} units ×{" "}
+              {editingAsset.quantity || 0} {tc("units")} ×{" "}
               {fmtAsset(editingAsset.currentPrice || 0)}
             </p>
           </div>
@@ -542,7 +564,7 @@ export function V2EditAssetDialog({
         <div className="flex flex-col gap-4 pb-4">
           <div className="flex flex-col gap-2">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Notes
+              {ta("notes")}
             </Label>
             <Textarea
               value={(editingAsset as any).notes || ""}
@@ -554,12 +576,10 @@ export function V2EditAssetDialog({
               }
               rows={5}
               className="bg-zinc-900 border-white/[0.06] text-white resize-none text-sm leading-relaxed"
-              placeholder="Investment thesis, research notes, reminders…"
+              placeholder={td("notesPlaceholder")}
               autoFocus
             />
-            <p className="text-xs text-zinc-600">
-              Optional — track your reasoning or any context about this asset
-            </p>
+            <p className="text-xs text-zinc-600">{td("notesHelper")}</p>
           </div>
         </div>
       )}
@@ -569,32 +589,28 @@ export function V2EditAssetDialog({
         <div className="flex flex-col gap-5 pb-4">
           <div className="text-center py-1">
             <h3 className="text-white text-sm font-semibold mb-1">
-              Review Asset Details
+              {td("reviewAssetDetails")}
             </h3>
-            <p className="text-zinc-500 text-xs">
-              Confirm your changes before saving
-            </p>
+            <p className="text-zinc-500 text-xs">{td("confirmBeforeSaving")}</p>
           </div>
 
           <div className="rounded-lg border border-white/[0.06] overflow-hidden">
             {[
               {
-                label: "Type",
-                value:
-                  editingAsset.type.charAt(0).toUpperCase() +
-                  editingAsset.type.slice(1),
+                label: ta("type"),
+                value: ta(TYPE_LABEL_KEYS[editingAsset.type] || "other"),
               },
-              { label: "Name", value: editingAsset.name },
+              { label: ta("name"), value: editingAsset.name },
               ...(editingAsset.symbol
                 ? [
                     {
-                      label: "Symbol",
+                      label: ta("symbol"),
                       value: editingAsset.symbol.toUpperCase(),
                     },
                   ]
                 : []),
               {
-                label: "Currency",
+                label: ta("currency"),
                 value: currencyInfo
                   ? `${currencyInfo.flag} ${currencyInfo.code} — ${currencyInfo.name}`
                   : assetCurrency,
@@ -602,7 +618,7 @@ export function V2EditAssetDialog({
               ...(editingAsset.type !== "cash"
                 ? [
                     {
-                      label: "Current Price",
+                      label: ta("currentPrice"),
                       value: fmtAsset(editingAsset.currentPrice || 0),
                     },
                   ]
@@ -610,13 +626,13 @@ export function V2EditAssetDialog({
               ...(editingAsset.type !== "cash"
                 ? [
                     {
-                      label: "Current Value",
+                      label: ta("currentValue"),
                       value: fmtAsset(currentValue),
                     },
                   ]
                 : []),
               ...((editingAsset as any).notes
-                ? [{ label: "Notes", value: (editingAsset as any).notes }]
+                ? [{ label: ta("notes"), value: (editingAsset as any).notes }]
                 : []),
             ].map((row, i, arr) => (
               <div

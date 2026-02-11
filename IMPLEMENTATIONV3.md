@@ -211,21 +211,19 @@
 
 ### Step 36 — Migrate dialogs and forms to `useTranslations`
 
-> **Status**: Pending — depends on Step 34
+> **Status**: In progress — 4/9 components migrated
 
-- [ ] Migrate all dialog/form components:
+#### Migration Checklist
 
-| Component | Namespace | Key strings |
-|---|---|---|
-| `components/add-asset-dialog.tsx` | `dialogs.addAsset`, `assets` | Step labels (Type, Details, Purchase, Notes, Confirm), field labels, type options with descriptions, confirm summary row labels |
-| `components/edit-asset-dialog.tsx` | `dialogs.editAsset`, `assets` | Step labels, field labels, save/cancel, confirm summary |
-| `components/create-portfolio-dialog.tsx` | `dialogs.createPortfolio`, `portfolio` | Step labels (Name, Strategy, Confirm), risk tolerance options with descriptions, time horizon options, toggle labels |
-| `components/edit-portfolio-dialog.tsx` | `dialogs.editPortfolio`, `portfolio` | Step labels, field labels, change review rows |
-| `components/portfolio-goals.tsx` | `goals` | Goal type labels, status labels, preset goal descriptions, metric categories, Add/Edit Goal dialog labels |
-| `components/vault.tsx` | `vault` | Tab labels (Documents, Articles), document type names, upload dialog steps, article form fields |
-| `components/command-palette.tsx` | `search` | Placeholder text, category labels, empty states, keyboard hints |
-| `components/transaction-dialog.tsx` | `transactions` | Type labels (Buy, Sell, Dividend) with descriptions, step labels, field labels, confirm summary |
-| `components/not-found-content.tsx` | `errors` | "404", "PAGE NOT FOUND", description text, button labels |
+- [x] `components/not-found-content.tsx` — `errors`, `common` — 404 title, subtitle, description, button labels
+- [x] `components/create-portfolio-dialog.tsx` — `dialogs.createPortfolio`, `portfolio`, `common` — Step labels, risk tolerance options, time horizon options, toggle labels
+- [x] `components/edit-portfolio-dialog.tsx` — `dialogs.editPortfolio`, `dialogs.createPortfolio`, `portfolio`, `common` — Step labels, field labels, change review rows
+- [x] `components/add-asset-dialog.tsx` — `dialogs.addAsset`, `assets`, `common` — Step labels, type options with descriptions, field labels, confirm summary
+- [x] `components/edit-asset-dialog.tsx` — `dialogs.editAsset`, `assets`, `common` — Step labels, field labels, save/cancel, confirm summary
+- [x] `components/transaction-dialog.tsx` — `transactions`, `common` — Type labels (Buy, Sell, Dividend) with descriptions, step labels, field labels, confirm summary
+- [x] `components/command-palette.tsx` — `search`, `common` — Placeholder text, category labels, empty states, keyboard hints
+- [ ] `components/portfolio-goals.tsx` — `goals`, `common` — Goal type labels, status labels, preset goal descriptions, metric categories, Add/Edit Goal dialog labels
+- [ ] `components/vault.tsx` — `vault`, `common` — Tab labels (Documents, Articles), document type names, upload dialog steps, article form fields
 
 **Files**: All 9 components listed above
 

@@ -26,6 +26,7 @@ import {
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { useTranslations } from "next-intl";
 
 interface V2CreatePortfolioDialogProps {
   userId?: string;
@@ -33,47 +34,60 @@ interface V2CreatePortfolioDialogProps {
   triggerLabel?: string;
 }
 
-const STEPS = ["Name", "Strategy", "Confirm"] as const;
-
 const RISK_OPTIONS = [
   {
     value: "Conservative",
+    labelKey: "riskConservative" as const,
+    descKey: "riskConservativeDesc" as const,
     icon: ShieldCheck,
-    description: "Low risk, stable returns",
     color: "text-emerald-400",
     bgColor: "bg-emerald-500/10",
   },
   {
     value: "Moderate",
+    labelKey: "riskModerate" as const,
+    descKey: "riskModerateDesc" as const,
     icon: ChartLineUp,
-    description: "Balanced risk & reward",
     color: "text-amber-400",
     bgColor: "bg-amber-500/10",
   },
   {
     value: "Aggressive",
+    labelKey: "riskAggressive" as const,
+    descKey: "riskAggressiveDesc" as const,
     icon: ChartLineUp,
-    description: "High risk, high potential",
     color: "text-red-400",
     bgColor: "bg-red-500/10",
   },
 ] as const;
 
 const TIME_HORIZONS = [
-  { value: "Short-term (< 3 years)", label: "Short-term", sub: "< 3 years" },
+  {
+    value: "Short-term (< 3 years)",
+    labelKey: "horizonShort" as const,
+    subKey: "horizonShortSub" as const,
+  },
   {
     value: "Medium-term (3-10 years)",
-    label: "Medium-term",
-    sub: "3–10 years",
+    labelKey: "horizonMedium" as const,
+    subKey: "horizonMediumSub" as const,
   },
-  { value: "Long-term (10+ years)", label: "Long-term", sub: "10+ years" },
+  {
+    value: "Long-term (10+ years)",
+    labelKey: "horizonLong" as const,
+    subKey: "horizonLongSub" as const,
+  },
 ] as const;
 
 export function V2CreatePortfolioDialog({
   userId,
   triggerClassName,
-  triggerLabel = "New Portfolio",
+  triggerLabel,
 }: V2CreatePortfolioDialogProps) {
+  const tc = useTranslations("common");
+  const tp = useTranslations("portfolio");
+  const td = useTranslations("dialogs.createPortfolio");
+
   const [open, setOpen] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [name, setName] = useState("");
@@ -83,6 +97,8 @@ export function V2CreatePortfolioDialog({
   const [includeInNetworth, setIncludeInNetworth] = useState(true);
   const [allowSubscriptions, setAllowSubscriptions] = useState(false);
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
+
+  const STEPS = [td("stepName"), td("stepStrategy"), td("stepConfirm")];
 
   const reset = () => {
     setStepIdx(0);
@@ -134,7 +150,7 @@ export function V2CreatePortfolioDialog({
         className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
       >
         {stepIdx > 0 && <ArrowLeft className="h-3.5 w-3.5" />}
-        {stepIdx === 0 ? "Cancel" : "Back"}
+        {stepIdx === 0 ? tc("cancel") : tc("back")}
       </button>
       <button
         onClick={() => {
@@ -150,11 +166,11 @@ export function V2CreatePortfolioDialog({
         {stepIdx === STEPS.length - 1 ? (
           <>
             <Plus className="h-3.5 w-3.5" />
-            Create Portfolio
+            {td("createPortfolio")}
           </>
         ) : (
           <>
-            Continue
+            {tc("continue")}
             <ArrowRight className="h-3.5 w-3.5" />
           </>
         )}
@@ -172,7 +188,7 @@ export function V2CreatePortfolioDialog({
         }
       >
         <Plus className="h-4 w-4" />
-        {triggerLabel}
+        {triggerLabel || td("newPortfolio")}
       </button>
 
       <ResponsiveDialog
@@ -181,7 +197,7 @@ export function V2CreatePortfolioDialog({
           setOpen(v);
           if (!v) reset();
         }}
-        title="Create Portfolio"
+        title={td("title")}
         steps={[...STEPS]}
         currentStep={stepIdx}
         footer={footer}
@@ -192,12 +208,12 @@ export function V2CreatePortfolioDialog({
           <div className="flex flex-col gap-5 pb-4">
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Portfolio Name
+                {td("portfolioName")}
               </Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Growth Portfolio, Tech Stocks…"
+                placeholder={td("portfolioNamePlaceholder")}
                 className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
                 autoFocus
               />
@@ -205,18 +221,16 @@ export function V2CreatePortfolioDialog({
 
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Description
+                {td("description")}
               </Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe your investment strategy or goals…"
+                placeholder={td("descriptionPlaceholder")}
                 rows={3}
                 className="bg-zinc-900 border-white/[0.06] text-white resize-none text-sm"
               />
-              <p className="text-xs text-zinc-600">
-                Optional — helps organize your portfolios
-              </p>
+              <p className="text-xs text-zinc-600">{td("descriptionHelper")}</p>
             </div>
           </div>
         )}
@@ -227,7 +241,7 @@ export function V2CreatePortfolioDialog({
             {/* Risk Tolerance — card selector */}
             <div className="flex flex-col gap-3">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Risk Tolerance
+                {tp("riskTolerance")}
               </Label>
               <div className="grid grid-cols-3 gap-2">
                 {RISK_OPTIONS.map((opt) => {
@@ -254,10 +268,10 @@ export function V2CreatePortfolioDialog({
                         />
                       </div>
                       <span className="text-xs font-medium text-white">
-                        {opt.value}
+                        {tp(opt.labelKey)}
                       </span>
                       <span className="text-[10px] text-zinc-600 leading-tight text-center">
-                        {opt.description}
+                        {tp(opt.descKey)}
                       </span>
                       {/* Selection indicator dot */}
                       {isSelected && (
@@ -272,7 +286,7 @@ export function V2CreatePortfolioDialog({
             {/* Time Horizon — card selector */}
             <div className="flex flex-col gap-3">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Time Horizon
+                {tp("timeHorizon")}
               </Label>
               <div className="grid grid-cols-3 gap-2">
                 {TIME_HORIZONS.map((opt) => {
@@ -294,10 +308,10 @@ export function V2CreatePortfolioDialog({
                         weight={isSelected ? "fill" : "regular"}
                       />
                       <span className="text-xs font-medium text-white">
-                        {opt.label}
+                        {tp(opt.labelKey)}
                       </span>
                       <span className="text-[10px] text-zinc-600">
-                        {opt.sub}
+                        {tp(opt.subKey)}
                       </span>
                       {isSelected && (
                         <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white" />
@@ -317,10 +331,10 @@ export function V2CreatePortfolioDialog({
                   </div>
                   <div>
                     <p className="text-sm text-white font-medium">
-                      Include in Net Worth
+                      {tp("includeInNetWorth")}
                     </p>
                     <p className="text-[11px] text-zinc-600 mt-0.5">
-                      Count this portfolio in your total net worth
+                      {tp("includeInNetWorthDescription")}
                     </p>
                   </div>
                 </div>
@@ -337,10 +351,10 @@ export function V2CreatePortfolioDialog({
                   </div>
                   <div>
                     <p className="text-sm text-white font-medium">
-                      Allow Subscriptions
+                      {tp("allowSubscriptions")}
                     </p>
                     <p className="text-[11px] text-zinc-600 mt-0.5">
-                      Let others follow this portfolio's updates
+                      {tp("allowSubscriptionsDescription")}
                     </p>
                   </div>
                 </div>
@@ -361,32 +375,30 @@ export function V2CreatePortfolioDialog({
                 <Check className="h-6 w-6 text-emerald-400" />
               </div>
               <h3 className="text-white text-lg font-semibold mb-1">
-                Ready to Create Portfolio
+                {td("readyToCreate")}
               </h3>
-              <p className="text-zinc-400 text-sm">
-                Review your portfolio details before creating
-              </p>
+              <p className="text-zinc-400 text-sm">{td("reviewDetails")}</p>
             </div>
 
             <div className="rounded-lg border border-white/[0.06] overflow-hidden">
               {[
-                { label: "Name", value: name },
+                { label: td("name"), value: name },
                 ...(description
-                  ? [{ label: "Description", value: description }]
+                  ? [{ label: td("description"), value: description }]
                   : []),
                 ...(riskTolerance
-                  ? [{ label: "Risk Tolerance", value: riskTolerance }]
+                  ? [{ label: td("riskTolerance"), value: riskTolerance }]
                   : []),
                 ...(timeHorizon
-                  ? [{ label: "Time Horizon", value: timeHorizon }]
+                  ? [{ label: td("timeHorizon"), value: timeHorizon }]
                   : []),
                 {
-                  label: "Include in Net Worth",
-                  value: includeInNetworth ? "Yes" : "No",
+                  label: td("includeInNetWorth"),
+                  value: includeInNetworth ? tc("yes") : tc("no"),
                 },
                 {
-                  label: "Allow Subscriptions",
-                  value: allowSubscriptions ? "Yes" : "No",
+                  label: td("allowSubscriptions"),
+                  value: allowSubscriptions ? tc("yes") : tc("no"),
                 },
               ].map((row, i, arr) => (
                 <div

@@ -19,6 +19,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { useTranslations } from "next-intl";
 
 interface V2EditPortfolioDialogProps {
   portfolioId: string;
@@ -31,40 +32,49 @@ interface V2EditPortfolioDialogProps {
   initialAllowSubscriptions?: boolean;
 }
 
-const STEPS = ["Details", "Strategy", "Confirm"] as const;
-
 const RISK_OPTIONS = [
   {
     value: "Conservative",
+    labelKey: "riskConservative" as const,
+    descKey: "riskConservativeDesc" as const,
     icon: ShieldCheck,
-    description: "Low risk, stable returns",
     color: "text-emerald-400",
     bgColor: "bg-emerald-500/10",
   },
   {
     value: "Moderate",
+    labelKey: "riskModerate" as const,
+    descKey: "riskModerateDesc" as const,
     icon: ChartLineUp,
-    description: "Balanced risk & reward",
     color: "text-amber-400",
     bgColor: "bg-amber-500/10",
   },
   {
     value: "Aggressive",
+    labelKey: "riskAggressive" as const,
+    descKey: "riskAggressiveDesc" as const,
     icon: ChartLineUp,
-    description: "High risk, high potential",
     color: "text-red-400",
     bgColor: "bg-red-500/10",
   },
 ] as const;
 
 const TIME_HORIZONS = [
-  { value: "Short-term (< 3 years)", label: "Short-term", sub: "< 3 years" },
+  {
+    value: "Short-term (< 3 years)",
+    labelKey: "horizonShort" as const,
+    subKey: "horizonShortSub" as const,
+  },
   {
     value: "Medium-term (3-10 years)",
-    label: "Medium-term",
-    sub: "3–10 years",
+    labelKey: "horizonMedium" as const,
+    subKey: "horizonMediumSub" as const,
   },
-  { value: "Long-term (10+ years)", label: "Long-term", sub: "10+ years" },
+  {
+    value: "Long-term (10+ years)",
+    labelKey: "horizonLong" as const,
+    subKey: "horizonLongSub" as const,
+  },
 ] as const;
 
 export function V2EditPortfolioDialog({
@@ -77,6 +87,11 @@ export function V2EditPortfolioDialog({
   initialIncludeInNetworth = true,
   initialAllowSubscriptions = false,
 }: V2EditPortfolioDialogProps) {
+  const tc = useTranslations("common");
+  const tp = useTranslations("portfolio");
+  const td = useTranslations("dialogs.editPortfolio");
+  const tdc = useTranslations("dialogs.createPortfolio");
+
   const [open, setOpen] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [name, setName] = useState(initialName);
@@ -91,6 +106,8 @@ export function V2EditPortfolioDialog({
   );
 
   const updatePortfolio = useMutation(api.portfolios.updatePortfolio);
+
+  const STEPS = [td("stepDetails"), td("stepStrategy"), td("stepReview")];
 
   // Sync state when initial props change (e.g. after a refetch)
   useEffect(() => {
@@ -154,12 +171,12 @@ export function V2EditPortfolioDialog({
   // ── Detect changes for the confirm step ───────────────────────
   const changes = [
     ...(name !== initialName
-      ? [{ label: "Name", from: initialName, to: name }]
+      ? [{ label: td("portfolioName"), from: initialName, to: name }]
       : []),
     ...(description !== initialDescription
       ? [
           {
-            label: "Description",
+            label: tc("description"),
             from: initialDescription || "—",
             to: description || "—",
           },
@@ -168,7 +185,7 @@ export function V2EditPortfolioDialog({
     ...(riskTolerance !== initialRiskTolerance
       ? [
           {
-            label: "Risk Tolerance",
+            label: tp("riskTolerance"),
             from: initialRiskTolerance || "—",
             to: riskTolerance || "—",
           },
@@ -177,7 +194,7 @@ export function V2EditPortfolioDialog({
     ...(timeHorizon !== initialTimeHorizon
       ? [
           {
-            label: "Time Horizon",
+            label: tp("timeHorizon"),
             from: initialTimeHorizon || "—",
             to: timeHorizon || "—",
           },
@@ -186,18 +203,18 @@ export function V2EditPortfolioDialog({
     ...(includeInNetworth !== initialIncludeInNetworth
       ? [
           {
-            label: "Include in Net Worth",
-            from: initialIncludeInNetworth ? "Yes" : "No",
-            to: includeInNetworth ? "Yes" : "No",
+            label: tp("includeInNetWorth"),
+            from: initialIncludeInNetworth ? tc("yes") : tc("no"),
+            to: includeInNetworth ? tc("yes") : tc("no"),
           },
         ]
       : []),
     ...(allowSubscriptions !== initialAllowSubscriptions
       ? [
           {
-            label: "Allow Subscriptions",
-            from: initialAllowSubscriptions ? "Yes" : "No",
-            to: allowSubscriptions ? "Yes" : "No",
+            label: tp("allowSubscriptions"),
+            from: initialAllowSubscriptions ? tc("yes") : tc("no"),
+            to: allowSubscriptions ? tc("yes") : tc("no"),
           },
         ]
       : []),
@@ -220,7 +237,7 @@ export function V2EditPortfolioDialog({
         className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
       >
         {stepIdx > 0 && <ArrowLeft className="h-3.5 w-3.5" />}
-        {stepIdx === 0 ? "Cancel" : "Back"}
+        {stepIdx === 0 ? tc("cancel") : tc("back")}
       </button>
       <button
         onClick={() => {
@@ -236,11 +253,11 @@ export function V2EditPortfolioDialog({
         {stepIdx === STEPS.length - 1 ? (
           <>
             <FloppyDisk className="h-3.5 w-3.5" />
-            Save Changes
+            {td("saveChanges")}
           </>
         ) : (
           <>
-            Continue
+            {tc("continue")}
             <ArrowRight className="h-3.5 w-3.5" />
           </>
         )}
@@ -253,9 +270,9 @@ export function V2EditPortfolioDialog({
       <button
         onClick={handleOpen}
         className="text-xs text-zinc-500 hover:text-white transition-colors"
-        aria-label="Edit portfolio"
+        aria-label={td("editPortfolioButton")}
       >
-        Edit Portfolio
+        {td("editPortfolioButton")}
       </button>
 
       <ResponsiveDialog
@@ -264,7 +281,7 @@ export function V2EditPortfolioDialog({
           setOpen(v);
           if (!v) reset();
         }}
-        title="Edit Portfolio"
+        title={td("title")}
         steps={[...STEPS]}
         currentStep={stepIdx}
         footer={footer}
@@ -275,12 +292,12 @@ export function V2EditPortfolioDialog({
           <div className="flex flex-col gap-5 pb-4">
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Portfolio Name
+                {td("portfolioName")}
               </Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Portfolio name"
+                placeholder={td("portfolioNamePlaceholder")}
                 className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
                 autoFocus
               />
@@ -288,17 +305,17 @@ export function V2EditPortfolioDialog({
 
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Description
+                {tc("description")}
               </Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe your investment strategy or goals…"
+                placeholder={tdc("descriptionPlaceholder")}
                 rows={3}
                 className="bg-zinc-900 border-white/[0.06] text-white resize-none text-sm"
               />
               <p className="text-xs text-zinc-600">
-                Optional — helps organize your portfolios
+                {tdc("descriptionHelper")}
               </p>
             </div>
           </div>
@@ -310,7 +327,7 @@ export function V2EditPortfolioDialog({
             {/* Risk Tolerance — card selector */}
             <div className="flex flex-col gap-3">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Risk Tolerance
+                {tp("riskTolerance")}
               </Label>
               <div className="grid grid-cols-3 gap-2">
                 {RISK_OPTIONS.map((opt) => {
@@ -337,10 +354,10 @@ export function V2EditPortfolioDialog({
                         />
                       </div>
                       <span className="text-xs font-medium text-white">
-                        {opt.value}
+                        {tp(opt.labelKey)}
                       </span>
                       <span className="text-[10px] text-zinc-600 leading-tight text-center">
-                        {opt.description}
+                        {tp(opt.descKey)}
                       </span>
                       {isSelected && (
                         <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white" />
@@ -354,7 +371,7 @@ export function V2EditPortfolioDialog({
             {/* Time Horizon — card selector */}
             <div className="flex flex-col gap-3">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Time Horizon
+                {tp("timeHorizon")}
               </Label>
               <div className="grid grid-cols-3 gap-2">
                 {TIME_HORIZONS.map((opt) => {
@@ -376,10 +393,10 @@ export function V2EditPortfolioDialog({
                         weight={isSelected ? "fill" : "regular"}
                       />
                       <span className="text-xs font-medium text-white">
-                        {opt.label}
+                        {tp(opt.labelKey)}
                       </span>
                       <span className="text-[10px] text-zinc-600">
-                        {opt.sub}
+                        {tp(opt.subKey)}
                       </span>
                       {isSelected && (
                         <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white" />
@@ -399,10 +416,10 @@ export function V2EditPortfolioDialog({
                   </div>
                   <div>
                     <p className="text-sm text-white font-medium">
-                      Include in Net Worth
+                      {tp("includeInNetWorth")}
                     </p>
                     <p className="text-[11px] text-zinc-600 mt-0.5">
-                      Count this portfolio in your total net worth
+                      {tp("includeInNetWorthDescription")}
                     </p>
                   </div>
                 </div>
@@ -419,10 +436,10 @@ export function V2EditPortfolioDialog({
                   </div>
                   <div>
                     <p className="text-sm text-white font-medium">
-                      Allow Subscriptions
+                      {tp("allowSubscriptions")}
                     </p>
                     <p className="text-[11px] text-zinc-600 mt-0.5">
-                      Let others follow this portfolio's updates
+                      {tp("allowSubscriptionsDescription")}
                     </p>
                   </div>
                 </div>
@@ -442,11 +459,10 @@ export function V2EditPortfolioDialog({
               <>
                 <div className="text-center py-1">
                   <h3 className="text-white text-sm font-semibold mb-1">
-                    Review Changes
+                    {td("reviewChanges")}
                   </h3>
                   <p className="text-zinc-500 text-xs">
-                    {changes.length} field{changes.length !== 1 ? "s" : ""}{" "}
-                    modified
+                    {td("fieldsModified", { count: changes.length })}
                   </p>
                 </div>
 
@@ -479,10 +495,10 @@ export function V2EditPortfolioDialog({
             ) : (
               <div className="text-center py-6">
                 <p className="text-zinc-500 text-sm">
-                  No changes have been made.
+                  {td("noChangesDescription")}
                 </p>
                 <p className="text-zinc-700 text-xs mt-1">
-                  Go back to modify your portfolio settings.
+                  {td("goBackToModify")}
                 </p>
               </div>
             )}

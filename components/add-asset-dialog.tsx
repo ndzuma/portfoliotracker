@@ -31,6 +31,7 @@ import {
   type CurrencyMeta,
 } from "@/lib/currency";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslations } from "next-intl";
 
 interface V2AddAssetDialogProps {
   portfolioId: string;
@@ -39,51 +40,51 @@ interface V2AddAssetDialogProps {
 const ASSET_TYPES = [
   {
     id: "stock" as const,
-    label: "Stock",
+    labelKey: "stock" as const,
+    descKey: "stockDesc" as const,
     icon: TrendUp,
     color: "text-blue-400",
     bgColor: "bg-blue-500/10",
-    description: "Equities & ETFs",
   },
   {
     id: "crypto" as const,
-    label: "Crypto",
+    labelKey: "crypto" as const,
+    descKey: "cryptoDesc" as const,
     icon: Coins,
     color: "text-amber-400",
     bgColor: "bg-amber-500/10",
-    description: "Digital assets",
   },
   {
     id: "cash" as const,
-    label: "Cash",
+    labelKey: "cash" as const,
+    descKey: "cashDesc" as const,
     icon: Money,
     color: "text-emerald-400",
     bgColor: "bg-emerald-500/10",
-    description: "Savings & deposits",
   },
   {
     id: "bond" as const,
-    label: "Bond",
+    labelKey: "bond" as const,
+    descKey: "bondDesc" as const,
     icon: Bank,
     color: "text-purple-400",
     bgColor: "bg-purple-500/10",
-    description: "Fixed income",
   },
   {
     id: "real estate" as const,
-    label: "Real Estate",
+    labelKey: "realEstate" as const,
+    descKey: "realEstateDesc" as const,
     icon: Buildings,
     color: "text-teal-400",
     bgColor: "bg-teal-500/10",
-    description: "Property & REITs",
   },
   {
     id: "commodity" as const,
-    label: "Commodity",
+    labelKey: "commodity" as const,
+    descKey: "commodityDesc" as const,
     icon: Diamond,
     color: "text-orange-400",
     bgColor: "bg-orange-500/10",
-    description: "Gold, oil, etc.",
   },
 ];
 
@@ -95,7 +96,13 @@ type AssetType =
   | "real estate"
   | "commodity";
 
-const STEPS = ["Type", "Details", "Purchase", "Notes", "Confirm"] as const;
+const STEP_KEYS = [
+  "stepType",
+  "stepDetails",
+  "stepPurchase",
+  "stepNotes",
+  "stepConfirm",
+] as const;
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PORTAL CURRENCY PICKER — renders dropdown via portal so it escapes
@@ -293,6 +300,10 @@ function PortalCurrencyPicker({
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
+  const tc = useTranslations("common");
+  const ta = useTranslations("assets");
+  const td = useTranslations("dialogs.addAsset");
+
   const [open, setOpen] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const { currency: baseCurrency, format: fmtBase } = useCurrency();
@@ -311,6 +322,8 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
   });
 
   const createAsset = useMutation(api.assets.createAsset);
+
+  const STEPS = STEP_KEYS.map((k) => td(k));
 
   // Currency-aware formatting helpers — use the ASSET's selected currency, not the user's base
   const assetCurrSym = currencySymbol(form.currency);
@@ -383,7 +396,6 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
 
   // Clickable step navigation
   const handleStepClick = (idx: number) => {
-    // Allow clicking on completed steps or current step
     if (idx <= stepIdx) {
       setStepIdx(idx);
     }
@@ -410,9 +422,9 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
           }}
           className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
         >
-          Cancel
+          {tc("cancel")}
         </button>
-        <p className="text-[11px] text-zinc-700">Select an asset type</p>
+        <p className="text-[11px] text-zinc-700">{td("selectAnAssetType")}</p>
       </div>
     ) : (
       <div className="flex items-center justify-between gap-3">
@@ -421,7 +433,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
           className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back
+          {tc("back")}
         </button>
         <button
           onClick={() => {
@@ -437,11 +449,11 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
           {stepIdx === STEPS.length - 1 ? (
             <>
               <Plus className="h-3.5 w-3.5" />
-              Add Asset
+              {td("addAsset")}
             </>
           ) : (
             <>
-              Continue
+              {tc("continue")}
               <ArrowRight className="h-3.5 w-3.5" />
             </>
           )}
@@ -456,7 +468,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
         className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors"
       >
         <Plus className="h-4 w-4" />
-        Add Asset
+        {td("addAsset")}
       </button>
 
       <ResponsiveDialog
@@ -465,7 +477,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
           setOpen(v);
           if (!v) reset();
         }}
-        title="Add Asset"
+        title={td("title")}
         steps={[...STEPS]}
         currentStep={stepIdx}
         onStepClick={handleStepClick}
@@ -501,10 +513,10 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
                       />
                     </div>
                     <span className="text-xs font-medium text-white">
-                      {t.label}
+                      {ta(t.labelKey)}
                     </span>
                     <span className="text-[10px] text-zinc-600 leading-tight text-center">
-                      {t.description}
+                      {ta(t.descKey)}
                     </span>
                     {isSelected && (
                       <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white" />
@@ -532,14 +544,14 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
                 </div>
                 <div className="flex-1">
                   <p className="text-xs font-medium text-white">
-                    {selectedType.label}
+                    {ta(selectedType.labelKey)}
                   </p>
                 </div>
                 <button
                   onClick={() => setStepIdx(0)}
                   className="text-[11px] text-zinc-600 hover:text-white transition-colors"
                 >
-                  Change
+                  {tc("change")}
                 </button>
               </div>
             )}
@@ -547,19 +559,19 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
             {/* Name */}
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Name
+                {ta("name")}
               </Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder={
                   form.type === "stock"
-                    ? "Apple Inc."
+                    ? td("stockPlaceholder")
                     : form.type === "crypto"
-                      ? "Bitcoin"
+                      ? td("cryptoPlaceholder")
                       : form.type === "real estate"
-                        ? "Property name"
-                        : "Asset name"
+                        ? td("realEstatePlaceholder")
+                        : td("genericPlaceholder")
                 }
                 className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
                 autoFocus
@@ -570,24 +582,26 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
             {(form.type === "stock" || form.type === "crypto") && (
               <div className="flex flex-col gap-2">
                 <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                  Symbol
+                  {ta("symbol")}
                 </Label>
                 <Input
                   value={form.symbol}
                   onChange={(e) => setForm({ ...form, symbol: e.target.value })}
-                  placeholder={form.type === "stock" ? "AAPL" : "BTC"}
+                  placeholder={
+                    form.type === "stock"
+                      ? td("stockSymbolPlaceholder")
+                      : td("cryptoSymbolPlaceholder")
+                  }
                   className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
                 />
-                <p className="text-xs text-zinc-600">
-                  Used for automatic price tracking
-                </p>
+                <p className="text-xs text-zinc-600">{td("symbolHelper")}</p>
               </div>
             )}
 
             {/* Currency — portal picker for ALL asset types */}
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Currency
+                {ta("currency")}
               </Label>
               <PortalCurrencyPicker
                 value={form.currency}
@@ -596,8 +610,8 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
               />
               <p className="text-xs text-zinc-600">
                 {form.type === "cash"
-                  ? "The currency denomination for this cash holding"
-                  : "The currency this asset is denominated in"}
+                  ? td("currencyHelperCash")
+                  : td("currencyHelperOther")}
               </p>
             </div>
           </div>
@@ -610,7 +624,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
             {form.type !== "cash" && form.type !== "real estate" && (
               <div className="flex flex-col gap-2">
                 <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                  Quantity
+                  {ta("quantity")}
                 </Label>
                 <Input
                   type="number"
@@ -630,7 +644,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-2">
                 <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                  {form.type === "cash" ? "Amount" : "Purchase Price"}
+                  {form.type === "cash" ? td("amount") : ta("purchasePrice")}
                 </Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">
@@ -650,7 +664,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                  Date
+                  {tc("date")}
                 </Label>
                 <Input
                   type="date"
@@ -668,7 +682,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-2">
                   <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                    Current Price
+                    {ta("currentPrice")}
                   </Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">
@@ -681,17 +695,17 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
                       onChange={(e) =>
                         setForm({ ...form, currentPrice: e.target.value })
                       }
-                      placeholder="Auto from buy"
+                      placeholder={td("autoFromBuy")}
                       className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm pl-7"
                     />
                   </div>
                   <p className="text-xs text-zinc-600">
-                    Leave empty to use purchase price
+                    {td("leaveEmptyForPurchase")}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                    Fees
+                    {ta("fees")}
                   </Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">
@@ -716,7 +730,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
             {form.purchasePrice && (
               <div className="rounded-lg border border-white/[0.06] bg-zinc-900/20 px-4 py-3">
                 <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.12em] mb-1.5">
-                  Total Cost
+                  {td("totalCost")}
                 </p>
                 <p className="text-lg font-semibold text-white tabular-nums">
                   {fmtAsset(totalCost)}
@@ -739,19 +753,17 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
           <div className="flex flex-col gap-4 pb-4">
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Notes
+                {ta("notes")}
               </Label>
               <Textarea
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 rows={5}
                 className="bg-zinc-900 border-white/[0.06] text-white resize-none text-sm leading-relaxed"
-                placeholder="Investment thesis, research notes, reminders…"
+                placeholder={td("notesPlaceholderLong")}
                 autoFocus
               />
-              <p className="text-xs text-zinc-600">
-                Optional — you can always add notes later
-              </p>
+              <p className="text-xs text-zinc-600">{td("notesHelper")}</p>
             </div>
           </div>
         )}
@@ -761,25 +773,25 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
           <div className="flex flex-col gap-5 pb-4">
             <div className="text-center py-1">
               <h3 className="text-white text-sm font-semibold mb-1">
-                Review Asset
+                {td("reviewAsset")}
               </h3>
               <p className="text-zinc-500 text-xs">
-                Confirm the details before adding
+                {td("confirmBeforeAdding")}
               </p>
             </div>
 
             <div className="rounded-lg border border-white/[0.06] overflow-hidden">
               {[
                 {
-                  label: "Type",
+                  label: ta("type"),
                   value: form.type.charAt(0).toUpperCase() + form.type.slice(1),
                 },
-                { label: "Name", value: form.name },
+                { label: ta("name"), value: form.name },
                 ...(form.symbol
-                  ? [{ label: "Symbol", value: form.symbol.toUpperCase() }]
+                  ? [{ label: ta("symbol"), value: form.symbol.toUpperCase() }]
                   : []),
                 {
-                  label: "Currency",
+                  label: ta("currency"),
                   value: currencyInfo
                     ? `${currencyInfo.flag} ${currencyInfo.code} — ${currencyInfo.name}`
                     : form.currency,
@@ -787,19 +799,20 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
                 {
                   label:
                     form.type === "cash" || form.type === "real estate"
-                      ? "Units"
-                      : "Quantity",
+                      ? tc("units")
+                      : ta("quantity"),
                   value:
                     form.type === "cash" || form.type === "real estate"
                       ? "1"
                       : form.quantity,
                 },
                 {
-                  label: form.type === "cash" ? "Amount" : "Purchase Price",
+                  label:
+                    form.type === "cash" ? td("amount") : ta("purchasePrice"),
                   value: fmtAsset(Number(form.purchasePrice)),
                 },
                 {
-                  label: "Date",
+                  label: tc("date"),
                   value: new Date(form.purchaseDate).toLocaleDateString(
                     "en-US",
                     { year: "numeric", month: "short", day: "numeric" },
@@ -808,7 +821,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
                 ...(form.type !== "cash" && form.currentPrice
                   ? [
                       {
-                        label: "Current Price",
+                        label: ta("currentPrice"),
                         value: fmtAsset(Number(form.currentPrice)),
                       },
                     ]
@@ -816,7 +829,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
                 ...(Number(form.fees) > 0
                   ? [
                       {
-                        label: "Fees",
+                        label: ta("fees"),
                         value: fmtAsset(Number(form.fees)),
                       },
                     ]
@@ -824,7 +837,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
                 ...(form.notes
                   ? [
                       {
-                        label: "Notes",
+                        label: ta("notes"),
                         value:
                           form.notes.length > 60
                             ? form.notes.slice(0, 60) + "…"
@@ -852,7 +865,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
             {/* Total cost highlight */}
             <div className="rounded-lg border border-white/[0.06] bg-zinc-900/20 px-4 py-3 text-center">
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.12em] mb-1">
-                Total Investment
+                {td("totalInvestment")}
               </p>
               <p className="text-xl font-semibold text-white tabular-nums">
                 {fmtAsset(totalCost)}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { House, ArrowLeft, Compass } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 
 const GLITCH_CHARS = "░▒▓█▀▄▐▌▊▎▏┃━┓┗┛┏╋╳⬡⎔◇◆";
 
@@ -46,9 +47,11 @@ function useGlitchText(original: string, active: boolean) {
 }
 
 export function NotFoundContent() {
+  const t = useTranslations("errors");
+  const tCommon = useTranslations("common");
   const [mounted, setMounted] = useState(false);
-  const glitchedTitle = useGlitchText("404", mounted);
-  const glitchedSub = useGlitchText("PAGE NOT FOUND", mounted);
+  const glitchedTitle = useGlitchText(t("notFoundTitle"), mounted);
+  const glitchedSub = useGlitchText(t("notFoundSubtitle"), mounted);
 
   useEffect(() => {
     setMounted(true);
@@ -145,9 +148,7 @@ export function NotFoundContent() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.4 }}
           >
-            This route doesn&apos;t exist or you don&apos;t have access.
-            <br />
-            The page may have moved, or the feature isn&apos;t available yet.
+            {t("notFoundDescription")}
           </motion.p>
 
           {/* Navigation actions */}
@@ -162,14 +163,14 @@ export function NotFoundContent() {
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors"
             >
               <House className="h-4 w-4" />
-              Dashboard
+              {tCommon("dashboard")}
             </Link>
             <button
               onClick={() => window.history.back()}
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg border border-white/[0.06] bg-white/[0.03] text-zinc-400 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.1] transition-all"
             >
               <ArrowLeft className="h-4 w-4" />
-              Go Back
+              {tCommon("goBack")}
             </button>
           </motion.div>
 
@@ -185,7 +186,7 @@ export function NotFoundContent() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500/60" />
             </div>
             <span className="font-mono text-[10px] text-zinc-700 uppercase tracking-[0.2em]">
-              PulsePortfolio — Route Not Resolved
+              {t("routeNotResolved")}
             </span>
           </motion.div>
         </motion.div>
@@ -200,10 +201,10 @@ export function NotFoundContent() {
               textShadow: "0 0 80px rgba(212, 175, 55, 0.1)",
             }}
           >
-            404
+            {t("notFoundTitle")}
           </h1>
           <p className="font-mono text-xs tracking-[0.35em] text-zinc-600 mt-4 uppercase">
-            PAGE NOT FOUND
+            {t("notFoundSubtitle")}
           </p>
           <div
             className="w-16 h-px mt-8 mb-8"
@@ -213,16 +214,14 @@ export function NotFoundContent() {
             }}
           />
           <p className="text-sm text-zinc-600 max-w-sm leading-relaxed">
-            This route doesn&apos;t exist or you don&apos;t have access.
-            <br />
-            The page may have moved, or the feature isn&apos;t available yet.
+            {t("notFoundDescription")}
           </p>
           <div className="flex items-center gap-3 mt-10">
             <Link
               href="/"
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors"
             >
-              Dashboard
+              {tCommon("dashboard")}
             </Link>
           </div>
         </div>

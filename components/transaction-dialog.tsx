@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useCurrency } from "@/hooks/useCurrency";
 import { currencySymbol, formatMoney } from "@/lib/currency";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TYPES & CONSTANTS
@@ -52,34 +53,34 @@ interface Transaction {
 
 type Step = "list" | "type" | "details" | "confirm";
 
-const STEP_LABELS = ["Type", "Details", "Confirm"] as const;
+const STEP_KEYS = ["stepType", "stepDetails", "stepConfirm"] as const;
 
 const TYPE_STYLES: Record<
   string,
   {
     icon: typeof ArrowDownLeft;
-    label: string;
+    labelKey: string;
     color: string;
-    description: string;
+    descKey: string;
   }
 > = {
   buy: {
     icon: ArrowDownLeft,
-    label: "Buy",
+    labelKey: "buy",
     color: "text-emerald-400 bg-emerald-500/10",
-    description: "Purchase units",
+    descKey: "buyDescription",
   },
   sell: {
     icon: ArrowUpRight,
-    label: "Sell",
+    labelKey: "sell",
     color: "text-red-400 bg-red-500/10",
-    description: "Sell holdings",
+    descKey: "sellDescription",
   },
   dividend: {
     icon: Percent,
-    label: "Dividend",
+    labelKey: "dividend",
     color: "text-amber-400 bg-amber-500/10",
-    description: "Income received",
+    descKey: "dividendDescription",
   },
 };
 
@@ -137,6 +138,11 @@ export function V2TransactionDialog({
   assetSymbol,
   assetCurrency: assetCurrencyProp,
 }: V2TransactionDialogProps) {
+  const tc = useTranslations("common");
+  const tt = useTranslations("transactions");
+
+  const STEP_LABELS = STEP_KEYS.map((k) => tt(k));
+
   const [step, setStep] = useState<Step>("list");
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [form, setForm] = useState({
@@ -206,11 +212,11 @@ export function V2TransactionDialog({
         fees: form.fees ? Number(form.fees) : 0,
         notes: form.notes || undefined,
       });
-      toast.success("Transaction added");
+      toast.success(tt("transactionAdded"));
       setStep("list");
       resetForm();
     } catch {
-      toast.error("Failed to add transaction");
+      toast.error(tt("failedToAdd"));
     }
   };
 
@@ -226,21 +232,21 @@ export function V2TransactionDialog({
         fees: Number(form.fees),
         notes: form.notes || undefined,
       });
-      toast.success("Transaction updated");
+      toast.success(tt("transactionUpdated"));
       setStep("list");
       resetForm();
     } catch {
-      toast.error("Failed to update");
+      toast.error(tt("failedToUpdate"));
     }
   };
 
   const handleDelete = (id: Id<"transactions">) => {
-    if (confirm("Delete this transaction?")) {
+    if (confirm(tt("deleteConfirm"))) {
       try {
         deleteTransaction({ transactionId: id });
-        toast.success("Deleted");
+        toast.success(tt("transactionDeleted"));
       } catch {
-        toast.error("Failed to delete");
+        toast.error(tt("failedToDelete"));
       }
     }
   };
@@ -293,7 +299,7 @@ export function V2TransactionDialog({
             onClick={() => onOpenChange(false)}
             className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
           >
-            Close
+            {tc("close")}
           </button>
           <button
             onClick={() => {
@@ -303,7 +309,7 @@ export function V2TransactionDialog({
             className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add Transaction
+            {tt("addTransaction")}
           </button>
         </div>
       );
@@ -320,9 +326,9 @@ export function V2TransactionDialog({
             className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back
+            {tc("back")}
           </button>
-          <p className="text-[11px] text-zinc-700">Select a transaction type</p>
+          <p className="text-[11px] text-zinc-700">{tt("selectType")}</p>
         </div>
       );
     }
@@ -335,14 +341,14 @@ export function V2TransactionDialog({
             className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back
+            {tc("back")}
           </button>
           <button
             onClick={() => setStep("confirm")}
             disabled={!canSubmit}
             className="px-5 py-2.5 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Review
+            {tc("review")}
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -357,14 +363,14 @@ export function V2TransactionDialog({
           className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors flex items-center gap-2"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back
+          {tc("back")}
         </button>
         <button
           onClick={editingTx ? handleEdit : handleAdd}
           className="px-5 py-2.5 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors flex items-center gap-2"
         >
           <Plus className="h-3.5 w-3.5" />
-          {editingTx ? "Update Transaction" : "Add Transaction"}
+          {editingTx ? tt("updateTransaction") : tt("addTransaction")}
         </button>
       </div>
     );
@@ -383,10 +389,10 @@ export function V2TransactionDialog({
       }}
       title={
         step === "list"
-          ? "Transactions"
+          ? tt("title")
           : editingTx
-            ? "Edit Transaction"
-            : "Add Transaction"
+            ? tt("editTransaction")
+            : tt("addTransaction")
       }
       steps={step !== "list" ? [...STEP_LABELS] : undefined}
       currentStep={step !== "list" ? stepToIndex(step) : 0}
@@ -402,7 +408,9 @@ export function V2TransactionDialog({
           {/* ─── List Header ─── */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
             <div>
-              <h2 className="text-white text-sm font-semibold">Transactions</h2>
+              <h2 className="text-white text-sm font-semibold">
+                {tt("title")}
+              </h2>
               <div className="flex items-center gap-2 mt-0.5">
                 <p className="text-[11px] text-zinc-600">
                   {assetSymbol && `${assetSymbol} · `}
@@ -424,25 +432,25 @@ export function V2TransactionDialog({
               <div className="grid grid-cols-4 border-b border-white/[0.06]">
                 {[
                   {
-                    label: "Quantity",
+                    label: tt("quantity"),
                     value: stats.currentQuantity?.toLocaleString() || "0",
                   },
                   {
-                    label: "Avg Buy",
+                    label: tt("avgBuy"),
                     value:
                       stats.avgBuyPrice !== undefined
                         ? fmtAsset(stats.avgBuyPrice)
                         : "--",
                   },
                   {
-                    label: "Total Invested",
+                    label: tt("totalInvested"),
                     value:
                       stats.totalBuyAmount !== undefined
                         ? fmtAsset(stats.totalBuyAmount)
                         : "--",
                   },
                   {
-                    label: "Transactions",
+                    label: tt("title"),
                     value: String(stats.totalTransactions || 0),
                   },
                 ].map((s) => (
@@ -464,7 +472,7 @@ export function V2TransactionDialog({
                   <div className="flex items-center justify-center gap-2 px-6 py-2 border-b border-white/[0.06] bg-amber-500/[0.02]">
                     <ArrowsLeftRight className="h-3 w-3 text-amber-500/50" />
                     <p className="text-[11px] text-amber-500/70">
-                      Net investment ≈{" "}
+                      {tt("netInvestment")} ≈{" "}
                       <span className="font-semibold text-amber-500/90 tabular-nums">
                         {fmtDisplay(stats.convertedNetValue)}
                       </span>{" "}
@@ -483,10 +491,10 @@ export function V2TransactionDialog({
                   <ArrowDownLeft className="h-5 w-5 text-zinc-700" />
                 </div>
                 <p className="text-zinc-500 text-sm mb-1">
-                  No transactions yet
+                  {tt("noTransactionsYet")}
                 </p>
                 <p className="text-zinc-700 text-xs">
-                  Add your first buy, sell, or dividend
+                  {tt("addFirstTransaction")}
                 </p>
               </div>
             ) : (
@@ -508,7 +516,7 @@ export function V2TransactionDialog({
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white font-medium capitalize">
-                        {tx.type}
+                        {tt(tx.type)}
                       </p>
                       <p className="text-[11px] text-zinc-600">
                         {formatDate(tx.date)}
@@ -533,7 +541,8 @@ export function V2TransactionDialog({
                       </p>
                       {tx.quantity && tx.price && (
                         <p className="text-[10px] text-zinc-600 tabular-nums">
-                          {fmtAsset(tx.quantity * tx.price)} total
+                          {fmtAsset(tx.quantity * tx.price)}{" "}
+                          {tt("total").toLowerCase()}
                         </p>
                       )}
                     </div>
@@ -543,14 +552,14 @@ export function V2TransactionDialog({
                       <button
                         onClick={() => openEdit(tx)}
                         className="p-1.5 rounded-md text-zinc-600 hover:text-white hover:bg-white/[0.06] transition-all"
-                        title="Edit"
+                        title={tc("edit")}
                       >
                         <PencilSimple className="h-3.5 w-3.5" weight="bold" />
                       </button>
                       <button
                         onClick={() => handleDelete(tx._id)}
                         className="p-1.5 rounded-md text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                        title="Delete"
+                        title={tc("delete")}
                       >
                         <Trash className="h-3.5 w-3.5" weight="bold" />
                       </button>
@@ -598,10 +607,10 @@ export function V2TransactionDialog({
                     />
                   </div>
                   <span className="text-xs font-medium text-white capitalize">
-                    {style.label}
+                    {tt(style.labelKey)}
                   </span>
                   <span className="text-[10px] text-zinc-600 leading-tight text-center">
-                    {style.description}
+                    {tt(style.descKey)}
                   </span>
                   {isSelected && (
                     <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white" />
@@ -630,17 +639,20 @@ export function V2TransactionDialog({
             </div>
             <div className="flex-1">
               <p className="text-xs font-medium text-white capitalize">
-                {form.type}
+                {tt(form.type)}
               </p>
               <p className="text-[10px] text-zinc-600">
-                All values in {assetCurrency} ({assetCurrSym})
+                {tt("allValuesIn", {
+                  currency: assetCurrency,
+                  symbol: assetCurrSym,
+                })}
               </p>
             </div>
             <button
               onClick={() => setStep("type")}
               className="text-[11px] text-zinc-600 hover:text-white transition-colors"
             >
-              Change
+              {tc("change")}
             </button>
           </div>
 
@@ -648,7 +660,7 @@ export function V2TransactionDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Date
+                {tt("date")}
               </Label>
               <Input
                 type="date"
@@ -659,7 +671,7 @@ export function V2TransactionDialog({
             </div>
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Fees
+                {tt("fees")}
               </Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">
@@ -681,7 +693,7 @@ export function V2TransactionDialog({
           {form.type !== "dividend" && (
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                Quantity
+                {tt("quantity")}
               </Label>
               <Input
                 type="number"
@@ -698,7 +710,9 @@ export function V2TransactionDialog({
           {/* Price per unit / Dividend amount */}
           <div className="flex flex-col gap-2">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              {form.type === "dividend" ? "Dividend Amount" : "Price Per Unit"}
+              {form.type === "dividend"
+                ? tt("dividendAmount")
+                : tt("pricePerUnit")}
             </Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">
@@ -726,7 +740,7 @@ export function V2TransactionDialog({
           {totalAmount > 0 && (
             <div className="rounded-lg border border-white/[0.06] bg-zinc-900/20 px-4 py-3">
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.12em] mb-1.5">
-                Total
+                {tt("total")}
               </p>
               <p className="text-lg font-semibold text-white tabular-nums">
                 {fmtAsset(totalAmount)}
@@ -735,14 +749,16 @@ export function V2TransactionDialog({
                 <p className="text-[11px] text-zinc-600 mt-0.5 tabular-nums">
                   {form.quantity} × {fmtAsset(Number(form.price))}
                   {Number(form.fees) > 0 &&
-                    ` + ${fmtAsset(Number(form.fees))} fees`}
+                    ` + ${fmtAsset(Number(form.fees))} ${tt("fees").toLowerCase()}`}
                 </p>
               )}
               {/* Converted equivalent when currencies differ */}
               {isConverted && totalAmount > 0 && (
                 <p className="text-[10px] text-amber-500/60 mt-1 tabular-nums">
                   ≈ {fmtDisplay(totalAmount)} in {displayCurrency}
-                  <span className="text-amber-500/40 ml-1">(indicative)</span>
+                  <span className="text-amber-500/40 ml-1">
+                    ({tt("indicative")})
+                  </span>
                 </p>
               )}
             </div>
@@ -751,12 +767,12 @@ export function V2TransactionDialog({
           {/* Notes */}
           <div className="flex flex-col gap-2">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Notes (optional)
+              {tt("notesOptional")}
             </Label>
             <Textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="Additional details..."
+              placeholder={tt("additionalDetails")}
               rows={2}
               className="bg-zinc-900 border-white/[0.06] text-white resize-none text-sm"
             />
@@ -771,21 +787,23 @@ export function V2TransactionDialog({
         <div className="flex flex-col gap-5 pb-4">
           <div className="text-center py-1">
             <h3 className="text-white text-sm font-semibold mb-1">
-              {editingTx ? "Review Changes" : "Review Transaction"}
+              {editingTx ? tt("reviewChanges") : tt("reviewTransaction")}
             </h3>
             <p className="text-zinc-500 text-xs">
-              Confirm the details before {editingTx ? "updating" : "adding"}
+              {editingTx
+                ? tt("confirmBeforeUpdating")
+                : tt("confirmBeforeAdding")}
             </p>
           </div>
 
           <div className="rounded-lg border border-white/[0.06] overflow-hidden">
             {[
               {
-                label: "Type",
-                value: form.type.charAt(0).toUpperCase() + form.type.slice(1),
+                label: tt("type"),
+                value: tt(form.type),
               },
               {
-                label: "Date",
+                label: tt("date"),
                 value: new Date(form.date).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "short",
@@ -793,16 +811,16 @@ export function V2TransactionDialog({
                 }),
               },
               ...(form.type !== "dividend"
-                ? [{ label: "Quantity", value: form.quantity }]
+                ? [{ label: tt("quantity"), value: form.quantity }]
                 : []),
               {
-                label: form.type === "dividend" ? "Amount" : "Price",
+                label: form.type === "dividend" ? tt("amount") : tt("price"),
                 value: fmtAsset(Number(form.price)),
               },
               ...(form.type !== "dividend" && form.quantity
                 ? [
                     {
-                      label: "Total",
+                      label: tt("total"),
                       value: fmtAsset(
                         Number(form.quantity) * Number(form.price),
                       ),
@@ -812,19 +830,19 @@ export function V2TransactionDialog({
               ...(form.fees !== "0" && Number(form.fees) > 0
                 ? [
                     {
-                      label: "Fees",
+                      label: tt("fees"),
                       value: fmtAsset(Number(form.fees)),
                     },
                   ]
                 : []),
               {
-                label: "Currency",
+                label: tt("currency"),
                 value: assetCurrency,
               },
               ...(form.notes
                 ? [
                     {
-                      label: "Notes",
+                      label: tt("notes"),
                       value:
                         form.notes.length > 80
                           ? form.notes.slice(0, 80) + "…"
@@ -853,14 +871,19 @@ export function V2TransactionDialog({
           {totalAmount > 0 && (
             <div className="rounded-lg border border-white/[0.06] bg-zinc-900/20 px-4 py-3 text-center">
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.12em] mb-1">
-                {form.type === "dividend" ? "Dividend Amount" : "Total Cost"}
+                {form.type === "dividend"
+                  ? tt("dividendAmount")
+                  : tt("totalCost")}
               </p>
               <p className="text-xl font-semibold text-white tabular-nums">
                 {fmtAsset(totalAmount)}
               </p>
               {isConverted && (
                 <p className="text-[11px] text-amber-500/60 mt-1 tabular-nums">
-                  ≈ {fmtDisplay(totalAmount)} in {displayCurrency}
+                  ≈ {fmtDisplay(totalAmount)} in {displayCurrency}{" "}
+                  <span className="text-amber-500/40">
+                    ({tt("indicative")})
+                  </span>
                 </p>
               )}
             </div>

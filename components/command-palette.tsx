@@ -25,6 +25,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useTranslations } from "next-intl";
 
 // ─── Types ───────────────────────────────────────────────────────
 interface SearchResult {
@@ -45,22 +46,22 @@ interface CategoryResults {
 
 const CATEGORY_META: Record<
   string,
-  { label: string; icon: React.ElementType; accentColor: string }
+  { labelKey: string; icon: React.ElementType; accentColor: string }
 > = {
   portfolio: {
-    label: "Portfolios",
+    labelKey: "portfolios",
     icon: ChartPieSlice,
     accentColor: "var(--primary)",
   },
   asset: {
-    label: "Assets",
+    labelKey: "assets",
     icon: CurrencyCircleDollar,
     accentColor: "#22c55e",
   },
-  document: { label: "Documents", icon: FileText, accentColor: "#3b82f6" },
-  article: { label: "Articles", icon: Newspaper, accentColor: "#f59e0b" },
-  market: { label: "Market Data", icon: TrendUp, accentColor: "#a78bfa" },
-  action: { label: "Quick Actions", icon: Compass, accentColor: "#94a3b8" },
+  document: { labelKey: "documents", icon: FileText, accentColor: "#3b82f6" },
+  article: { labelKey: "articles", icon: Newspaper, accentColor: "#f59e0b" },
+  market: { labelKey: "marketData", icon: TrendUp, accentColor: "#a78bfa" },
+  action: { labelKey: "quickActions", icon: Compass, accentColor: "#94a3b8" },
 };
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -111,6 +112,8 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
   userId?: Id<"users">;
 }) {
+  const ts = useTranslations("search");
+
   const [mounted, setMounted] = useState(false);
   const [rawSearch, setRawSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -160,7 +163,7 @@ export function CommandPalette({
       const items = resultMap[catKey];
       if (items.length > 0) {
         const meta = CATEGORY_META[catKey];
-        cats.push({ label: meta.label, icon: meta.icon, items });
+        cats.push({ label: ts(meta.labelKey), icon: meta.icon, items });
         for (const item of items) {
           flat.push({ ...item, globalIndex: globalIdx++ });
         }
@@ -327,7 +330,7 @@ export function CommandPalette({
                 type="text"
                 value={rawSearch}
                 onChange={(e) => setRawSearch(e.target.value)}
-                placeholder="Search portfolios, assets, currencies, documents..."
+                placeholder={ts("searchPlaceholderFull")}
                 className="flex-1 bg-transparent border-0 outline-none text-sm text-white placeholder:text-zinc-600 py-3.5 font-mono"
                 autoComplete="off"
                 autoCorrect="off"
@@ -387,10 +390,10 @@ export function CommandPalette({
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-zinc-500 font-medium">
-                        Search across your workspace
+                        {ts("searchAcrossWorkspace")}
                       </p>
                       <p className="text-[11px] text-zinc-700 mt-1">
-                        Portfolios, assets, currencies, documents, and articles
+                        {ts("searchDescription")}
                       </p>
                     </div>
                   </motion.div>
@@ -443,14 +446,10 @@ export function CommandPalette({
                       className="text-zinc-700"
                     />
                     <p className="text-xs text-zinc-500">
-                      No results for &ldquo;
-                      <span className="text-zinc-400 font-mono">
-                        {rawSearch.trim()}
-                      </span>
-                      &rdquo;
+                      {ts("noResultsFor", { query: rawSearch.trim() })}
                     </p>
                     <p className="text-[11px] text-zinc-700">
-                      Try a different search term
+                      {ts("tryDifferentTerm")}
                     </p>
                   </motion.div>
                 )}
@@ -570,7 +569,7 @@ export function CommandPalette({
                                   >
                                     {item.external && (
                                       <span className="text-[9px] text-zinc-600 font-mono mr-1">
-                                        ext
+                                        {ts("ext")}
                                       </span>
                                     )}
                                     <kbd className="inline-flex items-center px-1 py-0.5 rounded bg-white/[0.06] border border-white/[0.06]">
@@ -610,7 +609,7 @@ export function CommandPalette({
                       className="text-zinc-500"
                     />
                   </kbd>
-                  <span className="ml-0.5">navigate</span>
+                  <span className="ml-0.5">{ts("navigate")}</span>
                 </span>
                 <span className="flex items-center gap-1">
                   <kbd className="inline-flex items-center px-1 py-0.5 rounded bg-white/[0.04] border border-white/[0.06]">
@@ -620,18 +619,18 @@ export function CommandPalette({
                       className="text-zinc-500"
                     />
                   </kbd>
-                  <span className="ml-0.5">open</span>
+                  <span className="ml-0.5">{ts("open")}</span>
                 </span>
                 <span className="flex items-center gap-1">
                   <kbd className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] font-mono">
                     esc
                   </kbd>
-                  <span className="ml-0.5">close</span>
+                  <span className="ml-0.5">{ts("closeAction")}</span>
                 </span>
               </div>
               <span className="font-mono text-zinc-700">
                 {hasResults
-                  ? `${flatItems.length} result${flatItems.length !== 1 ? "s" : ""}`
+                  ? ts("resultCount", { count: flatItems.length })
                   : ""}
               </span>
             </div>
