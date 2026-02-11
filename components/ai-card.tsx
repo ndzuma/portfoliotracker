@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowsClockwise, ArrowRight } from "@phosphor-icons/react";
 import { V2AISummaryPopup } from "./ai-summary-popup";
+import { useTranslations } from "next-intl";
 
 interface V2AICardProps {
   label?: string;
@@ -16,7 +17,7 @@ interface V2AICardProps {
 }
 
 export function V2AICard({
-  label = "AI Market Intelligence",
+  label,
   headline,
   analysis,
   timestamp,
@@ -26,6 +27,7 @@ export function V2AICard({
   showRefresh = false,
 }: V2AICardProps) {
   const [popupOpen, setPopupOpen] = useState(false);
+  const t = useTranslations("ai");
 
   // Use headline if available, otherwise truncate analysis
   const displayText =
@@ -43,21 +45,25 @@ export function V2AICard({
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-            {label}
+            {label || t("marketIntelligence")}
           </p>
           {showRefresh && (
             <button
               onClick={onRefresh}
               disabled={isRefreshing}
               className="group ml-auto flex items-center gap-1.5 px-2 py-1 rounded-md border border-white/[0.06] text-zinc-500 hover:text-emerald-400 hover:border-emerald-500/20 hover:bg-emerald-500/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              title={headline ? "Refresh Analysis" : "Generate Analysis"}
+              title={headline ? t("refreshAnalysis") : t("generateAnalysis")}
             >
               <ArrowsClockwise
                 className={`h-3 w-3 ${isRefreshing ? "animate-spin" : "group-hover:rotate-45 transition-transform duration-300"}`}
                 weight="bold"
               />
               <span className="text-[10px] font-medium uppercase tracking-wider">
-                {isRefreshing ? "Analyzing" : headline ? "Refresh" : "Generate"}
+                {isRefreshing
+                  ? t("analyzing")
+                  : headline
+                    ? t("refresh")
+                    : t("generate")}
               </span>
             </button>
           )}
@@ -76,7 +82,7 @@ export function V2AICard({
             className="group mt-auto pt-4 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] transition-colors"
             style={{ color: "var(--primary, #d4af37)" }}
           >
-            Read Full Analysis
+            {t("readFullAnalysis")}
             <ArrowRight
               className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
               weight="bold"

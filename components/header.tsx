@@ -24,6 +24,7 @@ import {
   CommandPalette,
   useCommandPalette,
 } from "@/components/command-palette";
+import { useTranslations } from "next-intl";
 
 const BASE_NAV_ITEMS = [
   { id: "overview", label: "Overview", href: "/", icon: ChartPieSlice },
@@ -77,6 +78,7 @@ function NavItem({
   isLast: boolean;
 }) {
   const [isHovered, setIsHovered] = useState(false);
+  const t = useTranslations("nav");
   const Icon = item.icon;
   const showLabel = isActive || isHovered;
 
@@ -155,7 +157,7 @@ function NavItem({
               }}
               transition={labelFadeSpring}
             >
-              {item.label}
+              {t(item.id)}
             </motion.span>
           </motion.div>
         </motion.div>
@@ -175,6 +177,7 @@ function MobileNavItem({
   onClose: () => void;
   index: number;
 }) {
+  const t = useTranslations("nav");
   const Icon = item.icon;
 
   return (
@@ -200,7 +203,7 @@ function MobileNavItem({
             weight={isActive ? "duotone" : "regular"}
             style={isActive ? { color: "var(--primary)" } : undefined}
           />
-          <span className="text-sm font-medium">{item.label}</span>
+          <span className="text-sm font-medium">{t(item.id)}</span>
           {isActive && (
             <motion.div
               className="ml-auto w-1.5 h-1.5 rounded-full"
@@ -218,6 +221,7 @@ function MobileNavItem({
 // ─── Search Nav Button (expand-on-hover, ticker-cell DNA) ─────
 function SearchNavButton({ onClick }: { onClick: () => void }) {
   const [isHovered, setIsHovered] = useState(false);
+  const t = useTranslations("nav");
 
   return (
     <motion.button
@@ -274,7 +278,7 @@ function SearchNavButton({ onClick }: { onClick: () => void }) {
           }}
           transition={labelFadeSpring}
         >
-          Search
+          {t("search")}
           <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-[10px] text-zinc-600 font-mono">
             ⌘K
           </kbd>

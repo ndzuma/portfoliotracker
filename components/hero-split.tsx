@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, ArrowDownRight } from "@phosphor-icons/react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useTranslations } from "next-intl";
 
 interface V2HeroSplitProps {
   leftContent: React.ReactNode;
@@ -46,12 +47,16 @@ export function NetWorthHero({
   portfolioCount,
 }: NetWorthHeroProps) {
   const { format, symbol } = useCurrency();
+  const t = useTranslations("dashboard");
   const isPositive = change >= 0;
+
+  // Build the formatted change string for ICU interpolation
+  const formattedChange = `${isPositive ? "+" : "-"}${symbol}${Math.abs(change).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
   return (
     <div>
       <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-4">
-        Total Net Worth
+        {t("totalNetWorth")}
       </p>
       <div className="flex items-end gap-5 flex-wrap">
         <h1 className="text-5xl lg:text-[68px] font-bold text-white tracking-tighter leading-none">
@@ -72,12 +77,10 @@ export function NetWorthHero({
         </div>
       </div>
       <p className="text-zinc-600 text-sm mt-3">
-        {isPositive ? "+" : "-"}
-        {symbol}
-        {Math.abs(change).toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-        })}{" "}
-        today across {portfolioCount} portfolio{portfolioCount !== 1 ? "s" : ""}
+        {t("todayAcrossPortfolios", {
+          change: formattedChange,
+          count: portfolioCount,
+        })}
       </p>
     </div>
   );

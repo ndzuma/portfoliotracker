@@ -46,7 +46,8 @@
     "memberSince": "Member since {date}",
     "admin": "Admin",
     "armed": "Armed",
-    "disarmed": "Disarmed"
+    "disarmed": "Disarmed",
+    "redirecting": "Redirecting…"
   },
   "nav": {
     "overview": "Overview",
@@ -102,7 +103,11 @@
     "horizonMedium": "Medium-term",
     "horizonMediumSub": "3–10 years",
     "horizonLong": "Long-term",
-    "horizonLongSub": "10+ years"
+    "horizonLongSub": "10+ years",
+    "topHolding": "Top Holding",
+    "accessDenied": "Access Denied",
+    "accessDeniedDescription": "You don't have permission to view this portfolio.",
+    "portfolioAnalytics": "Portfolio Analytics"
   },
   "assets": {
     "stock": "Stock",
@@ -304,6 +309,7 @@
   },
   "ai": {
     "marketIntelligence": "AI Market Intelligence",
+    "aiPortfolioInsight": "AI Portfolio Insight",
     "readFullAnalysis": "Read Full Analysis",
     "refresh": "Refresh",
     "generate": "Generate",

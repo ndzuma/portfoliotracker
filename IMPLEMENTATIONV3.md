@@ -172,28 +172,40 @@
 
 ---
 
-### Step 35 — Migrate core components to `useTranslations`
+### Step 35 — Migrate core components to `useTranslations` ✅
 
-> **Status**: Pending — depends on Step 34
+> **Status**: Complete
 
-- [ ] Migrate in priority order (highest visibility first):
+- [x] Migrate in priority order (highest visibility first):
 
-| # | Component | Namespace | Strings to replace |
+| # | Component | Namespace | Status |
 |---|---|---|---|
-| 1 | `components/header.tsx` | `nav` | Overview, News, Watchlist, Research, Earnings, Settings, Search |
-| 2 | `components/hero-split.tsx` | `dashboard` | "Total Net Worth", "today across X portfolios" (ICU plural) |
-| 3 | `components/ticker.tsx` | — | Minimal text, mostly data-driven |
-| 4 | `components/ai-card.tsx` | `ai` | "AI Market Intelligence", "Read Full Analysis", "Refresh", "Generate", "Analyzing" |
-| 5 | `components/portfolio-card.tsx` | `dashboard`, `common` | "today", "assets", "View details" |
-| 6 | `components/holdings.tsx` | `assets` | Column headers (Asset, Qty, Value, Change), type group labels (Stocks, Crypto…), expanded panel labels (Quantity, Avg Buy Price, Current Price, Total Value), action buttons (Transactions, Edit, Delete) |
-| 7 | `components/tabs.tsx` | — | Tab labels are passed as props — parent components will pass translated strings |
-| 8 | `app/(webapp)/page.tsx` | `dashboard` | "Your Portfolios", "Market Benchmarks", tab labels ("Portfolios", "Markets"), "{count} active", empty states |
-| 9 | `app/(webapp)/portfolio/[id]/page.tsx` | `portfolio` | Tab labels, section headers, stat labels, action buttons |
-| 10 | `app/(webapp)/news/page.tsx` | `news` | "News & Insights", subtitle, "Live Feed", "Updated {time}", "Showing X–Y of Z articles", empty/loading states |
+| 1 | `components/header.tsx` | `nav` | ✅ `NavItem`, `MobileNavItem`, `SearchNavButton` resolve labels via `t(item.id)` |
+| 2 | `components/hero-split.tsx` | `dashboard` | ✅ "Total Net Worth" + ICU plural `todayAcrossPortfolios` with `{change, count}` |
+| 3 | `components/ticker.tsx` | — | ⏭ Skipped — purely data-driven, no hardcoded user-facing strings |
+| 4 | `components/ai-card.tsx` | `ai` | ✅ Label default via `t('marketIntelligence')`, buttons, refresh states |
+| 5 | `components/portfolio-card.tsx` | `common`, `portfolio` | ✅ "today", asset count via `t('assetCount', {count})`, "View details" |
+| 6 | `components/holdings.tsx` | `assets`, `common`, `portfolio` | ✅ TYPE_LABEL_KEYS map, column headers, expanded panel, action buttons, quantity units, delete confirm |
+| 7 | `components/tabs.tsx` | — | ⏭ Skipped — labels passed as props; parent pages now pass translated strings |
+| 8 | `app/(webapp)/page.tsx` | `dashboard`, `ai` | ✅ Tab labels, "Your Portfolios", portfolio count, empty states, "Market Benchmarks", "Add Portfolio" |
+| 9 | `app/(webapp)/portfolio/[id]/page.tsx` | `portfolio`, `common`, `ai`, `errors`, `goals` | ✅ Tab labels, stat labels, "Back", "Delete Portfolio", "Access Denied", "Performance", "Holdings" header, asset count |
+| 10 | `app/(webapp)/news/page.tsx` | `news`, `common` | ✅ Title, subtitle, "Live Feed", `updated` with `{time}`, `showingArticles` with `{start, end, total}`, loading/empty states, "Read" |
 
-**Pattern**: Each component adds `const t = useTranslations('namespace')` and replaces hardcoded strings with `t('key')` or `t('key', { variable })` for interpolation.
+**Pattern applied**: Each component adds `const t = useTranslations('namespace')` and replaces hardcoded strings with `t('key')` or `t('key', { variable })` for interpolation. Multiple namespaces use aliased hooks (e.g., `tc` for `common`, `ta` for `ai`, `tp` for `portfolio`, `tg` for `goals`).
 
-**Files**: All 10 components listed above
+**New translation keys added** (to both `en.json` and `pt.json`):
+- `common.redirecting` — "Redirecting…" / "A redirecionar…"
+- `portfolio.portfolioAnalytics` — "Portfolio Analytics" / "Análise do Portefólio"
+- `portfolio.topHolding` — "Top Holding" / "Principal Ativo"
+- `portfolio.accessDenied` — "Access Denied" / "Acesso Negado"
+- `portfolio.accessDeniedDescription` — permission denial message
+- `ai.aiPortfolioInsight` — "AI Portfolio Insight" / "IA — Análise do Portefólio"
+
+**JSON parity**: ✅ 429 keys in both `en.json` and `pt.json` — verified programmatically.
+
+**Build**: ✅ `next build` passes — 13 static pages generated, no regressions.
+
+**Files touched**: `messages/en.json`, `messages/pt.json`, `components/header.tsx`, `components/hero-split.tsx`, `components/ai-card.tsx`, `components/portfolio-card.tsx`, `components/holdings.tsx`, `app/(webapp)/page.tsx`, `app/(webapp)/portfolio/[id]/page.tsx`, `app/(webapp)/news/page.tsx`
 
 ---
 
@@ -282,3 +294,4 @@ No code changes needed beyond these 4 files.
 | 2025-07-17 | 32 | English message catalog — `messages/en.json`, 471 lines, 18 namespaces, full app coverage including ICU pluralization patterns |
 | 2025-07-17 | 33 | Portuguese (PT-PT) message catalog — `messages/pt.json`, 471 lines, 100% key parity with English, European Portuguese vocabulary throughout |
 | 2025-07-17 | 34 | Layout provider + locale sync hook — `app/layout.tsx` made async, wraps all children with `NextIntlClientProvider` (locale + messages from server), `<html lang>` dynamic. `hooks/useLocaleSync.ts` bridges Convex `userPreferences.language` → `NEXT_LOCALE` cookie with reload, sign-out cleanup, loop guard. Wired into `app/auth-wrapper.tsx`. Build clean, zero regressions. |
+| 2025-07-17 | 35 | Core component migration — 8 components + 2 pages wired to `useTranslations()`. Header nav labels resolved via `t(item.id)` from `nav` namespace. `NetWorthHero` uses ICU plural `todayAcrossPortfolios` with `{change, count}`. Holdings uses `TYPE_LABEL_KEYS` map → translated asset type labels, column headers, expanded panel, action buttons, quantity units. Dashboard page: tab labels, portfolio count, empty states, market benchmarks. Portfolio detail: tab labels, stat labels (Holdings, Top Holding, YTD Return, Volatility), Back, Delete Portfolio, Access Denied, Performance, AI label. News page: title, subtitle, Live Feed, `updated` with `{time}`, `showingArticles` with `{start, end, total}`, loading/empty states. 6 new keys added to both `en.json` and `pt.json`. JSON parity verified: 429 keys. Build clean. |

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight, ArrowDownRight } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useTranslations } from "next-intl";
 
 /* ─── Sparkline Component ─── */
 function Spark({ up, className = "" }: { up: boolean; className?: string }) {
@@ -44,6 +45,8 @@ export function V2PortfolioCard({
   description,
 }: V2PortfolioCardProps) {
   const { format, symbol } = useCurrency();
+  const tc = useTranslations("common");
+  const tp = useTranslations("portfolio");
   const isPositive = change >= 0;
 
   return (
@@ -62,7 +65,7 @@ export function V2PortfolioCard({
                 {name}
               </p>
               <p className="text-zinc-600 text-xs mt-0.5">
-                {assetsCount} assets
+                {tp("assetCount", { count: assetsCount })}
               </p>
             </div>
             <Badge
@@ -97,12 +100,12 @@ export function V2PortfolioCard({
             {Math.abs(change).toLocaleString(undefined, {
               minimumFractionDigits: 2,
             })}{" "}
-            today
+            {tc("today")}
           </p>
 
           {/* View Details Footer */}
           <div className="flex items-center gap-1 mt-4 text-xs text-zinc-600 group-hover:text-zinc-400 transition-colors">
-            View details <ArrowUpRight className="h-3 w-3" />
+            {tc("viewDetails")} <ArrowUpRight className="h-3 w-3" />
           </div>
         </div>
       </div>

@@ -13,10 +13,13 @@ import { V2PortfolioCard } from "@/components/portfolio-card";
 import { V2AllocationBar } from "@/components/allocation-bar";
 import { V2CreatePortfolioDialog } from "@/components/create-portfolio-dialog";
 import { parseMarkdown } from "@/lib/markdown-parser";
+import { useTranslations } from "next-intl";
 
 export default function V2Dashboard() {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState("portfolios");
+  const t = useTranslations("dashboard");
+  const ta = useTranslations("ai");
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: user?.id || "",
@@ -39,12 +42,12 @@ export default function V2Dashboard() {
     totalValue > 0 ? (totalChange / (totalValue - totalChange)) * 100 : 0;
 
   const tabs = [
-    { id: "portfolios", label: "Portfolios" },
-    { id: "markets", label: "Markets" },
+    { id: "portfolios", label: t("portfolios") },
+    { id: "markets", label: t("markets") },
   ];
 
   const cleanAnalysis = parseMarkdown(
-    (aiSummaryData as any)?.analysis || "Analyzing market conditions...",
+    (aiSummaryData as any)?.analysis || ta("analyzingMarket"),
   );
 
   const aiHeadline = parseMarkdown((aiSummaryData as any)?.headline || "");
@@ -91,17 +94,17 @@ export default function V2Dashboard() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-xl font-semibold text-white tracking-tight">
-                  Your Portfolios
+                  {t("yourPortfolios")}
                 </h2>
                 <p className="text-zinc-600 text-xs mt-1">
-                  {userPortfolios.length} active
+                  {t("portfolioCount", { count: userPortfolios.length })}
                 </p>
               </div>
               {/* Show traditional button after 4 portfolios */}
               {userPortfolios.length >= 4 && (
                 <V2CreatePortfolioDialog
                   userId={userId}
-                  triggerLabel="Add Portfolio"
+                  triggerLabel={t("addPortfolio")}
                 />
               )}
             </div>
@@ -126,7 +129,7 @@ export default function V2Dashboard() {
                   {userPortfolios.length < 4 && (
                     <V2CreatePortfolioDialog
                       userId={userId}
-                      triggerLabel="Create a new portfolio"
+                      triggerLabel={t("createNewPortfolio")}
                       triggerClassName="relative rounded-2xl border border-white/[0.06] bg-zinc-950/60 p-5 hover:border-white/[0.12] transition-all hover:bg-zinc-900/50 min-h-[200px] flex flex-col items-center justify-center group cursor-pointer text-zinc-500 group-hover:text-white text-sm font-medium"
                     />
                   )}
@@ -134,11 +137,11 @@ export default function V2Dashboard() {
               ) : (
                 <div className="col-span-4 flex flex-col items-center justify-center py-20 text-center">
                   <p className="text-zinc-600 text-sm mb-6">
-                    No portfolios yet. Create one to begin tracking.
+                    {t("noPortfoliosYet")}
                   </p>
                   <V2CreatePortfolioDialog
                     userId={userId}
-                    triggerLabel="Create Your First Portfolio"
+                    triggerLabel={t("createFirstPortfolio")}
                   />
                 </div>
               )}
@@ -158,7 +161,7 @@ export default function V2Dashboard() {
         {activeTab === "markets" && (
           <section className="max-w-[1600px] mx-auto px-8 pt-8 pb-16">
             <h2 className="text-xl font-semibold text-white tracking-tight mb-8">
-              Market Benchmarks
+              {t("marketBenchmarks")}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {benchmarkData.length > 0 ? (
@@ -196,9 +199,7 @@ export default function V2Dashboard() {
                 })
               ) : (
                 <div className="col-span-3 text-center py-16">
-                  <p className="text-zinc-600 text-sm">
-                    No market data available.
-                  </p>
+                  <p className="text-zinc-600 text-sm">{t("noMarketData")}</p>
                 </div>
               )}
             </div>

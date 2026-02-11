@@ -8,6 +8,7 @@ import { V2MovingTicker } from "@/components/moving-ticker";
 import { V2HeroSplit } from "@/components/hero-split";
 import { parseMarkdown } from "@/lib/markdown-parser";
 import { ArrowSquareOut, Newspaper } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 
 interface NewsItem {
   category: string;
@@ -33,6 +34,8 @@ export default function V2NewsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const perPage = 12;
+  const t = useTranslations("news");
+  const tc = useTranslations("common");
 
   const aiSummaryData = useQuery(api.ai.getAiNewsSummary) || {};
   const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
@@ -117,7 +120,7 @@ export default function V2NewsPage() {
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[10px] text-emerald-500 font-semibold uppercase tracking-[0.2em]">
-                  Live Feed
+                  {t("liveFeed")}
                 </span>
               </div>
               {latestArticleTime && (
@@ -127,7 +130,7 @@ export default function V2NewsPage() {
                     style={{ background: "rgba(255,255,255,0.1)" }}
                   />
                   <span className="text-[10px] text-zinc-600 font-medium tracking-wide">
-                    Updated {latestArticleTime}
+                    {t("updated", { time: latestArticleTime })}
                   </span>
                 </>
               )}
@@ -135,14 +138,12 @@ export default function V2NewsPage() {
 
             {/* Title */}
             <h1 className="text-4xl lg:text-[56px] font-bold text-white tracking-tighter leading-[0.95] mb-4">
-              News &<br />
-              Insights
+              {t("title")}
             </h1>
 
             {/* Subtitle */}
             <p className="text-sm text-zinc-500 leading-relaxed max-w-md">
-              Real-time market intelligence aggregated from trusted sources,
-              enriched with AI-powered analysis.
+              {t("subtitle")}
             </p>
           </div>
         }
@@ -160,20 +161,15 @@ export default function V2NewsPage() {
         {/* Summary bar */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-zinc-500 tabular-nums">
-            {total > 0 ? (
-              <>
-                Showing{" "}
-                <span className="text-zinc-300 font-medium">
-                  {rangeStart}–{rangeEnd}
-                </span>{" "}
-                of <span className="text-zinc-300 font-medium">{total}</span>{" "}
-                articles
-              </>
-            ) : loading ? (
-              "Loading articles…"
-            ) : (
-              "No articles found"
-            )}
+            {total > 0
+              ? t("showingArticles", {
+                  start: rangeStart,
+                  end: rangeEnd,
+                  total,
+                })
+              : loading
+                ? t("loadingArticles")
+                : t("noArticles")}
           </p>
         </div>
 
@@ -229,7 +225,7 @@ export default function V2NewsPage() {
                     {item.summary}
                   </p>
                   <div className="flex items-center gap-1 mt-3 text-[11px] text-zinc-600 group-hover:text-zinc-400 transition-colors">
-                    Read <ArrowSquareOut className="h-3 w-3" />
+                    {tc("read")} <ArrowSquareOut className="h-3 w-3" />
                   </div>
                 </div>
               </a>
@@ -238,7 +234,7 @@ export default function V2NewsPage() {
         ) : (
           <div className="text-center py-20">
             <Newspaper className="mx-auto h-10 w-10 text-zinc-700 mb-4" />
-            <p className="text-zinc-600 text-sm">No articles found.</p>
+            <p className="text-zinc-600 text-sm">{t("noArticlesFound")}</p>
           </div>
         )}
 

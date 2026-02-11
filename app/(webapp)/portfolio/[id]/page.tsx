@@ -30,6 +30,7 @@ import type { Asset } from "@/components/types";
 import { useUser } from "@clerk/nextjs";
 import { parseMarkdown } from "@/lib/markdown-parser";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useTranslations } from "next-intl";
 
 export default function V2PortfolioDetail() {
   const { user } = useUser();
@@ -37,6 +38,11 @@ export default function V2PortfolioDetail() {
   const routeParams = useParams();
   const portfolioId = routeParams.id as string;
   const { format, symbol: currSymbol, compact } = useCurrency();
+  const t = useTranslations("portfolio");
+  const tc = useTranslations("common");
+  const ta = useTranslations("ai");
+  const te = useTranslations("errors");
+  const tg = useTranslations("goals");
   const [activeTab, setActiveTab] = useState("holdings");
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
@@ -112,9 +118,7 @@ export default function V2PortfolioDetail() {
 
   const handleDeletePortfolio = async () => {
     if (!convexUser) return;
-    const confirmed = confirm(
-      "Are you sure you want to delete this portfolio? This will permanently remove all assets, transactions, and associated data. This action cannot be undone.",
-    );
+    const confirmed = confirm(t("deleteConfirm"));
     if (!confirmed) return;
     try {
       setIsDeleting(true);
@@ -141,16 +145,16 @@ export default function V2PortfolioDetail() {
   const volatility = analytics?.riskMetrics?.volatility;
 
   const tabs = [
-    { id: "holdings", label: "Holdings" },
-    { id: "analytics", label: "Portfolio Analytics" },
-    { id: "goals", label: "Goals" },
-    { id: "vault", label: "Vault" },
+    { id: "holdings", label: t("holdings") },
+    { id: "analytics", label: t("portfolioAnalytics") },
+    { id: "goals", label: t("goals") },
+    { id: "vault", label: t("vault") },
   ];
 
   const dateRanges = ["1M", "3M", "6M", "1Y", "ALL"];
 
   const cleanAnalysis = parseMarkdown(
-    portfolioAI?.analysis || "Analysis will appear once data is processed.",
+    portfolioAI?.analysis || ta("analyzingMarket"),
   );
 
   const aiHeadline = parseMarkdown(portfolioAI?.headline);
@@ -184,7 +188,7 @@ export default function V2PortfolioDetail() {
         style={{ background: "#09090b" }}
       >
         <div className="text-center">
-          <p className="text-sm text-zinc-500">Redirecting…</p>
+          <p className="text-sm text-zinc-500">{tc("redirecting")}</p>
         </div>
       </div>
     );
@@ -198,17 +202,17 @@ export default function V2PortfolioDetail() {
       >
         <div className="text-center">
           <h1 className="text-xl font-semibold text-white mb-3">
-            Access Denied
+            {t("accessDenied")}
           </h1>
           <p className="text-zinc-600 text-sm mb-6">
-            You don't have permission to view this portfolio.
+            {t("accessDeniedDescription")}
           </p>
           <Link
             href="/"
             className="text-sm text-zinc-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4 inline mr-1" />
-            Back
+            {tc("back")}
           </Link>
         </div>
       </div>
@@ -233,7 +237,7 @@ export default function V2PortfolioDetail() {
               className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              Back
+              {tc("back")}
             </Link>
             {portfolio && convexUser && (
               <>
@@ -257,7 +261,7 @@ export default function V2PortfolioDetail() {
                   className="text-xs text-zinc-500 hover:text-red-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                 >
                   <Trash className="h-3 w-3" />
-                  {isDeleting ? "Deleting..." : "Delete Portfolio"}
+                  {isDeleting ? t("deleting") : t("deletePortfolio")}
                 </button>
               </>
             )}
@@ -300,7 +304,7 @@ export default function V2PortfolioDetail() {
                 {Math.abs(portfolio?.change || 0).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                 })}{" "}
-                today
+                {tc("today")}
               </p>
             </div>
           }
@@ -308,7 +312,7 @@ export default function V2PortfolioDetail() {
             <div className="h-full flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                  Performance
+                  {t("performance")}
                 </p>
                 <div className="flex items-center gap-0.5">
                   {dateRanges.map((r) => (
@@ -338,13 +342,13 @@ export default function V2PortfolioDetail() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">
-                Holdings
+                {t("holdings")}
               </p>
               <p className="text-2xl font-bold text-white">{holdingsCount}</p>
             </div>
             <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">
-                Top Holding
+                {t("topHolding")}
               </p>
               <p className="text-lg font-bold text-white truncate">
                 {topHolding?.symbol || topHolding?.name || "--"}
@@ -357,7 +361,7 @@ export default function V2PortfolioDetail() {
             </div>
             <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">
-                YTD Return
+                {tg("ytdReturn")}
               </p>
               <p
                 className={`text-2xl font-bold ${ytdReturn !== undefined && ytdReturn >= 0 ? "text-emerald-500" : "text-red-500"}`}
@@ -369,7 +373,7 @@ export default function V2PortfolioDetail() {
             </div>
             <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-4">
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-1.5">
-                Volatility
+                {tg("volatility")}
               </p>
               <p className="text-2xl font-bold text-white">
                 {volatility !== undefined
@@ -385,7 +389,7 @@ export default function V2PortfolioDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
               <V2AICard
-                label="AI Portfolio Insight"
+                label={ta("aiPortfolioInsight")}
                 headline={aiHeadline}
                 analysis={cleanAnalysis}
                 timestamp={portfolioTimestamp}
@@ -416,10 +420,10 @@ export default function V2PortfolioDetail() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-xl font-semibold text-white tracking-tight">
-                  Holdings
+                  {t("holdings")}
                 </h2>
                 <p className="text-zinc-600 text-xs mt-1">
-                  {portfolio?.assets?.length || 0} assets
+                  {t("assetCount", { count: portfolio?.assets?.length || 0 })}
                 </p>
               </div>
               <V2AddAssetDialog portfolioId={portfolioId} />
