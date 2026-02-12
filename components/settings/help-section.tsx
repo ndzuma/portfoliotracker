@@ -32,6 +32,7 @@ import {
 } from "@phosphor-icons/react";
 import { Section } from "./settings-primitives";
 import { useFeatureFlag } from "@/hooks/useFeatureFlag";
+import { useTranslations } from "next-intl";
 
 /* ─── Category definitions with accent colors ─── */
 interface HelpItem {
@@ -57,42 +58,40 @@ const HELP_CATEGORIES: HelpCategory[] = [
     items: [
       {
         icon: House,
-        title: "Dashboard",
-        description: "Overview of all portfolios, net worth, and market news",
+        title: "helpDashboard",
+        description: "helpDashboardDesc",
       },
       {
         icon: ChartPieSlice,
-        title: "Portfolio View",
-        description:
-          "Detailed holdings, performance charts, analytics, and goals for a single portfolio",
+        title: "helpPortfolioView",
+        description: "helpPortfolioViewDesc",
       },
       {
         icon: Newspaper,
-        title: "News Feed",
-        description: "AI-powered market news summaries and financial headlines",
+        title: "helpNewsFeed",
+        description: "helpNewsFeedDesc",
       },
       {
         icon: GearSix,
-        title: "Settings",
-        description:
-          "Profile, currency, AI config, notifications, and data export",
+        title: "helpSettings",
+        description: "helpSettingsDesc",
       },
       {
         icon: Binoculars,
-        title: "Watchlist",
-        description: "Track stocks and assets you're interested in",
+        title: "helpWatchlist",
+        description: "helpWatchlistDesc",
         flag: "watchlist",
       },
       {
         icon: CalendarDots,
-        title: "Earnings Calendar",
-        description: "Upcoming earnings announcements for your holdings",
+        title: "helpEarningsCalendar",
+        description: "helpEarningsCalendarDesc",
         flag: "earnings",
       },
       {
         icon: Flask,
-        title: "Research Hub",
-        description: "Asset screening, sector analysis, and custom reports",
+        title: "helpResearchHub",
+        description: "helpResearchHubDesc",
         flag: "research",
       },
     ],
@@ -104,51 +103,43 @@ const HELP_CATEGORIES: HelpCategory[] = [
     items: [
       {
         icon: PlusCircle,
-        title: "Add Asset",
-        description:
-          "Add stocks, crypto, real estate, bonds, cash, or commodities to a portfolio with currency selection",
+        title: "helpAddAsset",
+        description: "helpAddAssetDesc",
       },
       {
         icon: PencilSimple,
-        title: "Edit Asset",
-        description:
-          "Update asset name, symbol, currency, current price, and notes",
+        title: "helpEditAsset",
+        description: "helpEditAssetDesc",
       },
       {
         icon: Receipt,
-        title: "Record Transaction",
-        description:
-          "Log buy, sell, or dividend transactions with date, price, quantity, and fees",
+        title: "helpRecordTransaction",
+        description: "helpRecordTransactionDesc",
       },
       {
         icon: ChartPieSlice,
-        title: "Create Portfolio",
-        description:
-          "Create a new portfolio with name, description, risk tolerance, and time horizon",
+        title: "helpCreatePortfolio",
+        description: "helpCreatePortfolioDesc",
       },
       {
         icon: PencilSimple,
-        title: "Edit Portfolio",
-        description:
-          "Update portfolio name, description, and configuration settings",
+        title: "helpEditPortfolio",
+        description: "helpEditPortfolioDesc",
       },
       {
         icon: Target,
-        title: "Set Goals",
-        description:
-          "Define portfolio value targets, return goals, and custom milestones with deadlines",
+        title: "helpSetGoals",
+        description: "helpSetGoalsDesc",
       },
       {
         icon: FileText,
-        title: "Vault — Documents",
-        description:
-          "Upload and manage strategy documents, account statements, and research files",
+        title: "helpVaultDocuments",
+        description: "helpVaultDocumentsDesc",
       },
       {
         icon: BookOpen,
-        title: "Vault — Articles",
-        description:
-          "Save and organize links to articles, research, and analysis",
+        title: "helpVaultArticles",
+        description: "helpVaultArticlesDesc",
       },
     ],
   },
@@ -159,23 +150,23 @@ const HELP_CATEGORIES: HelpCategory[] = [
     items: [
       {
         icon: Command,
-        title: "⌘K / Ctrl+K",
-        description: "Open the command palette for quick search and navigation",
+        title: "helpCmdK",
+        description: "helpCmdKDesc",
       },
       {
         icon: X,
-        title: "Escape",
-        description: "Close any open dialog, modal, or bottom sheet",
+        title: "helpEscape",
+        description: "helpEscapeDesc",
       },
       {
         icon: ArrowUp,
-        title: "↑ / ↓ Arrow Keys",
-        description: "Navigate through search results in the command palette",
+        title: "helpArrowKeys",
+        description: "helpArrowKeysDesc",
       },
       {
         icon: ArrowElbowDownLeft,
-        title: "Enter / Return",
-        description: "Select the highlighted item in the command palette",
+        title: "helpEnter",
+        description: "helpEnterDesc",
       },
     ],
   },
@@ -186,27 +177,23 @@ const HELP_CATEGORIES: HelpCategory[] = [
     items: [
       {
         icon: CurrencyCircleDollar,
-        title: "Change Base Currency",
-        description:
-          "Switch your display currency — all values are converted using live FX rates from 160+ currencies",
+        title: "helpChangeCurrency",
+        description: "helpChangeCurrencyDesc",
       },
       {
         icon: ArrowsClockwise,
-        title: "FX Rate Sync",
-        description:
-          "Exchange rates are updated automatically every 24 hours from ExchangeRatesAPI (EUR-based)",
+        title: "helpFxSync",
+        description: "helpFxSyncDesc",
       },
       {
         icon: Export,
-        title: "Export Data",
-        description:
-          "Download all your portfolios, assets, and transactions as a JSON file",
+        title: "helpExportData",
+        description: "helpExportDataDesc",
       },
       {
         icon: Compass,
-        title: "Market Region",
-        description:
-          "Set your preferred market region for benchmarks and data sources",
+        title: "helpMarketRegion",
+        description: "helpMarketRegionDesc",
       },
     ],
   },
@@ -217,30 +204,26 @@ const HELP_CATEGORIES: HelpCategory[] = [
     items: [
       {
         icon: Sparkle,
-        title: "Portfolio AI Summary",
-        description:
-          "Generate on-demand AI analysis with performance insights, risk assessment, and recommendations",
+        title: "helpAiSummary",
+        description: "helpAiSummaryDesc",
         flag: "ai-summaries",
       },
       {
         icon: Lightning,
-        title: "Market Pulse",
-        description:
-          "Subscribe to AI-generated market briefs via email, Discord, or Telegram",
+        title: "helpMarketPulse",
+        description: "helpMarketPulseDesc",
         flag: "notifications",
       },
       {
         icon: Brain,
-        title: "AI Summary Schedule",
-        description:
-          "Configure automatic portfolio analysis frequency: 12h, daily, weekly, monthly, or manual",
+        title: "helpAiSchedule",
+        description: "helpAiScheduleDesc",
         flag: "ai-summaries",
       },
       {
         icon: HardDrives,
-        title: "BYOAI — Bring Your Own AI",
-        description:
-          "Connect OpenRouter or self-hosted models instead of the default hosted AI provider",
+        title: "helpByoai",
+        description: "helpByoaiDesc",
         flag: "byoai",
       },
     ],
@@ -252,6 +235,7 @@ const HELP_CATEGORIES: HelpCategory[] = [
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function HelpSection() {
+  const t = useTranslations("settings");
   const [query, setQuery] = useState("");
 
   // Resolve every feature flag referenced by help items.
@@ -281,6 +265,11 @@ export function HelpSection() {
   const flagFilteredCategories = useMemo(() => {
     return HELP_CATEGORIES.map((cat) => ({
       ...cat,
+      label: t(cat.id === "navigation" ? "helpNavigation" : 
+                cat.id === "portfolio-actions" ? "helpPortfolioActions" :
+                cat.id === "keyboard-shortcuts" ? "helpKeyboardShortcuts" :
+                cat.id === "data-actions" ? "helpDataSettings" :
+                cat.id === "ai-features" ? "helpAiFeatures" : cat.label),
       items: cat.items.filter((item) => {
         if (!item.flag) return true; // no flag — always show
         const val = flagValues[item.flag];
@@ -288,7 +277,7 @@ export function HelpSection() {
         return true; // undefined (loading) or true — show
       }),
     })).filter((cat) => cat.items.length > 0);
-  }, [flagValues]);
+  }, [flagValues, t]);
 
   // Step 2: Apply search query on top of the flag-filtered set
   const visibleCategories = useMemo(() => {
@@ -300,13 +289,13 @@ export function HelpSection() {
         ...cat,
         items: cat.items.filter(
           (item) =>
-            item.title.toLowerCase().includes(q) ||
-            item.description.toLowerCase().includes(q) ||
+            t(item.title).toLowerCase().includes(q) ||
+            t(item.description).toLowerCase().includes(q) ||
             cat.label.toLowerCase().includes(q),
         ),
       }))
       .filter((cat) => cat.items.length > 0);
-  }, [query, flagFilteredCategories]);
+  }, [query, flagFilteredCategories, t]);
 
   const totalVisible = flagFilteredCategories.reduce(
     (sum, cat) => sum + cat.items.length,
@@ -318,7 +307,7 @@ export function HelpSection() {
   );
 
   return (
-    <Section title="Help & Features" description={`${totalVisible} items`}>
+    <Section title={t("helpFeatures")} description={t("itemsCount", { count: totalVisible })}>
       {/* ── Search input ── */}
       <div className="relative mb-4">
         <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-600" />
@@ -326,7 +315,7 @@ export function HelpSection() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search features, actions, shortcuts…"
+          placeholder={t("searchFeaturesPlaceholder")}
           className="
             w-full bg-zinc-900 border border-white/[0.06] text-zinc-300 text-xs font-mono
             pl-9 pr-4 py-2.5 rounded-lg
@@ -349,8 +338,7 @@ export function HelpSection() {
       {/* ── Search result count ── */}
       {query && (
         <p className="text-[10px] text-zinc-700 mb-3 font-mono">
-          {totalResults} result{totalResults !== 1 ? "s" : ""} for &ldquo;
-          {query}&rdquo;
+          {t("resultsForQuery", { count: totalResults, query })}
         </p>
       )}
 
@@ -358,9 +346,9 @@ export function HelpSection() {
       {visibleCategories.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <Question className="h-8 w-8 text-zinc-800 mb-3" />
-          <p className="text-sm text-zinc-600">No matching features found</p>
+          <p className="text-sm text-zinc-600">{t("noMatchingFeatures")}</p>
           <p className="text-xs text-zinc-700 mt-1">
-            Try a different search term
+            {t("tryDifferentSearchTerm")}
           </p>
         </div>
       ) : (
@@ -406,10 +394,10 @@ export function HelpSection() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-zinc-300">
-                          {item.title}
+                          {t(item.title)}
                         </p>
                         <p className="text-[11px] text-zinc-600 leading-relaxed mt-0.5">
-                          {item.description}
+                          {t(item.description)}
                         </p>
                       </div>
                     </div>

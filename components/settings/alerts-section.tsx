@@ -17,29 +17,24 @@ import {
   SettingsToggle,
   StatusDot,
 } from "./settings-primitives";
+import { useTranslations } from "next-intl";
 
 /* ─── Channel metadata ─── */
 const CHANNELS = [
   {
     value: "email" as const,
-    label: "Email",
     icon: EnvelopeSimple,
-    description: "Delivered to your account email",
     needsWebhook: false,
   },
   {
     value: "discord" as const,
-    label: "Discord",
     icon: ChatCircleDots,
-    description: "Via webhook to your channel",
     needsWebhook: true,
     placeholder: "https://discord.com/api/webhooks/...",
   },
   {
     value: "telegram" as const,
-    label: "Telegram",
     icon: PaperPlaneTilt,
-    description: "Via bot to your chat",
     needsWebhook: true,
     placeholder: "https://api.telegram.org/bot...",
   },
@@ -79,8 +74,37 @@ export function AlertsSection({
   onEarningsRemindersChange,
   earningsRemindersEnabled = true,
 }: AlertsSectionProps) {
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
   const [discordVisible, setDiscordVisible] = useState(false);
   const [telegramVisible, setTelegramVisible] = useState(false);
+
+  // Channel labels and descriptions from translations
+  const getChannelLabel = (value: ChannelType) => {
+    switch (value) {
+      case "email":
+        return t("emailChannel");
+      case "discord":
+        return t("discordChannel");
+      case "telegram":
+        return t("telegramChannel");
+      default:
+        return value;
+    }
+  };
+
+  const getChannelDescription = (value: ChannelType) => {
+    switch (value) {
+      case "email":
+        return t("emailChannelDesc");
+      case "discord":
+        return t("discordChannelDesc");
+      case "telegram":
+        return t("telegramChannelDesc");
+      default:
+        return "";
+    }
+  };
 
   const toggleChannel = (channel: ChannelType) => {
     if (marketPulseChannels.includes(channel)) {
@@ -99,9 +123,9 @@ export function AlertsSection({
 
   return (
     <Section
-      title="Notifications & Alerts"
+      title={t("notificationsAlerts")}
       description={
-        totalActive > 0 ? `${totalActive} active` : "All notifications off"
+        totalActive > 0 ? t("activeLabel", { count: totalActive }) : t("allNotificationsOff")
       }
       status={totalActive > 0 ? "live" : "off"}
     >
@@ -109,7 +133,7 @@ export function AlertsSection({
       <div className="flex items-center gap-3 py-3 border-b border-white/[0.03]">
         <Lightning className="h-3.5 w-3.5 text-zinc-600" />
         <span className="text-[10px] text-zinc-600 uppercase tracking-wider font-medium">
-          Active Channels
+          {t("activeChannels")}
         </span>
         <div className="flex items-center gap-2 ml-auto">
           {CHANNELS.map((ch) => {
@@ -121,7 +145,7 @@ export function AlertsSection({
                 <span
                   className={`text-[10px] font-medium ${isActive ? "text-zinc-300" : "text-zinc-700"}`}
                 >
-                  {ch.label}
+                  {getChannelLabel(ch.value)}
                 </span>
               </div>
             );
@@ -137,7 +161,7 @@ export function AlertsSection({
                 <span
                   className={`text-[10px] font-medium ${earningsReminders ? "text-zinc-300" : "text-zinc-700"}`}
                 >
-                  Earnings
+                  {tc("earnings")}
                 </span>
               </div>
             </>
@@ -147,8 +171,8 @@ export function AlertsSection({
 
       {/* ── AI Market Pulse Toggle ── */}
       <SettingRow
-        label="AI Market Pulse"
-        description="Receive AI-generated market summaries on a schedule"
+        label={t("aiMarketPulse")}
+        description={t("aiMarketPulseDescription")}
       >
         <SettingsToggle
           checked={marketPulseEnabled}
@@ -160,8 +184,8 @@ export function AlertsSection({
       {marketPulseEnabled && (
         <div className="py-3 border-b border-white/[0.03]">
           <p className="text-[11px] text-zinc-600 mb-3">
-            Delivery channels{" "}
-            <span className="text-zinc-700">(select one or more)</span>
+            {t("deliveryChannels")}{" "}
+            <span className="text-zinc-700">({t("selectOneOrMore")})</span>
           </p>
 
           <div className="flex flex-col gap-0">
@@ -197,10 +221,10 @@ export function AlertsSection({
                       <p
                         className={`text-xs font-medium ${isActive ? "text-white" : "text-zinc-400"}`}
                       >
-                        {ch.label}
+                        {getChannelLabel(ch.value)}
                       </p>
                       <p className="text-[10px] text-zinc-700">
-                        {ch.description}
+                        {getChannelDescription(ch.value)}
                       </p>
                     </div>
                     {/* Checkbox indicator */}
@@ -265,7 +289,7 @@ export function AlertsSection({
                         </div>
                       </div>
                       <p className="text-[10px] text-zinc-700 mt-1.5">
-                        Paste your Discord channel webhook URL
+                        {t("pasteDiscordWebhook")}
                       </p>
                     </div>
                   )}
@@ -303,7 +327,7 @@ export function AlertsSection({
                         </div>
                       </div>
                       <p className="text-[10px] text-zinc-700 mt-1.5">
-                        Paste your Telegram bot webhook URL
+                        {t("pasteTelegramWebhook")}
                       </p>
                     </div>
                   )}
@@ -315,7 +339,7 @@ export function AlertsSection({
           {/* No channels selected warning */}
           {marketPulseChannels.length === 0 && (
             <p className="text-[10px] text-amber-500/70 mt-2 px-1">
-              Select at least one channel to receive Market Pulse notifications
+              {t("selectAtLeastOneChannel")}
             </p>
           )}
         </div>
@@ -328,18 +352,15 @@ export function AlertsSection({
             <div className="flex items-center gap-2 mb-1.5">
               <Bell className="h-3 w-3 text-zinc-600" />
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">
-                Preview
+                {tc("preview")}
               </span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              You&apos;ll receive a concise AI market brief via{" "}
-              <span className="text-zinc-300 font-medium">
-                {marketPulseChannels
-                  .map((c) => CHANNELS.find((ch) => ch.value === c)?.label || c)
-                  .join(" & ")}
-              </span>
-              . Delivery frequency is controlled by your AI Summary schedule in
-              the AI tab.
+              {t("previewPulseDescription", {
+                channels: marketPulseChannels
+                  .map((c) => getChannelLabel(c))
+                  .join(" & ")
+              })}
             </p>
           </div>
         </div>
@@ -348,8 +369,8 @@ export function AlertsSection({
       {/* ── Earnings Calendar Reminders ── */}
       {earningsRemindersEnabled ? (
         <SettingRow
-          label="Earnings Reminders"
-          description="Get notified before earnings announcements for your holdings"
+          label={t("earningsReminders")}
+          description={t("earningsRemindersDescription")}
         >
           <div className="flex items-center gap-2.5">
             <CalendarCheck
@@ -367,15 +388,14 @@ export function AlertsSection({
             <CalendarCheck className="h-3.5 w-3.5 text-zinc-700 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-zinc-500">
-                Earnings Reminders
+                {t("earningsReminders")}
               </p>
               <p className="text-[10px] text-zinc-700 mt-0.5">
-                Coming soon — get notified before earnings announcements for
-                your holdings
+                {t("earningsComingSoon")}
               </p>
             </div>
             <span className="text-[9px] text-zinc-700 uppercase tracking-wider font-medium bg-white/[0.02] border border-white/[0.04] px-2 py-0.5 rounded-full shrink-0">
-              Soon
+              {tc("soon")}
             </span>
           </div>
         </div>
