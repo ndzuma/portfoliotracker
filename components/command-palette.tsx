@@ -302,7 +302,7 @@ export function CommandPalette({
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Search"
+            aria-label={ts("search")}
             className="relative z-10 w-full max-w-[560px] bg-zinc-950 border border-white/[0.08] rounded-xl shadow-2xl overflow-hidden flex flex-col"
             style={{
               maxHeight: "min(520px, 60vh)",

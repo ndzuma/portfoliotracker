@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useTranslations } from "next-intl";
 
 // ─── StatusDot — live / amber / off with optional pulse ─────────────────────
 
@@ -223,6 +224,8 @@ function formatFrequency(freq: string | undefined): string {
 }
 
 export function PulseStrip() {
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
   const { user } = useUser();
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: user?.id || "",
@@ -252,10 +255,10 @@ export function PulseStrip() {
   const aiProvider = userPreferences?.aiProvider || "default";
   const aiProviderLabel =
     aiProvider === "openrouter"
-      ? "OpenRouter"
+      ? t("openRouter")
       : aiProvider === "self-hosted"
-        ? "Self-Hosted"
-        : "Hosted";
+        ? t("selfHosted")
+        : t("defaultHosted");
 
   const marketPulseActive = userPreferences?.marketPulseEnabled ?? false;
   const marketPulseChannels = (userPreferences as any)?.marketPulseChannels as
@@ -269,8 +272,8 @@ export function PulseStrip() {
       : userPreferences?.marketPulseChannel
         ? userPreferences.marketPulseChannel.charAt(0).toUpperCase() +
           userPreferences.marketPulseChannel.slice(1)
-        : "On"
-    : "Off";
+        : tc("on")
+    : tc("off");
 
   const earningsOn = userPreferences?.earningsReminders ?? false;
 
@@ -280,38 +283,38 @@ export function PulseStrip() {
 
   const items: PulseItem[] = [
     {
-      label: "Portfolios",
+      label: t("pulsePortfolios"),
       value: String(portfolioCount),
       status: portfolioCount > 0 ? "live" : "off",
     },
     {
-      label: "Currency",
+      label: t("pulseCurrency"),
       value: currency,
       status: "live",
     },
     {
-      label: "FX Sync",
+      label: t("pulseFxSync"),
       value: fxUpdated,
       status: fxRates ? "live" : "off",
     },
     {
-      label: "AI Provider",
+      label: t("pulseAiProvider"),
       value: aiProviderLabel,
       status: aiProvider !== "default" ? "amber" : "live",
     },
     {
-      label: "AI Summary",
+      label: t("pulseAiSummary"),
       value: aiSummaryFreq,
       status:
-        aiSummaryFreq !== "—" && aiSummaryFreq !== "Manual" ? "live" : "off",
+        aiSummaryFreq !== "—" && aiSummaryFreq !== t("manualOnly") ? "live" : "off",
     },
     {
-      label: "Earnings",
-      value: earningsOn ? "On" : "Off",
+      label: t("pulseEarnings"),
+      value: earningsOn ? tc("on") : tc("off"),
       status: earningsOn ? "live" : "off",
     },
     {
-      label: "Market Pulse",
+      label: t("pulseMarketPulse"),
       value: marketPulseLabel,
       status: marketPulseActive ? "live" : "off",
     },
