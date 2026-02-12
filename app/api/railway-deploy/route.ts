@@ -37,6 +37,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 function normalizeStatus(rawStatus: string): string {
   const lower = rawStatus.toLowerCase();
   if (lower === "success") return "success";
+  if (lower === "active") return "success";
   if (lower === "initializing") return "pending";
   return lower;
 }
