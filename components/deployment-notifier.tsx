@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Rocket, CheckCircle2, Clock } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 interface Deployment {
   deploymentId: string;
@@ -18,7 +18,9 @@ interface Deployment {
 }
 
 export function DeploymentNotifier() {
-  const [lastSeenDeploymentId, setLastSeenDeploymentId] = useState<string | null>(null);
+  const [lastSeenDeploymentId, setLastSeenDeploymentId] = useState<
+    string | null
+  >(null);
   const [hasShownInitial, setHasShownInitial] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -26,7 +28,7 @@ export function DeploymentNotifier() {
     try {
       const response = await fetch("/api/railway-deploy");
       if (!response.ok) return;
-      
+
       const data = await response.json();
       const deployment: Deployment | null = data.deployment;
 
@@ -42,8 +44,10 @@ export function DeploymentNotifier() {
       // Show toast if there's a new deployment we haven't seen
       if (deployment.deploymentId !== lastSeenDeploymentId && !isDismissed) {
         setLastSeenDeploymentId(deployment.deploymentId);
-        
-        const deploymentTime = new Date(deployment.triggeredAt).toLocaleTimeString([], {
+
+        const deploymentTime = new Date(
+          deployment.triggeredAt,
+        ).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         });
@@ -68,19 +72,19 @@ export function DeploymentNotifier() {
             >
               {/* Animated gradient background */}
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 animate-gradient" />
-              
+
               {/* Shimmer effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
 
               <div className="relative flex items-start gap-4 p-5 pr-12 bg-background/95 backdrop-blur-xl border border-indigo-500/30 rounded-2xl shadow-2xl shadow-indigo-500/20 min-w-[380px] max-w-[480px]">
                 {/* Animated icon container */}
-                <motion.div 
+                <motion.div
                   className="relative flex-shrink-0"
-                  animate={{ 
+                  animate={{
                     rotate: [0, -10, 10, -10, 0],
                     scale: [1, 1.1, 1],
                   }}
-                  transition={{ 
+                  transition={{
                     duration: 0.6,
                     ease: "easeInOut",
                   }}
@@ -88,11 +92,11 @@ export function DeploymentNotifier() {
                   <div className="relative">
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl blur-lg"
-                      animate={{ 
+                      animate={{
                         opacity: [0.4, 0.7, 0.4],
                         scale: [1, 1.2, 1],
                       }}
-                      transition={{ 
+                      transition={{
                         duration: 2,
                         repeat: Infinity,
                         ease: "easeInOut",
@@ -113,7 +117,11 @@ export function DeploymentNotifier() {
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ delay: 0.2, type: "spring", stiffness: 500 }}
+                      transition={{
+                        delay: 0.2,
+                        type: "spring",
+                        stiffness: 500,
+                      }}
                       className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-500/30"
                     >
                       <CheckCircle2 className="w-3 h-3" />
@@ -126,7 +134,10 @@ export function DeploymentNotifier() {
                     {serviceName} was updated in {environment}
                     {branch && (
                       <span className="inline-flex items-center gap-1 ml-1">
-                        from <span className="font-mono text-indigo-500 dark:text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">{branch}</span>
+                        from{" "}
+                        <span className="font-mono text-indigo-500 dark:text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">
+                          {branch}
+                        </span>
                       </span>
                     )}
                     {commitMessage && (
@@ -167,7 +178,11 @@ export function DeploymentNotifier() {
                         <span className="relative flex items-center gap-2">
                           <motion.div
                             animate={{ rotate: 360 }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
                             className="opacity-0 group-hover:opacity-100"
                           >
                             <RefreshCw className="w-3.5 h-3.5" />
@@ -177,7 +192,7 @@ export function DeploymentNotifier() {
                         </span>
                       </Button>
                     </motion.div>
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -200,8 +215,18 @@ export function DeploymentNotifier() {
                   }}
                   className="absolute top-3 right-3 p-1.5 text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted rounded-lg transition-all duration-200"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -210,7 +235,7 @@ export function DeploymentNotifier() {
           {
             duration: Infinity,
             position: "bottom-right",
-          }
+          },
         );
       }
     } catch (error) {
