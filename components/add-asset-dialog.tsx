@@ -32,6 +32,10 @@ import {
 } from "@/lib/currency";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
+import {
+  SymbolSearchInput,
+  type SymbolSearchSelection,
+} from "@/components/symbol-search-input";
 
 interface V2AddAssetDialogProps {
   portfolioId: string;
@@ -308,6 +312,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
   const [stepIdx, setStepIdx] = useState(0);
   const { currency: baseCurrency, format: fmtBase } = useCurrency();
   const { currencies: dynamicCurrencies } = useAvailableCurrencies();
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState({
     symbol: "",
     name: "",
@@ -345,6 +350,7 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
       notes: "",
       currency: baseCurrency,
     });
+    setSearchQuery("");
     setStepIdx(0);
   };
 
@@ -556,14 +562,24 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
               </div>
             )}
 
-            {/* Name */}
+            {/* Search — unified search input */}
             <div className="flex flex-col gap-2">
               <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                {ta("name")}
+                {td("searchAsset")}
               </Label>
-              <Input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              <SymbolSearchInput
+                value={searchQuery}
+                onChange={(v) => setSearchQuery(v)}
+                onSelect={(r: SymbolSearchSelection) => {
+                  setSearchQuery(`${r.symbol} — ${r.name}`);
+                  setForm({
+                    ...form,
+                    name: r.name,
+                    symbol: r.symbol,
+                    currency: r.currency || form.currency,
+                  });
+                }}
+                assetType={form.type}
                 placeholder={
                   form.type === "stock"
                     ? td("stockPlaceholder")
@@ -573,46 +589,72 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
                         ? td("realEstatePlaceholder")
                         : td("genericPlaceholder")
                 }
-                className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
                 autoFocus
               />
             </div>
 
-            {/* Symbol — stocks & crypto only */}
-            {(form.type === "stock" || form.type === "crypto") && (
-              <div className="flex flex-col gap-2">
-                <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                  {ta("symbol")}
+            {/* Divider */}
+            <div className="border-t border-white/[0.06]" />
+
+            {/* Other — manual entry for assets not in the database */}
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[10px] text-zinc-600 font-medium uppercase tracking-[0.15em]">
+                  {td("otherAsset")}
                 </Label>
                 <Input
-                  value={form.symbol}
-                  onChange={(e) => setForm({ ...form, symbol: e.target.value })}
-                  placeholder={
-                    form.type === "stock"
-                      ? td("stockSymbolPlaceholder")
-                      : td("cryptoSymbolPlaceholder")
-                  }
-                  className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder={td("otherAssetPlaceholder")}
+                  className="bg-zinc-900/50 border-white/[0.06] text-zinc-300 h-9 text-sm"
                 />
-                <p className="text-xs text-zinc-600">{td("symbolHelper")}</p>
               </div>
-            )}
 
-            {/* Currency — portal picker for ALL asset types */}
-            <div className="flex flex-col gap-2">
-              <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                {ta("currency")}
-              </Label>
-              <PortalCurrencyPicker
-                value={form.currency}
-                onChange={(v) => setForm({ ...form, currency: v })}
-                currencies={dynamicCurrencies}
-              />
-              <p className="text-xs text-zinc-600">
-                {form.type === "cash"
-                  ? td("currencyHelperCash")
-                  : td("currencyHelperOther")}
-              </p>
+              {/* Symbol + Currency — appear when name is filled */}
+              <AnimatePresence>
+                {form.name.trim().length > 0 && (
+                  <motion.div
+                    className="flex flex-col gap-4"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    {/* Symbol */}
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-[10px] text-zinc-600 font-medium uppercase tracking-[0.15em]">
+                        {ta("symbol")}
+                      </Label>
+                      <Input
+                        value={form.symbol}
+                        onChange={(e) =>
+                          setForm({ ...form, symbol: e.target.value })
+                        }
+                        placeholder={
+                          form.type === "stock"
+                            ? td("stockSymbolPlaceholder")
+                            : form.type === "crypto"
+                              ? td("cryptoSymbolPlaceholder")
+                              : "Ticker"
+                        }
+                        className="bg-zinc-900/50 border-white/[0.06] text-zinc-300 h-9 text-sm uppercase"
+                      />
+                    </div>
+
+                    {/* Currency */}
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-[10px] text-zinc-600 font-medium uppercase tracking-[0.15em]">
+                        {ta("currency")}
+                      </Label>
+                      <PortalCurrencyPicker
+                        value={form.currency}
+                        onChange={(v) => setForm({ ...form, currency: v })}
+                        currencies={dynamicCurrencies}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         )}

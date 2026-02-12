@@ -730,7 +730,11 @@
       "realEstatePlaceholder": "Property name",
       "genericPlaceholder": "Asset name",
       "stockSymbolPlaceholder": "AAPL",
-      "cryptoSymbolPlaceholder": "BTC"
+      "cryptoSymbolPlaceholder": "BTC",
+      "searchAsset": "Search",
+      "searchPrompt": "Search for an asset above to autofill details",
+      "otherAsset": "Other",
+      "otherAssetPlaceholder": "Enter asset name manually…"
     },
     "editAsset": {
       "title": "Edit Asset",
@@ -750,7 +754,11 @@
       "currencyHelperCash": "The currency denomination for this cash holding",
       "currencyHelperOther": "The currency this asset is denominated in",
       "stockSymbolPlaceholder": "e.g., AAPL",
-      "cryptoSymbolPlaceholder": "e.g., BTC"
+      "cryptoSymbolPlaceholder": "e.g., BTC",
+      "searchAsset": "Search",
+      "searchPrompt": "Search for an asset above to autofill details",
+      "otherAsset": "Other",
+      "otherAssetPlaceholder": "Enter asset name manually…"
     }
   },
   "onboarding": {

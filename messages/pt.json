@@ -730,7 +730,11 @@
       "realEstatePlaceholder": "Nome do imóvel",
       "genericPlaceholder": "Nome do ativo",
       "stockSymbolPlaceholder": "AAPL",
-      "cryptoSymbolPlaceholder": "BTC"
+      "cryptoSymbolPlaceholder": "BTC",
+      "searchAsset": "Pesquisar",
+      "searchPrompt": "Pesquise um ativo acima para preencher os detalhes automaticamente",
+      "otherAsset": "Outro",
+      "otherAssetPlaceholder": "Introduza o nome do ativo manualmente…"
     },
     "editAsset": {
       "title": "Editar Ativo",
@@ -750,7 +754,11 @@
       "currencyHelperCash": "A moeda de denominação desta posição de liquidez",
       "currencyHelperOther": "A moeda em que este ativo é denominado",
       "stockSymbolPlaceholder": "ex.: AAPL",
-      "cryptoSymbolPlaceholder": "ex.: BTC"
+      "cryptoSymbolPlaceholder": "ex.: BTC",
+      "searchAsset": "Pesquisar",
+      "searchPrompt": "Pesquise um ativo acima para preencher os detalhes automaticamente",
+      "otherAsset": "Outro",
+      "otherAssetPlaceholder": "Introduza o nome do ativo manualmente…"
     }
   },
   "onboarding": {

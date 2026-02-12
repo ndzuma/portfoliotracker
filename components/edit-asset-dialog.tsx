@@ -20,6 +20,7 @@ import {
   CaretDown,
   Check,
 } from "@phosphor-icons/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -35,6 +36,10 @@ import {
 } from "@/lib/currency";
 import { useAvailableCurrencies } from "@/hooks/useCurrency";
 import { useTranslations } from "next-intl";
+import {
+  SymbolSearchInput,
+  type SymbolSearchSelection,
+} from "@/components/symbol-search-input";
 
 interface V2EditAssetDialogProps {
   isOpen: boolean;
@@ -299,6 +304,7 @@ export function V2EditAssetDialog({
 
   const [stepIdx, setStepIdx] = useState(0);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(asset);
+  const [searchQuery, setSearchQuery] = useState("");
   const updateAsset = useMutation(api.assets.updateAsset);
   const { currency: baseCurrency } = useCurrency();
   const { currencies: dynamicCurrencies } = useAvailableCurrencies();
@@ -311,11 +317,17 @@ export function V2EditAssetDialog({
     (editingAsset === null || asset._id !== editingAsset._id)
   ) {
     setEditingAsset(asset);
+    setSearchQuery(
+      asset.symbol ? `${asset.symbol} — ${asset.name}` : asset.name,
+    );
     setStepIdx(0);
   }
 
   const reset = () => {
     setEditingAsset(asset);
+    setSearchQuery(
+      asset?.symbol ? `${asset.symbol} — ${asset.name}` : asset?.name || "",
+    );
     setStepIdx(0);
   };
 
@@ -443,63 +455,103 @@ export function V2EditAssetDialog({
             </div>
           </div>
 
-          {/* Name */}
+          {/* Search — unified search input */}
           <div className="flex flex-col gap-2">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              {ta("name")}
+              {td("searchAsset")}
             </Label>
-            <Input
-              value={editingAsset.name}
-              onChange={(e) =>
-                setEditingAsset({ ...editingAsset, name: e.target.value })
+            <SymbolSearchInput
+              value={searchQuery}
+              onChange={(v) => setSearchQuery(v)}
+              onSelect={(r: SymbolSearchSelection) => {
+                setSearchQuery(`${r.symbol} — ${r.name}`);
+                setEditingAsset({
+                  ...editingAsset,
+                  name: r.name,
+                  symbol: r.symbol,
+                  currency: r.currency || editingAsset.currency,
+                });
+              }}
+              assetType={editingAsset.type}
+              placeholder={
+                editingAsset.type === "stock"
+                  ? td("stockSymbolPlaceholder")
+                  : editingAsset.type === "crypto"
+                    ? td("cryptoSymbolPlaceholder")
+                    : td("searchAsset")
               }
-              className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
-              autoFocus
             />
           </div>
 
-          {/* Symbol — stocks & crypto only */}
-          {(editingAsset.type === "stock" ||
-            editingAsset.type === "crypto") && (
-            <div className="flex flex-col gap-2">
-              <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                {ta("symbol")}
+          {/* Divider */}
+          <div className="border-t border-white/[0.06]" />
+
+          {/* Other — manual entry for assets not in the database */}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[10px] text-zinc-600 font-medium uppercase tracking-[0.15em]">
+                {td("otherAsset")}
               </Label>
               <Input
-                value={editingAsset.symbol || ""}
+                value={editingAsset.name}
                 onChange={(e) =>
-                  setEditingAsset({
-                    ...editingAsset,
-                    symbol: e.target.value,
-                  })
+                  setEditingAsset({ ...editingAsset, name: e.target.value })
                 }
-                className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
-                placeholder={
-                  editingAsset.type === "stock"
-                    ? td("stockSymbolPlaceholder")
-                    : td("cryptoSymbolPlaceholder")
-                }
+                placeholder={td("otherAssetPlaceholder")}
+                className="bg-zinc-900/50 border-white/[0.06] text-zinc-300 h-9 text-sm"
               />
             </div>
-          )}
 
-          {/* Currency — portal picker for ALL asset types */}
-          <div className="flex flex-col gap-2">
-            <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              {ta("currency")}
-            </Label>
-            <PortalCurrencyPicker
-              value={assetCurrency}
-              onChange={(v) =>
-                setEditingAsset({ ...editingAsset, currency: v })
-              }
-              currencies={dynamicCurrencies}
-            />
-            <p className="text-xs text-zinc-600">
-              {editingAsset.type === "cash"
-                ? td("currencyHelperCash")
-                : td("currencyHelperOther")}
-            </p>
+            {/* Symbol + Currency — appear when name is filled */}
+            <AnimatePresence>
+              {editingAsset.name.trim().length > 0 && (
+                <motion.div
+                  className="flex flex-col gap-4"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  {/* Symbol */}
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-[10px] text-zinc-600 font-medium uppercase tracking-[0.15em]">
+                      {ta("symbol")}
+                    </Label>
+                    <Input
+                      value={editingAsset.symbol || ""}
+                      onChange={(e) =>
+                        setEditingAsset({
+                          ...editingAsset,
+                          symbol: e.target.value,
+                        })
+                      }
+                      placeholder={
+                        editingAsset.type === "stock"
+                          ? td("stockSymbolPlaceholder")
+                          : editingAsset.type === "crypto"
+                            ? td("cryptoSymbolPlaceholder")
+                            : "Ticker"
+                      }
+                      className="bg-zinc-900/50 border-white/[0.06] text-zinc-300 h-9 text-sm uppercase"
+                    />
+                  </div>
+
+                  {/* Currency */}
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-[10px] text-zinc-600 font-medium uppercase tracking-[0.15em]">
+                      {ta("currency")}
+                    </Label>
+                    <PortalCurrencyPicker
+                      value={assetCurrency}
+                      onChange={(v) =>
+                        setEditingAsset({ ...editingAsset, currency: v })
+                      }
+                      currencies={dynamicCurrencies}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       )}
