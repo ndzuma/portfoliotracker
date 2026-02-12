@@ -9,6 +9,7 @@ import { ConvexClientProvider } from "./ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { AuthenticatedWrapper } from "./auth-wrapper";
+import { DeploymentNotifier } from "@/components/deployment-notifier";
 import { PostHogProvider } from "./PostHogProvider";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
@@ -66,6 +67,7 @@ export default async function RootLayout({
                     <AuthenticatedWrapper>{children}</AuthenticatedWrapper>
                   </Suspense>
                   <Toaster position="bottom-right" richColors />
+                  <DeploymentNotifier />
                 </ConvexClientProvider>
               </ClerkProvider>
             </ThemeProvider>
