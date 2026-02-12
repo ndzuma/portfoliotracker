@@ -21,11 +21,11 @@ import { useTranslations } from "next-intl";
 
 /* ─── AI Summary Frequency Options ─── */
 const FREQUENCY_OPTIONS = [
-  { value: "12h", label: "Every 12 hours", description: "Twice daily" },
-  { value: "daily", label: "Daily", description: "Once per day" },
-  { value: "weekly", label: "Weekly", description: "Every Monday" },
-  { value: "monthly", label: "Monthly", description: "1st of month" },
-  { value: "manual", label: "Manual Only", description: "On demand" },
+  { value: "12h" as const },
+  { value: "daily" as const },
+  { value: "weekly" as const },
+  { value: "monthly" as const },
+  { value: "manual" as const },
 ] as const;
 
 type AiSummaryFrequency = "12h" | "daily" | "weekly" | "monthly" | "manual";
@@ -65,6 +65,42 @@ export function AiSection({
   aiSummariesEnabled = true,
 }: AiSectionProps) {
   const t = useTranslations("settings");
+  
+  // Helper functions for frequency translations
+  const getFrequencyLabel = (value: AiSummaryFrequency) => {
+    switch (value) {
+      case "12h":
+        return t("every12Hours");
+      case "daily":
+        return t("daily");
+      case "weekly":
+        return t("weekly");
+      case "monthly":
+        return t("monthly");
+      case "manual":
+        return t("manualOnly");
+      default:
+        return value;
+    }
+  };
+
+  const getFrequencyDescription = (value: AiSummaryFrequency) => {
+    switch (value) {
+      case "12h":
+        return t("twiceDaily");
+      case "daily":
+        return t("oncePerDay");
+      case "weekly":
+        return t("everyMonday");
+      case "monthly":
+        return t("firstOfMonth");
+      case "manual":
+        return t("onDemand");
+      default:
+        return "";
+    }
+  };
+
   const selectedFreq = FREQUENCY_OPTIONS.find(
     (f) => f.value === aiSummaryFrequency,
   );
@@ -109,7 +145,7 @@ export function AiSection({
                       value={opt.value}
                       className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
                     >
-                      {opt.label}
+                      {getFrequencyLabel(opt.value)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -134,7 +170,7 @@ export function AiSection({
                     </>
                   ) : (
                     <>
-                      {t("autoDescription", { frequency: selectedFreq.description.toLowerCase() })}
+                      {t("autoDescription", { frequency: getFrequencyDescription(aiSummaryFrequency).toLowerCase() })}
                     </>
                   )}
                 </p>
@@ -240,11 +276,11 @@ export function AiSection({
               <div className="flex items-center gap-2 mb-3">
                 <ArrowSquareOut className="h-3 w-3 text-zinc-500" />
                 <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
-                  OpenRouter Config
+                  {t("openRouterConfig")}
                 </span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">API Key</Label>
+                <Label className="text-xs text-zinc-400">{t("apiKey")}</Label>
                 <Input
                   type="password"
                   value={openRouterApiKey}
@@ -264,11 +300,11 @@ export function AiSection({
               <div className="flex items-center gap-2 mb-1">
                 <HardDrives className="h-3 w-3 text-zinc-500" />
                 <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
-                  Self-Hosted Config
+                  {t("selfHostedConfig")}
                 </span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">Tunnel ID</Label>
+                <Label className="text-xs text-zinc-400">{t("tunnelId")}</Label>
                 <Input
                   value={tunnelId}
                   onChange={(e) => onTunnelIdChange(e.target.value)}
@@ -277,7 +313,7 @@ export function AiSection({
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">Server URL</Label>
+                <Label className="text-xs text-zinc-400">{t("serverUrl")}</Label>
                 <Input
                   value={selfHostedUrl}
                   onChange={(e) => onSelfHostedUrlChange(e.target.value)}
