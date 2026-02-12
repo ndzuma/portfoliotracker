@@ -23,6 +23,7 @@ import { AiSection } from "@/components/settings/ai-section";
 import { AdvancedSection } from "@/components/settings/advanced-section";
 import { HelpSection } from "@/components/settings/help-section";
 import { useFeatureFlag } from "@/hooks/useFeatureFlag";
+import { useTranslations } from "next-intl";
 
 type AiSummaryFrequency = "12h" | "daily" | "weekly" | "monthly" | "manual";
 type ChannelType = "email" | "discord" | "telegram";
@@ -30,6 +31,8 @@ type ChannelType = "email" | "discord" | "telegram";
 export default function V2SettingsPage() {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState("profile");
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
 
   // Feature flags
   const appearanceEnabled = useQuery(api.flags.getFlag, {
@@ -185,10 +188,10 @@ export default function V2SettingsPage() {
           telegramWebhookUrl,
         });
       }
-      toast.success("Settings saved");
+      toast.success(t("settingsSaved"));
       setHasChanges(false);
     } catch (e: any) {
-      toast.error(e.message || "Failed to save");
+      toast.error(e.message || t("failedToSave"));
     } finally {
       setIsSaving(false);
     }
@@ -258,9 +261,9 @@ export default function V2SettingsPage() {
       a.download = `pulseportfolio-export-${new Date().toISOString().split("T")[0]}.json`;
       a.click();
       window.URL.revokeObjectURL(url);
-      toast.success("Export complete");
+      toast.success(t("exportComplete"));
     } catch {
-      toast.error("Export failed");
+      toast.error(t("exportFailed"));
     } finally {
       setIsExporting(false);
     }
@@ -268,12 +271,12 @@ export default function V2SettingsPage() {
 
   // ── Tabs ──
   const tabs = [
-    { id: "profile", label: "Profile" },
-    { id: "data", label: "Data & Markets" },
-    { id: "alerts", label: "Alerts" },
-    { id: "ai", label: "AI" },
-    { id: "advanced", label: "Advanced" },
-    { id: "help", label: "Help" },
+    { id: "profile", label: t("profile") },
+    { id: "data", label: t("dataMarkets") },
+    { id: "alerts", label: t("alerts") },
+    { id: "ai", label: t("ai") },
+    { id: "advanced", label: t("advanced") },
+    { id: "help", label: t("help") },
   ];
 
   return (
@@ -287,10 +290,10 @@ export default function V2SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-1.5">
-                Settings
+                {t("title")}
               </p>
               <h1 className="text-3xl font-bold text-white tracking-tight">
-                Control Room
+                {t("controlRoom")}
               </h1>
             </div>
 
@@ -304,7 +307,7 @@ export default function V2SettingsPage() {
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-60"
               >
                 <FloppyDisk className="h-3.5 w-3.5" />
-                {isSaving ? "Saving…" : "Save Changes"}
+                {isSaving ? t("saving") : t("saveChanges")}
               </motion.button>
             )}
           </div>
@@ -336,10 +339,10 @@ export default function V2SettingsPage() {
 
               {/* Appearance */}
               {appearanceEnabled && (
-                <Section title="Appearance" description="Theme & display">
+                <Section title={t("appearance")} description={t("appearanceDesc")}>
                   <SettingRow
-                    label="Dark Mode"
-                    description="Toggle between light and dark theme"
+                    label={t("darkMode")}
+                    description={t("darkModeDescription")}
                   >
                     <div className="flex items-center gap-3">
                       <Sun className="h-3.5 w-3.5 text-zinc-600" />
@@ -395,17 +398,16 @@ export default function V2SettingsPage() {
               {notificationsEnabled === false ? (
                 /* Flag disabled — show coming-soon message */
                 <Section
-                  title="Notifications & Alerts"
-                  description="Coming soon"
+                  title={t("notificationsAlerts")}
+                  description={t("comingSoon")}
                   status="off"
                 >
                   <div className="py-8 text-center">
                     <p className="text-sm text-zinc-600">
-                      Notifications are coming soon.
+                      {t("notificationsComingSoon")}
                     </p>
                     <p className="text-xs text-zinc-700 mt-1">
-                      Multi-channel alerts for Market Pulse and earnings
-                      reminders are in development.
+                      {t("notificationsComingSoonDesc")}
                     </p>
                   </div>
                 </Section>
@@ -529,14 +531,14 @@ export default function V2SettingsPage() {
             >
               <div className="max-w-[1600px] mx-auto px-8 py-3 flex items-center justify-between">
                 <p className="text-xs text-zinc-500">
-                  You have unsaved changes
+                  {t("unsavedChanges")}
                 </p>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleDiscard}
                     className="text-xs text-zinc-400 hover:text-white transition-colors px-3 py-1.5"
                   >
-                    Discard
+                    {tc("discard")}
                   </button>
                   <button
                     onClick={handleSave}
@@ -544,7 +546,7 @@ export default function V2SettingsPage() {
                     className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-60"
                   >
                     <FloppyDisk className="h-3.5 w-3.5" />
-                    {isSaving ? "Saving…" : "Save"}
+                    {isSaving ? t("saving") : tc("save")}
                   </button>
                 </div>
               </div>

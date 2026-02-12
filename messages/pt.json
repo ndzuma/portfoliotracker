@@ -472,7 +472,19 @@
     "helpAiSchedule": "Agenda de Resumo IA",
     "helpAiScheduleDesc": "Configurar frequência automática de análise: 12h, diária, semanal, mensal ou manual",
     "helpByoai": "BYOAI — Traga a Sua Própria IA",
-    "helpByoaiDesc": "Ligar modelos OpenRouter ou auto-alojados em vez do fornecedor IA padrão"
+    "helpByoaiDesc": "Ligar modelos OpenRouter ou auto-alojados em vez do fornecedor IA padrão",
+    "appearance": "Aparência",
+    "appearanceDesc": "Tema e exibição",
+    "settingsSaved": "Definições guardadas",
+    "failedToSave": "Falha ao guardar",
+    "exportComplete": "Exportação concluída",
+    "exportFailed": "Falha na exportação",
+    "comingSoon": "Brevemente",
+    "notificationsComingSoon": "As notificações estarão disponíveis brevemente.",
+    "notificationsComingSoonDesc": "Alertas multi-canal para Pulso de Mercado e lembretes de resultados estão em desenvolvimento.",
+    "manage": "Gerir",
+    "memberSince": "Membro desde {date}",
+    "admin": "Admin"
   },
   "news": {
     "title": "Notícias e Análises",

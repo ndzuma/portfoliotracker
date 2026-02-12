@@ -13,6 +13,7 @@ import type * as analytics from "../analytics.js";
 import type * as articles from "../articles.js";
 import type * as assets from "../assets.js";
 import type * as crons from "../crons.js";
+import type * as deployments from "../deployments.js";
 import type * as documents from "../documents.js";
 import type * as flags from "../flags.js";
 import type * as fx from "../fx.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   articles: typeof articles;
   assets: typeof assets;
   crons: typeof crons;
+  deployments: typeof deployments;
   documents: typeof documents;
   flags: typeof flags;
   fx: typeof fx;

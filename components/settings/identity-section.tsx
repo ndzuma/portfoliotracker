@@ -10,10 +10,12 @@ import {
   EnvelopeSimple,
   Shield,
 } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 
 export function IdentitySection() {
   const { user: clerkUser } = useUser();
   const clerk = useClerk();
+  const t = useTranslations("settings");
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: clerkUser?.id || "",
@@ -32,8 +34,8 @@ export function IdentitySection() {
 
   return (
     <Section
-      title="Identity"
-      description="Your profile & account info"
+      title={t("identity")}
+      description={t("identityDescription")}
       status="live"
     >
       {/* Avatar + Name + Email row */}
@@ -68,12 +70,12 @@ export function IdentitySection() {
           </div>
           <div className="flex items-center gap-3 mt-2.5">
             <span className="text-[10px] text-zinc-600 uppercase tracking-wider">
-              Member since {memberSince}
+              {t("memberSince", { date: memberSince })}
             </span>
             {convexUser?.isAdmin && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[10px] font-semibold uppercase tracking-wider">
                 <Shield className="h-2.5 w-2.5" />
-                Admin
+                {t("admin")}
               </span>
             )}
           </div>
@@ -84,15 +86,15 @@ export function IdentitySection() {
           onClick={() => clerk.openUserProfile()}
           className="flex items-center gap-1 text-[11px] text-zinc-600 hover:text-zinc-300 transition-colors shrink-0 mt-1"
         >
-          Manage
+          {t("manage")}
           <ArrowSquareOut className="h-3 w-3" />
         </button>
       </div>
 
       {/* Settings rows */}
       <SettingRow
-        label="Display Name"
-        description="Synced from your login provider"
+        label={t("displayName")}
+        description={t("displayNameDescription")}
       >
         <span className="text-xs text-zinc-400 font-medium bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/[0.04]">
           {displayName}
@@ -100,8 +102,8 @@ export function IdentitySection() {
       </SettingRow>
 
       <SettingRow
-        label="Email"
-        description="Used for notifications and account recovery"
+        label={t("email")}
+        description={t("emailDescription")}
       >
         <span className="text-xs text-zinc-500">{email}</span>
       </SettingRow>

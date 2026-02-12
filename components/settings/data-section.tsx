@@ -18,6 +18,7 @@ import {
   type CurrencyMeta,
 } from "@/lib/currency";
 import { useAvailableCurrencies } from "@/hooks/useCurrency";
+import { useTranslations } from "next-intl";
 
 /* ─── Market Region Options ─── */
 const MARKET_REGIONS = [
@@ -57,10 +58,12 @@ function CurrencyPicker({
   value,
   onChange,
   currencies,
+  t,
 }: {
   value: string;
   onChange: (code: string) => void;
   currencies?: CurrencyMeta[];
+  t: any;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -144,7 +147,7 @@ function CurrencyPicker({
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search currencies…"
+                placeholder={t("searchCurrencies")}
                 className="bg-transparent text-xs text-zinc-300 placeholder:text-zinc-700 outline-none w-full"
               />
             </div>
@@ -153,7 +156,7 @@ function CurrencyPicker({
             <div className="max-h-[260px] overflow-y-auto overflow-x-hidden scrollbar-hide">
               {filtered.length === 0 ? (
                 <div className="px-3 py-4 text-center text-[11px] text-zinc-600">
-                  No currencies found
+                  {t("noCurrenciesFound")}
                 </div>
               ) : (
                 filtered.map((c) => (
@@ -216,6 +219,7 @@ export function DataSection({
   const { currencies: dynamicCurrencies } = useAvailableCurrencies();
   const fxRates = useQuery(api.marketData.getFxRates);
   const fx = fxAge(fxRates?.updatedAt);
+  const t = useTranslations("settings");
 
   const rateCount = fxRates?.rates
     ? Object.keys(fxRates.rates as Record<string, number>).length
@@ -225,26 +229,27 @@ export function DataSection({
 
   return (
     <Section
-      title="Data & Markets"
-      description="Currency, region & feeds"
+      title={t("dataMarkets")}
+      description={t("currencyRegionFeeds")}
       status={fx.status}
     >
       {/* Base Currency */}
       <SettingRow
-        label="Base Currency"
-        description="All portfolio values are converted to this currency"
+        label={t("baseCurrency")}
+        description={t("baseCurrencyDesc")}
       >
         <CurrencyPicker
           value={currency}
           onChange={onCurrencyChange}
           currencies={dynamicCurrencies}
+          t={t}
         />
       </SettingRow>
 
       {/* Market Region */}
       <SettingRow
-        label="Market Region"
-        description="Preferred region for news and market data"
+        label={t("marketRegion")}
+        description={t("marketRegionDesc")}
       >
         <div className="relative">
           <select
@@ -269,17 +274,20 @@ export function DataSection({
 
       {/* FX Sync Status */}
       <SettingRow
-        label="FX Rate Sync"
-        description={`${rateCount} currency pairs tracked · Updated daily`}
+        label={t("fxRateSync")}
+        description={t("fxRateSyncDesc", { count: rateCount })}
       >
         <div className="flex items-center gap-2.5">
           <StatusDot status={fx.status} pulse={fx.status === "live"} />
           <span className="text-[11px] text-zinc-500 tabular-nums">
-            {fx.label}
+            {fx.status === "live" && fx.label === "Just now" ? t("fxJustNow") :
+             fx.status === "live" ? t("fxHoursAgo", { hours: Math.floor((Date.now() - (fxRates?.updatedAt || 0)) / (1000 * 60 * 60)) }) :
+             fx.status === "amber" ? t("fxDaysAgo", { days: Math.floor((Date.now() - (fxRates?.updatedAt || 0)) / (1000 * 60 * 60 * 24)) }) :
+             t("fxNoData")}
           </span>
           <div className="w-px h-3 bg-white/[0.06]" />
           <span className="text-[10px] text-zinc-600 uppercase tracking-wider">
-            Base: EUR
+            {t("baseEur")}
           </span>
         </div>
       </SettingRow>

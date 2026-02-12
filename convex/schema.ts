@@ -2,6 +2,17 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // deployments — single document upserted by Railway webhook, read by DeploymentNotifier
+  deployments: defineTable({
+    deploymentId: v.string(),
+    status: v.string(),
+    serviceName: v.optional(v.string()),
+    environment: v.optional(v.string()),
+    branch: v.optional(v.string()),
+    commitMessage: v.optional(v.string()),
+    commitAuthor: v.optional(v.string()),
+    triggeredAt: v.number(),
+  }),
   // FX rates — single document updated daily, EUR-based from ExchangeRatesAPI
   fxRates: defineTable({
     base: v.string(), // always "EUR"

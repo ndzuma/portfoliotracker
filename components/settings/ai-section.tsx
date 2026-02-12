@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslations } from "next-intl";
 
 /* ─── AI Summary Frequency Options ─── */
 const FREQUENCY_OPTIONS = [
@@ -63,29 +64,30 @@ export function AiSection({
   byoaiEnabled,
   aiSummariesEnabled = true,
 }: AiSectionProps) {
+  const t = useTranslations("settings");
   const selectedFreq = FREQUENCY_OPTIONS.find(
     (f) => f.value === aiSummaryFrequency,
   );
 
   const providerLabel =
     aiProvider === "openrouter"
-      ? "OpenRouter"
+      ? t("openRouter")
       : aiProvider === "self-hosted"
-        ? "Self-Hosted"
-        : "Default (Hosted)";
+        ? t("selfHosted")
+        : t("defaultHosted");
 
   return (
     <>
       {/* ── Portfolio AI Summary Frequency ── */}
       {aiSummariesEnabled ? (
         <Section
-          title="AI Summaries"
-          description="Portfolio analysis schedule"
+          title={t("aiSummaries")}
+          description={t("portfolioAnalysisSchedule")}
           status={aiSummaryFrequency !== "manual" ? "live" : "off"}
         >
           <SettingRow
-            label="Summary Frequency"
-            description="How often AI generates portfolio analysis reports"
+            label={t("summaryFrequency")}
+            description={t("summaryFrequencyDesc")}
           >
             <div className="flex items-center gap-2">
               <Clock
@@ -122,23 +124,17 @@ export function AiSection({
                 <div className="flex items-center gap-2 mb-1.5">
                   <Brain className="h-3 w-3 text-zinc-600" />
                   <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">
-                    Schedule
+                    {t("schedule")}
                   </span>
                 </div>
                 <p className="text-xs text-zinc-400 leading-relaxed">
                   {aiSummaryFrequency === "manual" ? (
                     <>
-                      AI summaries are generated only when you manually trigger
-                      them from a portfolio page.
+                      {t("manualDescription")}
                     </>
                   ) : (
                     <>
-                      Your portfolios will be analyzed{" "}
-                      <span className="text-zinc-300 font-medium">
-                        {selectedFreq.description.toLowerCase()}
-                      </span>
-                      . Each summary includes performance insights, risk
-                      analysis, and actionable recommendations.
+                      {t("autoDescription", { frequency: selectedFreq.description.toLowerCase() })}
                     </>
                   )}
                 </p>
@@ -147,14 +143,13 @@ export function AiSection({
           )}
         </Section>
       ) : (
-        <Section title="AI Summaries" description="Coming soon" status="off">
+        <Section title={t("aiSummaries")} description={t("comingSoon")} status="off">
           <div className="py-6 text-center">
             <p className="text-sm text-zinc-600">
-              Scheduled AI summaries are coming soon.
+              {t("scheduledAiComingSoon")}
             </p>
             <p className="text-xs text-zinc-700 mt-1">
-              You can still generate on-demand summaries from any portfolio
-              page.
+              {t("onDemandStillAvailable")}
             </p>
           </div>
         </Section>
@@ -162,9 +157,9 @@ export function AiSection({
 
       {/* ── BYOAI Provider ── */}
       <Section
-        title="AI Provider"
+        title={t("aiProvider")}
         description={
-          byoaiEnabled ? "Model & routing config" : "Using hosted AI"
+          byoaiEnabled ? t("modelRoutingConfig") : t("usingHostedAi")
         }
         status={
           aiProvider === "openrouter" || aiProvider === "self-hosted"
@@ -173,8 +168,8 @@ export function AiSection({
         }
       >
         <SettingRow
-          label="Provider"
-          description="Choose how AI features are powered"
+          label={t("provider")}
+          description={t("providerDescription")}
         >
           {byoaiEnabled ? (
             <Select value={aiProvider} onValueChange={onAiProviderChange}>
@@ -186,31 +181,31 @@ export function AiSection({
                   value="default"
                   className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
                 >
-                  Default (Hosted)
+                  {t("defaultHosted")}
                 </SelectItem>
                 <SelectItem
                   value="openrouter"
                   className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
                 >
-                  OpenRouter
+                  {t("openRouter")}
                 </SelectItem>
                 <SelectItem
                   value="self-hosted"
                   className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
                 >
-                  Self-Hosted
+                  {t("selfHosted")}
                 </SelectItem>
               </SelectContent>
             </Select>
           ) : (
             <span className="text-xs text-zinc-600 bg-white/[0.02] px-3 py-1.5 rounded-lg border border-white/[0.04]">
-              Default (Hosted)
+              {t("defaultHosted")}
             </span>
           )}
         </SettingRow>
 
         {/* Provider status row */}
-        <SettingRow label="Status" description="Current provider connection">
+        <SettingRow label={t("status")} description={t("currentProviderConnection")}>
           <div className="flex items-center gap-2.5">
             <StatusDot
               status={
@@ -226,14 +221,14 @@ export function AiSection({
             />
             <span className="text-[11px] text-zinc-500">
               {aiProvider === "default"
-                ? "Connected to hosted AI"
+                ? t("connectedToHosted")
                 : aiProvider === "openrouter"
                   ? openRouterApiKey
-                    ? "API key configured"
-                    : "API key required"
+                    ? t("apiKeyConfigured")
+                    : t("apiKeyRequired")
                   : selfHostedUrl
-                    ? "Tunnel configured"
-                    : "Configuration required"}
+                    ? t("tunnelConfigured")
+                    : t("configurationRequired")}
             </span>
           </div>
         </SettingRow>

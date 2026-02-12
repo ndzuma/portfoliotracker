@@ -472,7 +472,19 @@
     "helpAiSchedule": "AI Summary Schedule",
     "helpAiScheduleDesc": "Configure automatic portfolio analysis frequency: 12h, daily, weekly, monthly, or manual",
     "helpByoai": "BYOAI — Bring Your Own AI",
-    "helpByoaiDesc": "Connect OpenRouter or self-hosted models instead of the default hosted AI provider"
+    "helpByoaiDesc": "Connect OpenRouter or self-hosted models instead of the default hosted AI provider",
+    "appearance": "Appearance",
+    "appearanceDesc": "Theme & display",
+    "settingsSaved": "Settings saved",
+    "failedToSave": "Failed to save",
+    "exportComplete": "Export complete",
+    "exportFailed": "Export failed",
+    "comingSoon": "Coming soon",
+    "notificationsComingSoon": "Notifications are coming soon.",
+    "notificationsComingSoonDesc": "Multi-channel alerts for Market Pulse and earnings reminders are in development.",
+    "manage": "Manage",
+    "memberSince": "Member since {date}",
+    "admin": "Admin"
   },
   "news": {
     "title": "News & Insights",
