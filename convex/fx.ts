@@ -29,7 +29,6 @@ export function convert(
   if (from === to || !from || !to) return amount;
   if (!amount || !isFinite(amount)) return amount;
 
-  console.log(`Converting ${amount} ${from} to ${to}`);
   const fromRate = from === "EUR" ? 1 : rates[from];
   const toRate = to === "EUR" ? 1 : rates[to];
 
