@@ -58,10 +58,10 @@ export function Section({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="rounded-xl border border-white/[0.06] bg-zinc-950/60 overflow-hidden"
+      className="rounded-xl border border-white/[0.06] bg-zinc-950/60"
     >
       {/* Section header */}
-      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-white/[0.04] bg-white/[0.01]">
+      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-white/[0.04] bg-white/[0.01] rounded-t-xl">
         {status && <StatusDot status={status} pulse={status === "live"} />}
         <h3 className="text-sm font-semibold text-white">{title}</h3>
         {description && (
@@ -75,7 +75,7 @@ export function Section({
       </div>
 
       {/* Section body */}
-      <div className="p-5 flex flex-col gap-0">{children}</div>
+      <div className="p-5 flex flex-col gap-0 rounded-b-xl">{children}</div>
     </motion.div>
   );
 }
