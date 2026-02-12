@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Sparkle } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 
 interface V2AISummaryPopupProps {
   open: boolean;
@@ -19,6 +20,8 @@ export function V2AISummaryPopup({
   analysis,
   timestamp,
 }: V2AISummaryPopupProps) {
+  const t = useTranslations("ai");
+  const tc = useTranslations("common");
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -83,11 +86,11 @@ export function V2AISummaryPopup({
             </div>
             <div>
               <h2 className="text-white text-lg font-semibold">
-                AI Market Intelligence
+                {t("marketIntelligence")}
               </h2>
               {timestamp && (
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  Updated {formatTimestamp(timestamp)}
+                  {t("lastUpdated", { time: formatTimestamp(timestamp) })}
                 </p>
               )}
             </div>
@@ -100,7 +103,7 @@ export function V2AISummaryPopup({
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                  Executive Summary
+                  {t("executiveSummary")}
                 </p>
               </div>
               <div className="text-white text-base leading-relaxed font-medium">
@@ -125,12 +128,9 @@ export function V2AISummaryPopup({
             <div className="bg-zinc-900/50 rounded-lg p-4 border border-white/[0.06] mt-6">
               <p className="text-xs text-zinc-500 leading-relaxed">
                 <span className="font-semibold text-zinc-400">
-                  AI Risk Warning:
+                  {t("aiRiskWarning")}:
                 </span>{" "}
-                This AI-generated analysis is for informational purposes only
-                and should not be considered financial advice. Always consult
-                with a qualified financial advisor before making investment
-                decisions.
+                {t("aiDisclaimer")}
               </p>
             </div>
           </div>
@@ -141,11 +141,11 @@ export function V2AISummaryPopup({
               onClick={() => onOpenChange(false)}
               className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
             >
-              Close
+              {tc("close")}
             </button>
             <div className="flex items-center gap-2 text-xs text-zinc-600">
               <Sparkle className="h-3 w-3" />
-              <span>Powered by AI</span>
+              <span>{t("poweredByAi")}</span>
             </div>
           </div>
         </div>
@@ -163,11 +163,11 @@ export function V2AISummaryPopup({
               </div>
               <div>
                 <h2 className="text-white text-lg font-semibold">
-                  AI Market Intelligence
+                  {t("marketIntelligence")}
                 </h2>
                 {timestamp && (
                   <p className="text-xs text-zinc-500 mt-0.5">
-                    Updated {formatTimestamp(timestamp)}
+                    {t("lastUpdated", { time: formatTimestamp(timestamp) })}
                   </p>
                 )}
               </div>
@@ -180,7 +180,7 @@ export function V2AISummaryPopup({
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                    Executive Summary
+                    {t("executiveSummary")}
                   </p>
                 </div>
                 <div className="text-white text-base leading-relaxed font-medium">
@@ -193,7 +193,7 @@ export function V2AISummaryPopup({
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
                   <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                    Detailed Analysis
+                    {t("detailedAnalysis")}
                   </p>
                 </div>
                 <div className="text-[14px] text-zinc-300 leading-relaxed whitespace-pre-line">
@@ -205,12 +205,9 @@ export function V2AISummaryPopup({
               <div className="bg-zinc-900/50 rounded-lg p-4 border border-white/[0.06] mt-6">
                 <p className="text-xs text-zinc-500 leading-relaxed">
                   <span className="font-semibold text-zinc-400">
-                    AI Risk Warning:
+                    {t("aiRiskWarning")}:
                   </span>{" "}
-                  This AI-generated analysis is for informational purposes only
-                  and should not be considered financial advice. Always consult
-                  with a qualified financial advisor before making investment
-                  decisions.
+                  {t("aiDisclaimer")}
                 </p>
               </div>
             </div>
@@ -221,11 +218,11 @@ export function V2AISummaryPopup({
                 onClick={() => onOpenChange(false)}
                 className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
               >
-                Close
+                {tc("close")}
               </button>
               <div className="flex items-center gap-2 text-xs text-zinc-600">
                 <Sparkle className="h-3 w-3" />
-                <span>Powered by AI</span>
+                <span>{t("poweredByAi")}</span>
               </div>
             </div>
           </div>

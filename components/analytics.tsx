@@ -16,6 +16,7 @@ import {
   Lightning,
   CaretDown,
 } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 
 interface V2AnalyticsProps {
   portfolioId: string;
@@ -119,6 +120,9 @@ function AccordionSection({
 export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
   if (!isFeatureEnabled("portfolioAnalytics")) return null;
 
+  const t = useTranslations("analytics");
+  const tc = useTranslations("common");
+
   const analytics = useQuery(api.portfolios.getPortfolioAnalytics, {
     portfolioId,
   });
@@ -151,85 +155,85 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
 
   const risk =
     analytics.riskMetrics.volatility < 0.15
-      ? "Low"
+      ? t("riskLow")
       : analytics.riskMetrics.volatility < 0.25
-        ? "Medium"
-        : "High";
+        ? t("riskMedium")
+        : t("riskHigh");
 
   return (
     <div className="flex flex-col gap-4">
       {/* ─── Performance Metrics (open by default) ─── */}
       <AccordionSection
-        title="Performance Metrics"
+        title={t("performanceMetrics")}
         icon={TrendUp}
         defaultOpen={true}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatBlock
             icon={TrendUp}
-            label="Total Return"
+            label={t("totalReturn")}
             value={fmt(analytics.performanceMetrics.totalReturn)}
-            sub="Since inception"
+            sub={t("sinceInception")}
           />
           <StatBlock
             icon={ChartBar}
-            label="Annualized"
+            label={t("annualized")}
             value={fmt(analytics.performanceMetrics.annualizedReturn)}
-            sub="Compound annual growth"
+            sub={t("compoundAnnualGrowth")}
           />
           <StatBlock
             icon={Pulse}
-            label="YTD Return"
+            label={t("ytdReturn")}
             value={fmt(analytics.performanceMetrics.ytdReturn)}
-            sub="Year to date"
+            sub={t("yearToDate")}
           />
           <StatBlock
             icon={Lightning}
-            label="Alpha"
+            label={t("alpha")}
             value={fmt(analytics.performanceMetrics.alpha)}
-            sub="Excess return vs market"
+            sub={t("excessReturnVsMarket")}
             accent={analytics.performanceMetrics.alpha > 0 ? "green" : "red"}
           />
         </div>
       </AccordionSection>
 
       {/* ─── Rolling Returns ─── */}
-      <AccordionSection title="Rolling Returns" icon={ChartBar}>
+      <AccordionSection title={t("rollingReturns")} icon={ChartBar}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatBlock
             icon={TrendUp}
-            label="1 Year"
+            label={t("rolling1Year")}
             value={fmt(analytics.performanceMetrics.rollingReturns["1Y"])}
-            sub="Trailing 12 months"
+            sub={t("trailing12Months")}
           />
           <StatBlock
             icon={TrendUp}
-            label="3 Years"
+            label={t("rolling3Years")}
             value={fmt(analytics.performanceMetrics.rollingReturns["3Y"])}
-            sub="Annualized 3-year"
+            sub={t("annualized3Year")}
           />
           <StatBlock
             icon={TrendUp}
-            label="5 Years"
+            label={t("rolling5Years")}
             value={fmt(analytics.performanceMetrics.rollingReturns["5Y"])}
-            sub="Annualized 5-year"
+            sub={t("annualized5Year")}
           />
         </div>
       </AccordionSection>
 
       {/* ─── Best & Worst Periods ─── */}
-      <AccordionSection title="Best & Worst Periods" icon={Crosshair}>
+      <AccordionSection title={t("bestWorstPeriods")} icon={Crosshair}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatBlock
             icon={TrendUp}
-            label="Best Month"
+            label={t("bestMonth")}
             value={`+${fmt(analytics.performanceMetrics.bestWorstPeriods.bestMonth.return)}`}
             sub={`${fmtDate(analytics.performanceMetrics.bestWorstPeriods.bestMonth.startDate)}`}
             accent="green"
           />
           <StatBlock
             icon={TrendDown}
-            label="Worst Month"
+            label={t("worstMonth")}
             value={fmt(
               analytics.performanceMetrics.bestWorstPeriods.worstMonth.return,
             )}
@@ -238,14 +242,14 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
           />
           <StatBlock
             icon={TrendUp}
-            label="Best Year"
+            label={t("bestYear")}
             value={`+${fmt(analytics.performanceMetrics.bestWorstPeriods.bestYear.return)}`}
             sub={`${fmtDate(analytics.performanceMetrics.bestWorstPeriods.bestYear.startDate)}`}
             accent="green"
           />
           <StatBlock
             icon={TrendDown}
-            label="Worst Year"
+            label={t("worstYear")}
             value={fmt(
               analytics.performanceMetrics.bestWorstPeriods.worstYear.return,
             )}
@@ -256,13 +260,13 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
       </AccordionSection>
 
       {/* ─── Risk Analysis ─── */}
-      <AccordionSection title="Risk Analysis" icon={Shield}>
+      <AccordionSection title={t("riskAnalysis")} icon={Shield}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
             <div className="flex items-center gap-2 mb-3">
               <Shield className="h-3.5 w-3.5 text-zinc-500" />
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider">
-                Volatility
+                {t("volatility")}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -270,64 +274,64 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
                 {fmt(analytics.riskMetrics.volatility)}
               </p>
               <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${risk === "Low" ? "bg-emerald-500/10 text-emerald-500" : risk === "Medium" ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500"}`}
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${risk === t("riskLow") ? "bg-emerald-500/10 text-emerald-500" : risk === t("riskMedium") ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500"}`}
               >
                 {risk}
               </span>
             </div>
             <p className="text-[11px] text-zinc-600 mt-1">
-              Annualized volatility
+              {t("annualizedVolatility")}
             </p>
           </div>
           <StatBlock
             icon={TrendDown}
-            label="Max Drawdown"
+            label={t("maxDrawdown")}
             value={`-${fmt(analytics.riskMetrics.maxDrawdown)}`}
-            sub="Largest peak-to-trough"
+            sub={t("largestPeakToTrough")}
             accent="red"
           />
           <StatBlock
             icon={Pulse}
-            label="Sharpe Ratio"
+            label={t("sharpeRatio")}
             value={analytics.riskMetrics.sharpeRatio.toFixed(2)}
-            sub="Risk-adjusted return"
+            sub={t("riskAdjustedReturn")}
           />
           <StatBlock
             icon={Warning}
-            label="Daily VaR (95%)"
+            label={t("dailyVar95")}
             value={`-${fmt(analytics.riskMetrics.valueAtRisk.daily)}`}
-            sub="Expected daily loss"
+            sub={t("expectedDailyLoss")}
             accent="amber"
           />
         </div>
       </AccordionSection>
 
       {/* ─── Benchmark Comparison ─── */}
-      <AccordionSection title="Benchmark Comparison (vs SPY)" icon={Pulse}>
+      <AccordionSection title={t("benchmarkComparison")} icon={Pulse}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatBlock
             icon={Pulse}
-            label="Beta"
+            label={t("beta")}
             value={analytics.riskMetrics.beta.toFixed(2)}
-            sub="Market sensitivity"
+            sub={t("marketSensitivity")}
           />
           <StatBlock
             icon={Crosshair}
-            label="Correlation"
+            label={t("correlation")}
             value={analytics.benchmarkComparisons.correlation.toFixed(3)}
-            sub="Price correlation to SPY"
+            sub={t("priceCorrelationToSpy")}
           />
           <StatBlock
             icon={Crosshair}
-            label="Info Ratio"
+            label={t("infoRatio")}
             value={analytics.benchmarkComparisons.informationRatio.toFixed(3)}
-            sub="Alpha per tracking error"
+            sub={t("alphaPerTrackingError")}
           />
           <StatBlock
             icon={TrendUp}
-            label="Outperformance"
+            label={t("outperformance")}
             value={`${analytics.benchmarkComparisons.cumulativeOutperformance > 0 ? "+" : ""}${fmt(analytics.benchmarkComparisons.cumulativeOutperformance)}`}
-            sub="Cumulative excess return"
+            sub={t("cumulativeExcessReturn")}
             accent={
               analytics.benchmarkComparisons.cumulativeOutperformance > 0
                 ? "green"

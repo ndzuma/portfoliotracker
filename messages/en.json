@@ -254,7 +254,11 @@
     "saveChanges": "Save Changes",
     "statusInProgress": "In Progress",
     "statusExceededShort": "Exceeded",
-    "statusCompleteShort": "Complete"
+    "statusCompleteShort": "Complete",
+    "deadlineOptional": "Deadline (optional)",
+    "notesOptional": "Notes (optional)",
+    "currentValueOptional": "Current Value (optional — auto-derived if empty)",
+    "customGoal": "Custom Goal"
   },
   "settings": {
     "title": "Settings",
@@ -540,7 +544,12 @@
     "lastUpdated": "Last updated {time}",
     "poweredBy": "Powered by {provider}",
     "summaryTitle": "AI Market Summary",
-    "fullAnalysis": "Full Analysis"
+    "fullAnalysis": "Full Analysis",
+    "executiveSummary": "Executive Summary",
+    "detailedAnalysis": "Detailed Analysis",
+    "aiRiskWarning": "AI Risk Warning",
+    "aiDisclaimer": "This AI-generated analysis is for informational purposes only and should not be considered financial advice. Always consult with a qualified financial advisor before making investment decisions.",
+    "poweredByAi": "Powered by AI"
   },
   "vault": {
     "title": "Vault",
@@ -599,7 +608,11 @@
     "deleted": "Deleted",
     "failed": "Failed",
     "renamed": "Renamed",
-    "searchVaultPlaceholder": "Search vault — articles, documents..."
+    "searchVaultPlaceholder": "Search vault — articles, documents...",
+    "research": "Research",
+    "addArticleButton": "Add article",
+    "uploadFileButton": "Upload file",
+    "loading": "Loading…"
   },
   "transactions": {
     "title": "Transactions",
@@ -787,5 +800,49 @@
     "dateRange1Y": "1Y",
     "dateRangeAll": "All",
     "noData": "No chart data available"
+  },
+  "analytics": {
+    "performanceMetrics": "Performance Metrics",
+    "totalReturn": "Total Return",
+    "sinceInception": "Since inception",
+    "annualized": "Annualized",
+    "compoundAnnualGrowth": "Compound annual growth",
+    "ytdReturn": "YTD Return",
+    "yearToDate": "Year to date",
+    "alpha": "Alpha",
+    "excessReturnVsMarket": "Excess return vs market",
+    "rollingReturns": "Rolling Returns",
+    "rolling1Year": "1 Year",
+    "trailing12Months": "Trailing 12 months",
+    "rolling3Years": "3 Years",
+    "annualized3Year": "Annualized 3-year",
+    "rolling5Years": "5 Years",
+    "annualized5Year": "Annualized 5-year",
+    "bestWorstPeriods": "Best & Worst Periods",
+    "bestMonth": "Best Month",
+    "worstMonth": "Worst Month",
+    "bestYear": "Best Year",
+    "worstYear": "Worst Year",
+    "riskAnalysis": "Risk Analysis",
+    "volatility": "Volatility",
+    "annualizedVolatility": "Annualized volatility",
+    "riskLow": "Low",
+    "riskMedium": "Medium",
+    "riskHigh": "High",
+    "maxDrawdown": "Max Drawdown",
+    "largestPeakToTrough": "Largest peak-to-trough",
+    "sharpeRatio": "Sharpe Ratio",
+    "riskAdjustedReturn": "Risk-adjusted return",
+    "dailyVar95": "Daily VaR (95%)",
+    "expectedDailyLoss": "Expected daily loss",
+    "benchmarkComparison": "Benchmark Comparison (vs SPY)",
+    "beta": "Beta",
+    "marketSensitivity": "Market sensitivity",
+    "correlation": "Correlation",
+    "priceCorrelationToSpy": "Price correlation to SPY",
+    "infoRatio": "Info Ratio",
+    "alphaPerTrackingError": "Alpha per tracking error",
+    "outperformance": "Outperformance",
+    "cumulativeExcessReturn": "Cumulative excess return"
   }
 }

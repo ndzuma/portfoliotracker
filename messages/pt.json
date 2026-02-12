@@ -254,7 +254,11 @@
     "saveChanges": "Guardar Alterações",
     "statusInProgress": "Em Progresso",
     "statusExceededShort": "Superado",
-    "statusCompleteShort": "Completo"
+    "statusCompleteShort": "Completo",
+    "deadlineOptional": "Prazo (opcional)",
+    "notesOptional": "Notas (opcional)",
+    "currentValueOptional": "Valor Atual (opcional — derivado automaticamente se vazio)",
+    "customGoal": "Objetivo Personalizado"
   },
   "settings": {
     "title": "Definições",
@@ -540,7 +544,12 @@
     "lastUpdated": "Última atualização {time}",
     "poweredBy": "Alimentado por {provider}",
     "summaryTitle": "Resumo de Mercado IA",
-    "fullAnalysis": "Análise Completa"
+    "fullAnalysis": "Análise Completa",
+    "executiveSummary": "Resumo Executivo",
+    "detailedAnalysis": "Análise Detalhada",
+    "aiRiskWarning": "Aviso de Risco IA",
+    "aiDisclaimer": "Esta análise gerada por IA é apenas para fins informativos e não deve ser considerada aconselhamento financeiro. Consulte sempre um consultor financeiro qualificado antes de tomar decisões de investimento.",
+    "poweredByAi": "Desenvolvido por IA"
   },
   "vault": {
     "title": "Cofre",
@@ -599,7 +608,11 @@
     "deleted": "Eliminado",
     "failed": "Falhou",
     "renamed": "Renomeado",
-    "searchVaultPlaceholder": "Pesquisar cofre — artigos, documentos..."
+    "searchVaultPlaceholder": "Pesquisar cofre — artigos, documentos...",
+    "research": "Pesquisa",
+    "addArticleButton": "Adicionar artigo",
+    "uploadFileButton": "Carregar ficheiro",
+    "loading": "A carregar…"
   },
   "transactions": {
     "title": "Transações",
@@ -787,5 +800,49 @@
     "dateRange1Y": "1A",
     "dateRangeAll": "Tudo",
     "noData": "Dados de gráfico indisponíveis"
+  },
+  "analytics": {
+    "performanceMetrics": "Métricas de Desempenho",
+    "totalReturn": "Retorno Total",
+    "sinceInception": "Desde o início",
+    "annualized": "Anualizado",
+    "compoundAnnualGrowth": "Crescimento anual composto",
+    "ytdReturn": "Retorno YTD",
+    "yearToDate": "Ano até à data",
+    "alpha": "Alfa",
+    "excessReturnVsMarket": "Retorno excedente vs mercado",
+    "rollingReturns": "Retornos Móveis",
+    "rolling1Year": "1 Ano",
+    "trailing12Months": "Últimos 12 meses",
+    "rolling3Years": "3 Anos",
+    "annualized3Year": "Anualizado 3 anos",
+    "rolling5Years": "5 Anos",
+    "annualized5Year": "Anualizado 5 anos",
+    "bestWorstPeriods": "Melhores e Piores Períodos",
+    "bestMonth": "Melhor Mês",
+    "worstMonth": "Pior Mês",
+    "bestYear": "Melhor Ano",
+    "worstYear": "Pior Ano",
+    "riskAnalysis": "Análise de Risco",
+    "volatility": "Volatilidade",
+    "annualizedVolatility": "Volatilidade anualizada",
+    "riskLow": "Baixo",
+    "riskMedium": "Médio",
+    "riskHigh": "Alto",
+    "maxDrawdown": "Drawdown Máximo",
+    "largestPeakToTrough": "Maior queda pico-a-vale",
+    "sharpeRatio": "Rácio de Sharpe",
+    "riskAdjustedReturn": "Retorno ajustado ao risco",
+    "dailyVar95": "VaR Diário (95%)",
+    "expectedDailyLoss": "Perda diária esperada",
+    "benchmarkComparison": "Comparação com Benchmark (vs SPY)",
+    "beta": "Beta",
+    "marketSensitivity": "Sensibilidade ao mercado",
+    "correlation": "Correlação",
+    "priceCorrelationToSpy": "Correlação de preço com SPY",
+    "infoRatio": "Rácio de Informação",
+    "alphaPerTrackingError": "Alfa por erro de tracking",
+    "outperformance": "Outperformance",
+    "cumulativeExcessReturn": "Retorno excedente acumulado"
   }
 }

@@ -14,6 +14,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslations } from "next-intl";
 import {
   FileText,
   BookOpen,
@@ -100,6 +101,8 @@ function ArticlesList({
   portfolioId: string;
   searchQuery: string;
 }) {
+  const t = useTranslations("vault");
+  const tc = useTranslations("common");
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<ArticleItem | null>(
@@ -148,9 +151,9 @@ function ArticlesList({
       setUrl("");
       setNotes("");
       setAddOpen(false);
-      toast.success("Article saved");
+      toast.success(t("articleSaved"));
     } catch {
-      toast.error("Failed to save");
+      toast.error(t("failedToSave"));
     }
   };
 
@@ -166,9 +169,9 @@ function ArticlesList({
       });
       setEditOpen(false);
       setEditingArticle(null);
-      toast.success("Article updated");
+      toast.success(t("articleUpdated"));
     } catch {
-      toast.error("Failed to update");
+      toast.error(t("failedToUpdate"));
     }
   };
 
@@ -186,9 +189,9 @@ function ArticlesList({
         articleId: id as Id<"userArticles">,
         userId: userId as Id<"users">,
       });
-      toast.success("Deleted");
+      toast.success(t("deleted"));
     } catch {
-      toast.error("Failed");
+      toast.error(t("failed"));
     }
   };
 
@@ -197,7 +200,7 @@ function ArticlesList({
       <div className="flex flex-col gap-2">
         {filteredArticles.length === 0 ? (
           <p className="text-sm text-zinc-600 py-3">
-            {searchQuery ? "No matching articles." : "No saved articles yet."}
+            {searchQuery ? t("noMatchingArticles") : t("noArticles")}
           </p>
         ) : (
           filteredArticles.map((a: ArticleItem) => (
@@ -255,7 +258,7 @@ function ArticlesList({
           onClick={() => setAddOpen(true)}
           className="flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mt-1 self-start"
         >
-          <Plus className="h-3 w-3" /> Add article
+          <Plus className="h-3 w-3" /> {t("addArticleButton")}
         </button>
       </div>
 
@@ -264,38 +267,38 @@ function ArticlesList({
         <DialogContent className="sm:max-w-[440px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
           <div className="px-6 py-4 border-b border-white/[0.06]">
             <DialogTitle className="text-white text-base font-semibold">
-              Save Article
+              {t("addArticle")}
             </DialogTitle>
           </div>
           <div className="px-6 pb-6 pt-5">
             <div className="flex flex-col gap-4 py-2">
               <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">Title</Label>
+                <Label className="text-xs text-zinc-400">{t("articleTitle")}</Label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Article title"
+                  placeholder={t("articlePlaceholder")}
                   className="bg-zinc-900 border-white/[0.06] text-white h-9"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">URL</Label>
+                <Label className="text-xs text-zinc-400">{t("articleUrl")}</Label>
                 <Input
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://..."
+                  placeholder={t("urlPlaceholder")}
                   className="bg-zinc-900 border-white/[0.06] text-white h-9"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label className="text-xs text-zinc-400">
-                  Notes{" "}
-                  <span className="text-zinc-600 font-normal">(optional)</span>
+                  {t("articleNotes")}{" "}
+                  <span className="text-zinc-600 font-normal">({tc("optional")})</span>
                 </Label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Key takeaways, thoughts..."
+                  placeholder={t("notesPlaceholder")}
                   rows={3}
                   className="bg-zinc-900 border border-white/[0.06] text-white text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-white/[0.12] transition-colors placeholder:text-zinc-600"
                 />
@@ -306,14 +309,14 @@ function ArticlesList({
                 onClick={() => setAddOpen(false)}
                 className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
               >
-                Cancel
+                {tc("cancel")}
               </button>
               <button
                 onClick={handleAdd}
                 disabled={!title.trim() || !url.trim()}
                 className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Save Article
+                {t("saveArticle")}
               </button>
             </div>
           </div>
@@ -331,38 +334,38 @@ function ArticlesList({
         <DialogContent className="sm:max-w-[440px] bg-zinc-950 border-white/[0.08] p-0 overflow-hidden">
           <div className="px-6 py-4 border-b border-white/[0.06]">
             <DialogTitle className="text-white text-base font-semibold">
-              Edit Article
+              {t("editArticle")}
             </DialogTitle>
           </div>
           <div className="px-6 pb-6 pt-5">
             <div className="flex flex-col gap-4 py-2">
               <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">Title</Label>
+                <Label className="text-xs text-zinc-400">{t("articleTitle")}</Label>
                 <Input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  placeholder="Article title"
+                  placeholder={t("articlePlaceholder")}
                   className="bg-zinc-900 border-white/[0.06] text-white h-9"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label className="text-xs text-zinc-400">URL</Label>
+                <Label className="text-xs text-zinc-400">{t("articleUrl")}</Label>
                 <Input
                   value={editUrl}
                   onChange={(e) => setEditUrl(e.target.value)}
-                  placeholder="https://..."
+                  placeholder={t("urlPlaceholder")}
                   className="bg-zinc-900 border-white/[0.06] text-white h-9"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label className="text-xs text-zinc-400">
-                  Notes{" "}
-                  <span className="text-zinc-600 font-normal">(optional)</span>
+                  {t("articleNotes")}{" "}
+                  <span className="text-zinc-600 font-normal">({tc("optional")})</span>
                 </Label>
                 <textarea
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
-                  placeholder="Key takeaways, thoughts..."
+                  placeholder={t("notesPlaceholder")}
                   rows={3}
                   className="bg-zinc-900 border border-white/[0.06] text-white text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-white/[0.12] transition-colors placeholder:text-zinc-600"
                 />
@@ -376,14 +379,14 @@ function ArticlesList({
                 }}
                 className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
               >
-                Cancel
+                {tc("cancel")}
               </button>
               <button
                 onClick={handleEdit}
                 disabled={!editTitle.trim() || !editUrl.trim()}
                 className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Update Article
+                {t("updateArticle")}
               </button>
             </div>
           </div>
@@ -408,6 +411,8 @@ function UploadDocumentDialog({
   userId: string;
   portfolioId: string;
 }) {
+  const t = useTranslations("vault");
+  const tc = useTranslations("common");
   const [step, setStep] = useState<1 | 2>(1);
   const [file, setFile] = useState<File | null>(null);
   const [docType, setDocType] = useState<DocumentType>("Other");
@@ -482,10 +487,10 @@ function UploadDocumentDialog({
         fileName: file.name,
         type: docType,
       });
-      toast.success("Document uploaded");
+      toast.success(t("documentUploaded"));
       handleClose(false);
     } catch {
-      toast.error("Upload failed");
+      toast.error(t("uploadFailed"));
       setIsUploading(false);
     }
   };
@@ -507,7 +512,7 @@ function UploadDocumentDialog({
         {/* Header with step indicators */}
         <div className="px-6 py-4 border-b border-white/[0.06]">
           <DialogTitle className="text-white text-base font-semibold mb-3">
-            Upload Document
+            {t("uploadDocument")}
           </DialogTitle>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
@@ -523,7 +528,7 @@ function UploadDocumentDialog({
               <span
                 className={`text-[11px] font-medium ${step >= 1 ? "text-white" : "text-zinc-600"}`}
               >
-                Select File
+                {t("stepSelectFile")}
               </span>
             </div>
             <div className="w-6 h-px bg-white/[0.08]" />
@@ -540,7 +545,7 @@ function UploadDocumentDialog({
               <span
                 className={`text-[11px] font-medium ${step >= 2 ? "text-white" : "text-zinc-600"}`}
               >
-                Confirm
+                {tc("confirm")}
               </span>
             </div>
           </div>
@@ -604,7 +609,7 @@ function UploadDocumentDialog({
                         }}
                         className="text-[11px] text-zinc-500 hover:text-white transition-colors underline underline-offset-2"
                       >
-                        Choose different file
+                        {t("chooseDifferentFile")}
                       </button>
                     </>
                   ) : (
@@ -615,12 +620,12 @@ function UploadDocumentDialog({
                       <div className="text-center">
                         <p className="text-sm text-zinc-300">
                           <span className="text-white font-medium">
-                            Click to browse
+                            {t("clickToBrowse")}
                           </span>{" "}
-                          or drag and drop
+                          {t("orDragAndDrop")}
                         </p>
                         <p className="text-[11px] text-zinc-600 mt-0.5">
-                          PDF, DOCX, XLSX, CSV, TXT — up to 10MB
+                          {t("fileSizeLimit")}
                         </p>
                       </div>
                     </>
@@ -630,7 +635,7 @@ function UploadDocumentDialog({
                 {/* Document type selector */}
                 <div className="mt-5">
                   <Label className="text-xs text-zinc-400 mb-2 block">
-                    Document Type
+                    {t("documentType")}
                   </Label>
                   <div className="grid grid-cols-2 gap-1.5">
                     {DOCUMENT_TYPES.map((type) => (
@@ -658,14 +663,14 @@ function UploadDocumentDialog({
                     onClick={() => handleClose(false)}
                     className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
                   >
-                    Cancel
+                    {tc("cancel")}
                   </button>
                   <button
                     onClick={() => setStep(2)}
                     disabled={!file}
                     className="flex items-center gap-1.5 px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Next
+                    {tc("next")}
                     <CaretRight className="h-3.5 w-3.5" weight="bold" />
                   </button>
                 </div>
@@ -683,7 +688,7 @@ function UploadDocumentDialog({
               >
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                   <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-4">
-                    Upload Summary
+                    {t("uploadSummary")}
                   </p>
 
                   <div className="flex items-start gap-4">
@@ -697,7 +702,7 @@ function UploadDocumentDialog({
                       <div className="flex flex-col gap-1 mt-2">
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] text-zinc-500">
-                            Format
+                            {tc("format")}
                           </span>
                           <span className="text-[11px] text-zinc-300 font-medium">
                             {getFileExtension(file.name)}
@@ -705,7 +710,7 @@ function UploadDocumentDialog({
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] text-zinc-500">
-                            Size
+                            {tc("size")}
                           </span>
                           <span className="text-[11px] text-zinc-300 font-medium">
                             {formatFileSize(file.size)}
@@ -713,7 +718,7 @@ function UploadDocumentDialog({
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] text-zinc-500">
-                            Type
+                            {tc("type")}
                           </span>
                           <span className="text-[11px] text-zinc-300 font-medium flex items-center gap-1.5">
                             <span>{DOC_TYPE_ICONS[docType]}</span>
@@ -733,7 +738,7 @@ function UploadDocumentDialog({
                     className="flex items-center gap-1.5 px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors disabled:opacity-40"
                   >
                     <CaretLeft className="h-3.5 w-3.5" weight="bold" />
-                    Back
+                    {tc("back")}
                   </button>
                   <button
                     onClick={handleUpload}
@@ -743,12 +748,12 @@ function UploadDocumentDialog({
                     {isUploading ? (
                       <>
                         <CircleNotch className="h-3.5 w-3.5 animate-spin" />
-                        Uploading...
+                        {t("uploading")}
                       </>
                     ) : (
                       <>
                         <Upload className="h-3.5 w-3.5" />
-                        Upload Document
+                        {t("uploadDocument")}
                       </>
                     )}
                   </button>
@@ -774,6 +779,8 @@ function DocumentsList({
   portfolioId: string;
   searchQuery: string;
 }) {
+  const t = useTranslations("vault");
+  const tc = useTranslations("common");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
@@ -804,9 +811,9 @@ function DocumentsList({
       });
       setEditingId(null);
       setNewName("");
-      toast.success("Renamed");
+      toast.success(t("renamed"));
     } catch {
-      toast.error("Failed");
+      toast.error(t("failed"));
     }
   };
 
@@ -816,9 +823,9 @@ function DocumentsList({
         documentId: id as Id<"userDocuments">,
         userId: userId as Id<"users">,
       });
-      toast.success("Deleted");
+      toast.success(t("deleted"));
     } catch {
-      toast.error("Failed");
+      toast.error(t("failed"));
     }
   };
 
@@ -828,8 +835,8 @@ function DocumentsList({
         {filteredDocs.length === 0 ? (
           <p className="text-sm text-zinc-600 py-3">
             {searchQuery
-              ? "No matching documents."
-              : "No documents uploaded yet."}
+              ? t("noMatchingDocuments")
+              : t("noDocuments")}
           </p>
         ) : (
           filteredDocs.map(
@@ -914,13 +921,13 @@ function DocumentsList({
                           }}
                           className="text-zinc-300 focus:text-white focus:bg-white/[0.06]"
                         >
-                          <PencilSimple className="h-3.5 w-3.5 mr-2" /> Rename
+                          <PencilSimple className="h-3.5 w-3.5 mr-2" /> {tc("rename")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDelete(doc._id)}
                           className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
                         >
-                          <Trash className="h-3.5 w-3.5 mr-2" /> Delete
+                          <Trash className="h-3.5 w-3.5 mr-2" /> {tc("delete")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -934,7 +941,7 @@ function DocumentsList({
           onClick={() => setUploadOpen(true)}
           className="flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors mt-1 self-start"
         >
-          <Upload className="h-3 w-3" /> Upload file
+          <Upload className="h-3 w-3" /> {t("uploadFileButton")}
         </button>
       </div>
 
@@ -952,6 +959,8 @@ function DocumentsList({
 /*  VAULT CONTAINER                                                            */
 /* ========================================================================== */
 export function V2Vault({ portfolioId, userId }: V2VaultProps) {
+  const t = useTranslations("vault");
+  const tc = useTranslations("common");
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
@@ -963,7 +972,7 @@ export function V2Vault({ portfolioId, userId }: V2VaultProps) {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search vault — articles, documents..."
+          placeholder={t("searchVaultPlaceholder")}
           className="w-full h-10 pl-9 pr-4 text-sm text-white placeholder:text-zinc-600 bg-zinc-900/60 border border-white/[0.06] rounded-lg focus:outline-none focus:border-white/[0.12] transition-colors"
         />
         {searchQuery && (
@@ -982,7 +991,7 @@ export function V2Vault({ portfolioId, userId }: V2VaultProps) {
         <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
           <div className="flex items-center gap-2 mb-5">
             <BookOpen className="h-3.5 w-3.5 text-blue-400" />
-            <h3 className="text-sm font-semibold text-white">Research</h3>
+            <h3 className="text-sm font-semibold text-white">{t("research")}</h3>
           </div>
           {userId ? (
             <ArticlesList
@@ -991,7 +1000,7 @@ export function V2Vault({ portfolioId, userId }: V2VaultProps) {
               searchQuery={searchQuery}
             />
           ) : (
-            <p className="text-sm text-zinc-600">Loading...</p>
+            <p className="text-sm text-zinc-600">{tc("loading")}</p>
           )}
         </div>
 
@@ -999,7 +1008,7 @@ export function V2Vault({ portfolioId, userId }: V2VaultProps) {
         <div className="rounded-xl border border-white/[0.06] bg-zinc-950/60 p-5">
           <div className="flex items-center gap-2 mb-5">
             <FileText className="h-3.5 w-3.5 text-amber-400" />
-            <h3 className="text-sm font-semibold text-white">Documents</h3>
+            <h3 className="text-sm font-semibold text-white">{t("documents")}</h3>
           </div>
           {userId ? (
             <DocumentsList
@@ -1008,7 +1017,7 @@ export function V2Vault({ portfolioId, userId }: V2VaultProps) {
               searchQuery={searchQuery}
             />
           ) : (
-            <p className="text-sm text-zinc-600">Loading...</p>
+            <p className="text-sm text-zinc-600">{tc("loading")}</p>
           )}
         </div>
       </div>

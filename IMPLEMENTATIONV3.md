@@ -209,9 +209,9 @@
 
 ---
 
-### Step 36 — Migrate dialogs and forms to `useTranslations`
+### Step 36 — Migrate dialogs and forms to `useTranslations` ✅
 
-> **Status**: In progress — 4/9 components migrated
+> **Status**: Complete — 9/9 components migrated
 
 #### Migration Checklist
 
@@ -222,8 +222,8 @@
 - [x] `components/edit-asset-dialog.tsx` — `dialogs.editAsset`, `assets`, `common` — Step labels, field labels, save/cancel, confirm summary
 - [x] `components/transaction-dialog.tsx` — `transactions`, `common` — Type labels (Buy, Sell, Dividend) with descriptions, step labels, field labels, confirm summary
 - [x] `components/command-palette.tsx` — `search`, `common` — Placeholder text, category labels, empty states, keyboard hints
-- [ ] `components/portfolio-goals.tsx` — `goals`, `common` — Goal type labels, status labels, preset goal descriptions, metric categories, Add/Edit Goal dialog labels
-- [ ] `components/vault.tsx` — `vault`, `common` — Tab labels (Documents, Articles), document type names, upload dialog steps, article form fields
+- [x] `components/portfolio-goals.tsx` — `goals`, `common` — Goal type labels, status labels, preset goal descriptions, metric categories, Add/Edit Goal dialog labels
+- [x] `components/vault.tsx` — `vault`, `common` — Tab labels (Documents, Articles), document type names, upload dialog steps, article form fields
 
 **Files**: All 9 components listed above
 
@@ -267,11 +267,11 @@ Step 32 ✅ ─── English message catalog (depends on nothing)
 Step 33 ✅ ─── Portuguese message catalog (depends on Step 32 for key structure)
 Step 34 ✅ ─── Layout provider + locale sync hook (depends on Steps 31–33)
 Step 35 ✅ ─── Core component migration (depends on Step 34)
-Step 36 ⬜ ─── Dialog/form migration (depends on Step 34, parallel with Step 35)
+Step 36 ✅ ─── Dialog/form migration (depends on Step 34, parallel with Step 35)
 Step 37 ✅ ─── Language picker UI (depends on Steps 34–35)
 ```
 
-Step 36 is the only remaining step. Steps 35 and 37 are complete, so the language switch already has visible effect across all core components and pages. Step 36 will extend coverage to dialogs and forms.
+All Phase 7 steps are now complete. The entire application including core components, dialogs/forms, goals section, analytics, AI features, and news are fully localized with English and Portuguese (PT-PT) support.
 
 ---
 
@@ -299,3 +299,5 @@ No code changes needed beyond these 4 files.
 | 2025-07-17 | 34 | Layout provider + locale sync hook — `app/layout.tsx` made async, wraps all children with `NextIntlClientProvider` (locale + messages from server), `<html lang>` dynamic. `hooks/useLocaleSync.ts` bridges Convex `userPreferences.language` → `NEXT_LOCALE` cookie with reload, sign-out cleanup, loop guard. Wired into `app/auth-wrapper.tsx`. Build clean, zero regressions. |
 | 2025-07-17 | 35 | Core component migration — 8 components + 2 pages wired to `useTranslations()`. Header nav labels resolved via `t(item.id)` from `nav` namespace. `NetWorthHero` uses ICU plural `todayAcrossPortfolios` with `{change, count}`. Holdings uses `TYPE_LABEL_KEYS` map → translated asset type labels, column headers, expanded panel, action buttons, quantity units. Dashboard page: tab labels, portfolio count, empty states, market benchmarks. Portfolio detail: tab labels, stat labels (Holdings, Top Holding, YTD Return, Volatility), Back, Delete Portfolio, Access Denied, Performance, AI label. News page: title, subtitle, Live Feed, `updated` with `{time}`, `showingArticles` with `{start, end, total}`, loading/empty states. 6 new keys added to both `en.json` and `pt.json`. JSON parity verified: 429 keys. Build clean. |
 | 2025-07-17 | 37 | Language picker — `components/settings/language-section.tsx` created with searchable dropdown (CurrencyPicker DNA), flag emoji + native name + English name + preview phrase per language. Instant-apply: calls `updateUserPreferences` mutation directly on selection (not batched with Save), `useLocaleSync` detects change → cookie update → page reload. "Switching…" spinner state with 3s fallback reload guard. Coverage indicator strip with flag emojis + active locale `StatusDot`. Wired into settings Profile tab. Removed static Language row + unused queries from `identity-section.tsx`. Build clean. |
+| 2025-07-17 | 36 | Dialog/form migration — `portfolio-goals.tsx` and `vault.tsx` fully migrated to `useTranslations()`. Goals: status labels (Getting Started → Exceeded), toast messages (target set, goal created/updated/deleted), step labels, form fields, review rows, metric categories translated. Vault: tab labels (Research/Documents), upload dialog steps, article forms, document type selector, empty states, toast messages. 4 new keys added: `deadlineOptional`, `notesOptional`, `currentValueOptional`, `customGoal`. JSON parity verified: 750 keys. Build clean. |
+| 2025-07-17 | 36+ | Additional component translations — `ai-summary-popup.tsx` (AI Market Intelligence popup with Executive Summary, Detailed Analysis sections, risk warning, close button), `analytics.tsx` (portfolio analytics with Performance Metrics, Rolling Returns, Risk Analysis, Benchmark Comparison sections with 30+ metric labels). New `analytics` namespace created with comprehensive metric translations. 47 new keys added. JSON parity verified: 797 keys. Build clean. |

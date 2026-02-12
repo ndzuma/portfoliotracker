@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslations } from "next-intl";
 import {
   Plus,
   Trash,
@@ -356,24 +357,26 @@ function GoalProgressBar({
   percentage,
   accent,
   compact = false,
+  t,
 }: {
   percentage: number;
   accent: string;
   compact?: boolean;
+  t: (key: string) => string;
 }) {
   const clampedPct = Math.min(Math.max(percentage, 0), 120);
   const displayPct = Math.min(clampedPct, 100);
   const exceeded = clampedPct > 100;
 
   const statusText = exceeded
-    ? "EXCEEDED"
+    ? t("statusExceededShort")
     : clampedPct >= 100
-      ? "COMPLETE"
+      ? t("statusCompleteShort")
       : clampedPct >= 75
-        ? "ON TRACK"
+        ? t("statusOnTrack")
         : clampedPct >= 25
-          ? "IN PROGRESS"
-          : "GETTING STARTED";
+          ? t("statusInProgress")
+          : t("statusGettingStarted");
 
   const statusColor = exceeded
     ? "#10b981"
@@ -439,6 +442,8 @@ function PresetGoalCard({
   onDelete: (goalId: Id<"portfolioGoals">) => void;
   index: number;
 }) {
+  const t = useTranslations("goals");
+  const tc = useTranslations("common");
   const meta = PRESET_META[type];
   const Icon = meta.PhosphorIcon;
   const accent = goal?.color || meta.accent;
@@ -469,11 +474,11 @@ function PresetGoalCard({
         unit: meta.unit,
         icon: meta.icon,
       });
-      toast.success(`${meta.label} target set`);
+      toast.success(t("targetSet", { label: meta.label }));
       setSettingTarget(false);
       setTargetInput("");
     } catch {
-      toast.error("Failed to set target");
+      toast.error(t("failedToSetTarget"));
     }
   };
 
@@ -508,7 +513,7 @@ function PresetGoalCard({
           className="text-[9px] font-semibold uppercase tracking-[0.15em] px-1.5 py-0.5 rounded-md"
           style={{ background: `${accent}12`, color: accent }}
         >
-          Preset
+          {t("preset")}
         </span>
       </div>
 
@@ -535,14 +540,14 @@ function PresetGoalCard({
           <>
             {/* Progress bar */}
             <div className="mb-3">
-              <GoalProgressBar percentage={percentage} accent={accent} />
+              <GoalProgressBar percentage={percentage} accent={accent} t={t} />
             </div>
 
             {/* Current → Target */}
             <div className="flex items-center justify-between px-1">
               <div>
                 <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
-                  Current
+                  {t("current")}
                 </p>
                 <p className="text-sm font-semibold text-white tabular-nums">
                   {formatVal(currentValue)}
@@ -551,7 +556,7 @@ function PresetGoalCard({
               <ArrowRight className="h-3 w-3 text-zinc-700" />
               <div className="text-right">
                 <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
-                  Target
+                  {t("target")}
                 </p>
                 <button
                   onClick={() => goal && onEdit(goal)}
@@ -570,7 +575,7 @@ function PresetGoalCard({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
               >
                 <PencilSimple className="h-3 w-3" />
-                Edit Target
+                {t("editTarget")}
               </button>
               <div className="w-px h-3 bg-white/[0.06]" />
               <button
@@ -578,7 +583,7 @@ function PresetGoalCard({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/[0.04] transition-colors"
               >
                 <Trash className="h-3 w-3" />
-                Remove
+                {tc("remove")}
               </button>
             </div>
           </>
@@ -589,7 +594,7 @@ function PresetGoalCard({
               {formatVal(currentValue)}
             </p>
             <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-4">
-              Current
+              {t("current")}
             </p>
 
             {settingTarget ? (
@@ -607,7 +612,7 @@ function PresetGoalCard({
                       if (e.key === "Enter") handleSetTarget();
                       if (e.key === "Escape") setSettingTarget(false);
                     }}
-                    placeholder="Target"
+                    placeholder={t("target")}
                     className="bg-zinc-900 border-white/[0.06] text-white h-9 text-sm pl-8"
                   />
                 </div>
@@ -615,7 +620,7 @@ function PresetGoalCard({
                   onClick={handleSetTarget}
                   className="px-3 py-2 text-xs font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors shrink-0"
                 >
-                  Set
+                  {tc("set")}
                 </button>
                 <button
                   onClick={() => setSettingTarget(false)}
@@ -630,7 +635,7 @@ function PresetGoalCard({
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border border-white/[0.08] text-zinc-400 hover:text-white hover:border-white/[0.15] transition-all"
               >
                 <Target className="h-3 w-3" />
-                Set Target
+                {t("setTarget")}
               </button>
             )}
           </div>
@@ -663,6 +668,8 @@ function GoalCard({
   onDelete: (goalId: Id<"portfolioGoals">) => void;
   index: number;
 }) {
+  const t = useTranslations("goals");
+  const tc = useTranslations("common");
   const meta = getGoalMeta(goal);
   const accent = meta.accent;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -801,7 +808,7 @@ function GoalCard({
                       className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-white/[0.04] transition-colors"
                     >
                       <PencilSimple className="h-3.5 w-3.5" />
-                      Edit
+                      {tc("edit")}
                     </button>
                     <div className="border-t border-white/[0.06]" />
                     <button
@@ -812,7 +819,7 @@ function GoalCard({
                       className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/[0.04] transition-colors"
                     >
                       <Trash className="h-3.5 w-3.5" />
-                      Delete
+                      {tc("delete")}
                     </button>
                   </motion.div>
                 )}
@@ -823,14 +830,14 @@ function GoalCard({
 
         {/* Progress bar */}
         <div className="mb-3">
-          <GoalProgressBar percentage={percentage} accent={accent} />
+          <GoalProgressBar percentage={percentage} accent={accent} t={t} />
         </div>
 
         {/* Current / Target */}
         <div className="flex items-center justify-between px-1">
           <div>
             <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
-              Current
+              {t("current")}
             </p>
             <p className="text-sm font-semibold text-white tabular-nums">
               {formatValue(currentValue, goal.unit)}
@@ -839,7 +846,7 @@ function GoalCard({
           <ArrowRight className="h-3 w-3 text-zinc-700" />
           <div className="text-right">
             <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
-              Target
+              {t("target")}
             </p>
             <p
               className="text-sm font-semibold tabular-nums"
@@ -930,11 +937,13 @@ function AddGoalDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations("goals");
+  const tc = useTranslations("common");
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<GoalFormState>({ ...emptyForm });
   const createGoal = useMutation(api.portfolioGoals.createGoal);
 
-  const steps = ["Choose Metric", "Details", "Confirm"];
+  const steps = [t("chooseMetric"), t("details"), tc("confirm")];
 
   useEffect(() => {
     if (!open) {
@@ -980,10 +989,10 @@ function AddGoalDialog({
         deadline: form.deadline ? new Date(form.deadline).getTime() : undefined,
         notes: form.notes.trim() || undefined,
       });
-      toast.success("Goal created");
+      toast.success(t("goalCreated"));
       onOpenChange(false);
     } catch {
-      toast.error("Failed to create goal");
+      toast.error(t("failedToCreateGoal"));
     }
   };
 
@@ -995,7 +1004,7 @@ function AddGoalDialog({
   if (step === 0) {
     footer = (
       <p className="text-xs text-zinc-600 text-center">
-        Select a metric to track
+        {t("selectAMetricToTrack")}
       </p>
     );
   } else {
@@ -1005,7 +1014,7 @@ function AddGoalDialog({
           onClick={() => setStep(Math.max(0, step - 1))}
           className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
         >
-          Back
+          {tc("back")}
         </button>
         {step < 2 ? (
           <button
@@ -1013,7 +1022,7 @@ function AddGoalDialog({
             disabled={!canContinueToConfirm}
             className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Continue
+            {tc("continue")}
           </button>
         ) : (
           <button
@@ -1021,7 +1030,7 @@ function AddGoalDialog({
             disabled={!canContinueToConfirm}
             className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Create Goal
+            {t("createGoal")}
           </button>
         )}
       </div>
@@ -1042,7 +1051,7 @@ function AddGoalDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Add Custom Goal"
+      title={t("addCustomGoal")}
       steps={steps}
       currentStep={step}
       footer={footer}
@@ -1054,7 +1063,9 @@ function AddGoalDialog({
           {Object.entries(categories).map(([category, metrics]) => (
             <div key={category}>
               <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-2.5">
-                {category}
+                {category === "Performance" ? t("metricsPerformance") :
+                  category === "Risk" ? t("metricsRisk") :
+                    category === "Benchmark" ? t("metricsBenchmark") : category}
               </p>
               <div className="flex flex-col gap-1.5">
                 {metrics.map((metric) => {
@@ -1133,7 +1144,7 @@ function AddGoalDialog({
               onClick={() => setStep(0)}
               className="text-[10px] text-zinc-600 hover:text-white transition-colors ml-auto"
             >
-              Change
+              {tc("change")}
             </button>
           </div>
 
@@ -1141,7 +1152,7 @@ function AddGoalDialog({
           {analytics && (
             <div className="rounded-lg border border-white/[0.04] bg-white/[0.02] px-3.5 py-2.5 flex items-center justify-between">
               <span className="text-[11px] text-zinc-500 uppercase tracking-wider">
-                Current Value
+                {t("currentValue")}
               </span>
               <span className="text-sm font-semibold text-white tabular-nums">
                 {selectedMetric.unit === "percentage"
@@ -1154,12 +1165,12 @@ function AddGoalDialog({
           {/* Name */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Goal Name
+              {t("goalName")}
             </Label>
             <Input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder={`e.g. ${selectedMetric.label} Target`}
+              placeholder={`${selectedMetric.label} ${t("target")}`}
               className="bg-zinc-900 border-white/[0.06] text-white h-10 text-sm"
             />
           </div>
@@ -1167,7 +1178,7 @@ function AddGoalDialog({
           {/* Target Value */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Target {form.unit === "percentage" ? "Percentage" : "Value"}
+              {form.unit === "percentage" ? t("targetPercentage") : t("targetAmount")}
             </Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
@@ -1190,9 +1201,9 @@ function AddGoalDialog({
           {/* Deadline (optional) */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Deadline{" "}
+              {t("deadline")}{" "}
               <span className="text-zinc-700 normal-case tracking-normal">
-                (optional)
+                ({tc("optional")})
               </span>
             </Label>
             <Input
@@ -1206,15 +1217,15 @@ function AddGoalDialog({
           {/* Notes (optional) */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Notes{" "}
+              {tc("notes")}{" "}
               <span className="text-zinc-700 normal-case tracking-normal">
-                (optional)
+                ({tc("optional")})
               </span>
             </Label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="Strategy notes, reminders..."
+              placeholder={t("strategyNotes")}
               rows={2}
               className="w-full bg-zinc-900 border border-white/[0.06] text-white text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-white/[0.12] transition-colors placeholder:text-zinc-700"
             />
@@ -1226,13 +1237,13 @@ function AddGoalDialog({
         /* ─── Step 3: Confirm ─────────────────────────────── */
         <div className="flex flex-col gap-0">
           <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-4">
-            Review your goal
+            {t("reviewYourGoal")}
           </p>
 
-          <ConfirmRow label="Name" value={form.name} />
-          <ConfirmRow label="Metric" value={selectedMetric.label} />
+          <ConfirmRow label={tc("name")} value={form.name} />
+          <ConfirmRow label={t("metric")} value={selectedMetric.label} />
           <ConfirmRow
-            label="Target"
+            label={t("target")}
             value={
               form.unit === "percentage"
                 ? `${form.targetValue}%`
@@ -1241,7 +1252,7 @@ function AddGoalDialog({
           />
           {analytics && (
             <ConfirmRow
-              label="Current Value"
+              label={t("currentValue")}
               value={
                 form.unit === "percentage"
                   ? `${selectedMetric.getValue(analytics).toFixed(2)}%`
@@ -1251,7 +1262,7 @@ function AddGoalDialog({
           )}
           {form.deadline && (
             <ConfirmRow
-              label="Deadline"
+              label={t("deadline")}
               value={new Date(form.deadline).toLocaleDateString("en-US", {
                 month: "long",
                 year: "numeric",
@@ -1260,7 +1271,7 @@ function AddGoalDialog({
           )}
           {form.notes && (
             <ConfirmRow
-              label="Notes"
+              label={tc("notes")}
               value={
                 form.notes.length > 80
                   ? form.notes.slice(0, 80) + "..."
@@ -1281,6 +1292,7 @@ function AddGoalDialog({
               }
               accent={selectedMetric.accent}
               compact
+              t={t}
             />
           </div>
         </div>
@@ -1300,11 +1312,13 @@ function EditGoalDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations("goals");
+  const tc = useTranslations("common");
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<GoalFormState>({ ...emptyForm });
   const updateGoal = useMutation(api.portfolioGoals.updateGoal);
 
-  const steps = ["Details", "Confirm"];
+  const steps = [t("details"), tc("confirm")];
 
   useEffect(() => {
     if (open && goal) {
@@ -1335,10 +1349,10 @@ function EditGoalDialog({
         deadline: form.deadline ? new Date(form.deadline).getTime() : undefined,
         notes: form.notes.trim() || undefined,
       });
-      toast.success("Goal updated");
+      toast.success(t("goalUpdated"));
       onOpenChange(false);
     } catch {
-      toast.error("Failed to update goal");
+      toast.error(t("failedToUpdateGoal"));
     }
   };
 
@@ -1349,14 +1363,14 @@ function EditGoalDialog({
           onClick={() => setStep(0)}
           className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
         >
-          Back
+          {tc("back")}
         </button>
       ) : (
         <button
           onClick={() => onOpenChange(false)}
           className="px-4 py-2 text-sm text-zinc-500 hover:text-white transition-colors"
         >
-          Cancel
+          {tc("cancel")}
         </button>
       )}
       {step === 0 ? (
@@ -1365,7 +1379,7 @@ function EditGoalDialog({
           disabled={!canSave}
           className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          Review
+          {tc("review")}
         </button>
       ) : (
         <button
@@ -1373,7 +1387,7 @@ function EditGoalDialog({
           disabled={!canSave}
           className="px-5 py-2 text-sm font-medium rounded-lg bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          Save Changes
+          {t("saveChanges")}
         </button>
       )}
     </div>
@@ -1383,7 +1397,7 @@ function EditGoalDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Edit Goal"
+      title={t("editGoal")}
       steps={steps}
       currentStep={step}
       footer={footer}
@@ -1410,7 +1424,7 @@ function EditGoalDialog({
           {/* Name */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Goal Name
+              {t("goalName")}
             </Label>
             <Input
               value={form.name}
@@ -1422,7 +1436,7 @@ function EditGoalDialog({
           {/* Target Value */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Target {form.unit === "currency" ? "Amount" : "Percentage"}
+              {form.unit === "currency" ? t("targetAmount") : t("targetPercentage")}
             </Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
@@ -1442,10 +1456,7 @@ function EditGoalDialog({
           {/* Current Value */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Current Value{" "}
-              <span className="text-zinc-700 normal-case tracking-normal">
-                (optional — auto-derived if empty)
-              </span>
+              {t("currentValueOptional")}
             </Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
@@ -1466,10 +1477,7 @@ function EditGoalDialog({
           {/* Deadline */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Deadline{" "}
-              <span className="text-zinc-700 normal-case tracking-normal">
-                (optional)
-              </span>
+              {t("deadlineOptional")}
             </Label>
             <Input
               type="date"
@@ -1482,12 +1490,12 @@ function EditGoalDialog({
           {/* Notes */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-              Notes
+              {tc("notes")}
             </Label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="Strategy notes, reminders..."
+              placeholder={t("strategyNotes")}
               rows={2}
               className="w-full bg-zinc-900 border border-white/[0.06] text-white text-sm rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-white/[0.12] transition-colors placeholder:text-zinc-700"
             />
@@ -1498,13 +1506,13 @@ function EditGoalDialog({
       {step === 1 && (
         <div className="flex flex-col gap-0">
           <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-4">
-            Confirm changes
+            {t("confirmChanges")}
           </p>
 
-          <ConfirmRow label="Name" value={form.name} />
-          <ConfirmRow label="Type" value={meta.label} />
+          <ConfirmRow label={tc("name")} value={form.name} />
+          <ConfirmRow label={tc("type")} value={meta.label} />
           <ConfirmRow
-            label="Target"
+            label={t("target")}
             value={
               form.unit === "currency"
                 ? `$${parseFloat(form.targetValue || "0").toLocaleString()}`
@@ -1513,7 +1521,7 @@ function EditGoalDialog({
           />
           {form.currentValue && (
             <ConfirmRow
-              label="Current Value"
+              label={t("currentValue")}
               value={
                 form.unit === "currency"
                   ? `$${parseFloat(form.currentValue).toLocaleString()}`
@@ -1523,7 +1531,7 @@ function EditGoalDialog({
           )}
           {form.deadline && (
             <ConfirmRow
-              label="Deadline"
+              label={t("deadline")}
               value={new Date(form.deadline).toLocaleDateString("en-US", {
                 month: "long",
                 year: "numeric",
@@ -1532,7 +1540,7 @@ function EditGoalDialog({
           )}
           {form.notes && (
             <ConfirmRow
-              label="Notes"
+              label={tc("notes")}
               value={
                 form.notes.length > 80
                   ? form.notes.slice(0, 80) + "..."
@@ -1588,6 +1596,8 @@ export function V2PortfolioGoals({
   ytdReturn: number;
   analytics: AnalyticsData | null | undefined;
 }) {
+  const t = useTranslations("goals");
+  const tc = useTranslations("common");
   const goalsRaw = useQuery(api.portfolioGoals.getGoalsByPortfolio, {
     portfolioId: portfolioId as Id<"portfolios">,
   });
@@ -1605,15 +1615,15 @@ export function V2PortfolioGoals({
 
   const handleDelete = async (goalId: Id<"portfolioGoals">) => {
     const confirmed = window.confirm(
-      "Delete this goal? This action cannot be undone.",
+      t("deleteGoalConfirm"),
     );
     if (!confirmed) return;
 
     try {
       await deleteGoal({ goalId });
-      toast.success("Goal deleted");
+      toast.success(t("goalDeleted"));
     } catch {
-      toast.error("Failed to delete goal");
+      toast.error(t("failedToDeleteGoal"));
     }
   };
 
@@ -1653,10 +1663,10 @@ export function V2PortfolioGoals({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-semibold text-white tracking-tight">
-            Goals
+            {t("title")}
           </h2>
           <p className="text-zinc-600 text-xs mt-1">
-            Track your portfolio milestones
+            {t("trackMilestones")}
           </p>
         </div>
       </div>
@@ -1687,7 +1697,7 @@ export function V2PortfolioGoals({
                   }).length
                 }
               </span>{" "}
-              / {allGoals.filter((g) => g.targetValue > 0).length} completed
+              / {allGoals.filter((g) => g.targetValue > 0).length} {t("completed")}
             </span>
           </div>
           <div className="w-px h-3 bg-white/[0.06]" />
@@ -1709,7 +1719,7 @@ export function V2PortfolioGoals({
                   }).length
                 }
               </span>{" "}
-              near target
+              {t("nearTarget")}
             </span>
           </div>
           {allGoals.some((g) => g.deadline) && (
@@ -1718,13 +1728,13 @@ export function V2PortfolioGoals({
               <div className="flex items-center gap-2">
                 <CalendarBlank className="h-3.5 w-3.5 text-zinc-500" />
                 <span className="text-xs text-zinc-500">
-                  Next deadline:{" "}
+                  {t("nextDeadline")}:{" "}
                   <span className="text-white font-medium">
                     {(() => {
                       const upcoming = allGoals
                         .filter((g) => g.deadline && g.deadline > Date.now())
                         .sort((a, b) => (a.deadline || 0) - (b.deadline || 0));
-                      if (upcoming.length === 0) return "None";
+                      if (upcoming.length === 0) return t("noneUpcoming");
                       return new Date(upcoming[0].deadline!).toLocaleDateString(
                         "en-US",
                         { month: "short", year: "numeric" },
