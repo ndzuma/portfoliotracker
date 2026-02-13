@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -26,12 +26,177 @@ import {
   Percent,
   Calendar,
   MapPin,
+  MagnifyingGlass,
+  CaretDown,
+  Check,
 } from "@phosphor-icons/react";
 import Image from "next/image";
+import {
+  CURRENCIES,
+  searchCurrencies,
+  type CurrencyMeta,
+} from "@/lib/currency";
+import { useAvailableCurrencies } from "@/hooks/useCurrency";
 
 interface OnboardingFlowProps {
   userId: string;
   userName: string;
+}
+
+/* ─── Market Region Options (matches settings) ─── */
+const MARKET_REGIONS = [
+  { value: "US", label: "US", flag: "🇺🇸" },
+  { value: "EU", label: "Europe", flag: "🇪🇺" },
+  { value: "APAC", label: "Asia-Pacific", flag: "🌏" },
+  { value: "AF", label: "Africa", flag: "🌍" },
+  { value: "GLOBAL", label: "Global", flag: "🌐" },
+] as const;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CURRENCY PICKER — searchable dropdown (matches settings page)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function CurrencyPicker({
+  value,
+  onChange,
+  currencies,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+  currencies?: CurrencyMeta[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const list = currencies ?? CURRENCIES;
+  const filtered = searchCurrencies(query, list);
+  const selected = list.find((c) => c.code === value);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (open && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [open]);
+
+  const handleSelect = useCallback(
+    (code: string) => {
+      onChange(code);
+      setOpen(false);
+      setQuery("");
+    },
+    [onChange],
+  );
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Trigger */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`
+          flex items-center gap-2 bg-zinc-900 border text-zinc-300 text-xs
+          pl-3 pr-2 py-1.5 rounded-lg cursor-pointer min-w-[160px] h-8
+          hover:border-white/[0.12] hover:text-white transition-colors
+          ${open ? "border-white/[0.2] ring-1 ring-white/10" : "border-white/[0.06]"}
+        `}
+      >
+        {selected && (
+          <span className="text-sm leading-none">{selected.flag}</span>
+        )}
+        <span className="flex-1 text-left font-semibold">{value}</span>
+        {selected && (
+          <span className="text-zinc-600 text-[10px]">{selected.symbol}</span>
+        )}
+        <CaretDown
+          className={`h-3 w-3 text-zinc-600 transition-transform ml-1 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {/* Dropdown */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-50 top-full mt-1.5 right-0 w-[280px] rounded-xl border border-white/[0.08] bg-zinc-950 shadow-2xl shadow-black/40 overflow-hidden"
+          >
+            {/* Search */}
+            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06]">
+              <MagnifyingGlass className="h-3.5 w-3.5 text-zinc-600 shrink-0" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search currencies…"
+                className="bg-transparent text-xs text-zinc-300 placeholder:text-zinc-700 outline-none w-full"
+              />
+            </div>
+
+            {/* List */}
+            <div className="max-h-[260px] overflow-y-auto overflow-x-hidden scrollbar-hide">
+              {filtered.length === 0 ? (
+                <div className="px-3 py-4 text-center text-[11px] text-zinc-600">
+                  No currencies found
+                </div>
+              ) : (
+                filtered.map((c) => (
+                  <button
+                    key={c.code}
+                    onClick={() => handleSelect(c.code)}
+                    className={`
+                      flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors
+                      hover:bg-white/[0.04]
+                      ${c.code === value ? "bg-white/[0.04]" : ""}
+                    `}
+                  >
+                    <span className="text-sm w-6 text-center shrink-0">
+                      {c.flag}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold tracking-wide ${
+                        c.code === value ? "text-white" : "text-zinc-400"
+                      }`}
+                    >
+                      {c.code}
+                    </span>
+                    <span className="text-[11px] text-zinc-600 flex-1 truncate">
+                      {c.name}
+                    </span>
+                    <span className="text-[11px] text-zinc-700 shrink-0 w-5 text-right">
+                      {c.symbol}
+                    </span>
+                    {c.code === value && (
+                      <Check className="h-3 w-3 text-emerald-500 shrink-0" />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 interface OnboardingData {
@@ -79,26 +244,26 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
   const markComplete = useMutation(api.users.markOnboardingComplete);
 
   const handleNext = () => {
-    if (currentStep === 5) {
+    if (currentStep === 4) {
       // Portfolio creation multi-step
       if (portfolioStep < 3) {
         setPortfolioStep(portfolioStep + 1);
       } else {
-        setCurrentStep(6);
+        setCurrentStep(5);
         setPortfolioStep(1);
       }
-    } else if (currentStep < 6) {
+    } else if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
-    if (currentStep === 5 && portfolioStep > 1) {
+    if (currentStep === 4 && portfolioStep > 1) {
       setPortfolioStep(portfolioStep - 1);
-    } else if (currentStep === 5 && portfolioStep === 1) {
+    } else if (currentStep === 4 && portfolioStep === 1) {
+      setCurrentStep(3);
+    } else if (currentStep === 5) {
       setCurrentStep(4);
-    } else if (currentStep === 6) {
-      setCurrentStep(5);
       setPortfolioStep(3);
     } else if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -168,7 +333,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
       }
 
       // Move to final step
-      setCurrentStep(6);
+      setCurrentStep(5);
     } catch (error) {
       console.error("Error saving onboarding data:", error);
     }
@@ -366,188 +531,158 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
               </motion.div>
             )}
 
-            {/* Step 2: Preferences */}
-            {currentStep === 2 && (
-              <motion.div
-                key="step2"
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-              >
-                <div className="text-center mb-12">
-                  <h2 className="text-4xl font-bold text-white mb-4">
-                    Your Preferences
-                  </h2>
-                  <p className="text-zinc-400 text-lg">
-                    Customize your experience with language, currency, and market region
-                  </p>
-                </div>
+             {/* Step 2: Preferences */}
+             {currentStep === 2 && (
+               <motion.div
+                 key="step2"
+                 variants={containerVariants}
+                 initial="initial"
+                 animate="animate"
+                 exit="exit"
+                 transition={{ duration: 0.5, ease: "easeInOut" }}
+               >
+                 <div className="text-center mb-12">
+                   <h2 className="text-4xl font-bold text-white mb-4">
+                     Your Preferences
+                   </h2>
+                   <p className="text-zinc-400 text-lg">
+                     Customize your experience with language, currency, and market region
+                   </p>
+                 </div>
 
-                <div className="space-y-12">
-                  {/* Language Selection */}
-                  <motion.div
-                    variants={staggerVariants}
-                    initial="initial"
-                    animate="animate"
-                    transition={{ delay: 0.3, duration: 0.6 }}
-                  >
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-lg bg-blue-500/10">
-                        <Globe className="h-5 w-5 text-blue-400" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-white">
-                        Language
-                      </h3>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      {[
-                        { code: "en", name: "English", flag: "🇬🇧" },
-                        { code: "pt", name: "Português", flag: "🇵🇹" },
-                      ].map((lang) => (
-                        <motion.button
-                          key={lang.code}
-                          variants={cardHoverVariants}
-                          whileHover="hover"
-                          whileTap="tap"
-                          onClick={() =>
-                            setData({ ...data, language: lang.code })
-                          }
-                          className={`p-6 rounded-2xl border transition-all ${
-                            data.language === lang.code
-                              ? "border-white/[0.3] bg-white/[0.08] shadow-lg"
-                              : "border-white/[0.06] hover:border-white/[0.15]"
-                          }`}
-                        >
-                          <div className="text-3xl mb-3">{lang.flag}</div>
-                          <div
-                            className={`font-medium ${
-                              data.language === lang.code
-                                ? "text-white"
-                                : "text-zinc-300"
-                            }`}
-                          >
-                            {lang.name}
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </motion.div>
+                 <div className="space-y-12">
+                   {/* Language Selection */}
+                   <motion.div
+                     variants={staggerVariants}
+                     initial="initial"
+                     animate="animate"
+                     transition={{ delay: 0.3, duration: 0.6 }}
+                   >
+                     <div className="flex items-center gap-3 mb-6">
+                       <div className="p-2 rounded-lg bg-blue-500/10">
+                         <Globe className="h-5 w-5 text-blue-400" />
+                       </div>
+                       <h3 className="text-xl font-semibold text-white">
+                         Language
+                       </h3>
+                     </div>
+                     <div className="grid grid-cols-3 gap-4">
+                       {[
+                         { code: "en", name: "English", flag: "🇬🇧" },
+                         { code: "pt", name: "Português", flag: "🇵🇹" },
+                       ].map((lang) => (
+                         <motion.button
+                           key={lang.code}
+                           variants={cardHoverVariants}
+                           whileHover="hover"
+                           whileTap="tap"
+                           onClick={() =>
+                             setData({ ...data, language: lang.code })
+                           }
+                           className={`p-6 rounded-2xl border transition-all ${
+                             data.language === lang.code
+                               ? "border-white/[0.3] bg-white/[0.08] shadow-lg"
+                               : "border-white/[0.06] hover:border-white/[0.15]"
+                           }`}
+                         >
+                           <div className="text-3xl mb-3">{lang.flag}</div>
+                           <div
+                             className={`font-medium ${
+                               data.language === lang.code
+                                 ? "text-white"
+                                 : "text-zinc-300"
+                             }`}
+                           >
+                             {lang.name}
+                           </div>
+                         </motion.button>
+                       ))}
+                     </div>
+                   </motion.div>
 
-                  {/* Currency Selection */}
-                  <motion.div
-                    variants={staggerVariants}
-                    initial="initial"
-                    animate="animate"
-                    transition={{ delay: 0.5, duration: 0.6 }}
-                  >
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-lg bg-emerald-500/10">
-                        <CurrencyDollar className="h-5 w-5 text-emerald-400" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-white">
-                        Base Currency
-                      </h3>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {[
-                        { code: "USD", symbol: "$" },
-                        { code: "EUR", symbol: "€" },
-                        { code: "GBP", symbol: "£" },
-                        { code: "CAD", symbol: "C$" },
-                        { code: "JPY", symbol: "¥" },
-                        { code: "AUD", symbol: "A$" },
-                        { code: "CHF", symbol: "CHF" },
-                      ].map((currency) => (
-                        <CurrencyButton
-                          key={currency.code}
-                          code={currency.code}
-                          symbol={currency.symbol}
-                          active={data.currency === currency.code}
-                          onClick={() =>
-                            setData({ ...data, currency: currency.code })
-                          }
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
+                   {/* Currency Selection - Searchable Dropdown */}
+                   <motion.div
+                     variants={staggerVariants}
+                     initial="initial"
+                     animate="animate"
+                     transition={{ delay: 0.5, duration: 0.6 }}
+                   >
+                     <div className="flex items-center gap-3 mb-6">
+                       <div className="p-2 rounded-lg bg-emerald-500/10">
+                         <CurrencyDollar className="h-5 w-5 text-emerald-400" />
+                       </div>
+                       <h3 className="text-xl font-semibold text-white">
+                         Base Currency
+                       </h3>
+                     </div>
+                     <p className="text-sm text-zinc-400 mb-4">
+                       Choose from 150+ supported currencies
+                     </p>
+                     <CurrencyPicker
+                       value={data.currency}
+                       onChange={(currency) =>
+                         setData({ ...data, currency })
+                       }
+                       currencies={(useAvailableCurrencies().currencies)}
+                     />
+                   </motion.div>
 
-                  {/* Market Region Selection */}
-                  <motion.div
-                    variants={staggerVariants}
-                    initial="initial"
-                    animate="animate"
-                    transition={{ delay: 0.7, duration: 0.6 }}
-                  >
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-lg bg-amber-500/10">
-                        <MapPin className="h-5 w-5 text-amber-400" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-white">
-                        Market Region
-                      </h3>
-                    </div>
-                    <p className="text-sm text-zinc-400 mb-6">
-                      Select your primary market region for localized insights and data
-                    </p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {[
-                        { code: "US", name: "United States", flag: "🇺🇸" },
-                        { code: "EU", name: "Europe", flag: "🇪🇺" },
-                        { code: "UK", name: "United Kingdom", flag: "🇬🇧" },
-                        { code: "CA", name: "Canada", flag: "🇨🇦" },
-                        { code: "AU", name: "Australia", flag: "🇦🇺" },
-                        { code: "JP", name: "Japan", flag: "🇯🇵" },
-                        { code: "SG", name: "Singapore", flag: "🇸🇬" },
-                        { code: "HK", name: "Hong Kong", flag: "🇭🇰" },
-                        { code: "IN", name: "India", flag: "🇮🇳" },
-                      ].map((region) => (
-                        <motion.button
-                          key={region.code}
-                          variants={cardHoverVariants}
-                          whileHover="hover"
-                          whileTap="tap"
-                          onClick={() =>
-                            setData({ ...data, marketRegion: region.code })
-                          }
-                          className={`p-5 rounded-2xl border transition-all ${
-                            data.marketRegion === region.code
-                              ? "border-white/[0.3] bg-white/[0.08] shadow-lg"
-                              : "border-white/[0.06] hover:border-white/[0.15]"
-                          }`}
-                        >
-                          <div className="text-2xl mb-2">{region.flag}</div>
-                          <div className="text-center">
-                            <div
-                              className={`text-xs font-semibold ${
-                                data.marketRegion === region.code
-                                  ? "text-white"
-                                  : "text-zinc-400"
-                              }`}
-                            >
-                              {region.code}
-                            </div>
-                            <div
-                              className={`text-[11px] ${
-                                data.marketRegion === region.code
-                                  ? "text-zinc-300"
-                                  : "text-zinc-500"
-                              }`}
-                            >
-                              {region.name}
-                            </div>
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </motion.div>
-                </div>
-              </motion.div>
-            )}
+                   {/* Market Region Selection */}
+                   <motion.div
+                     variants={staggerVariants}
+                     initial="initial"
+                     animate="animate"
+                     transition={{ delay: 0.7, duration: 0.6 }}
+                   >
+                     <div className="flex items-center gap-3 mb-6">
+                       <div className="p-2 rounded-lg bg-amber-500/10">
+                         <MapPin className="h-5 w-5 text-amber-400" />
+                       </div>
+                       <h3 className="text-xl font-semibold text-white">
+                         Market Region
+                       </h3>
+                     </div>
+                     <p className="text-sm text-zinc-400 mb-6">
+                       Select your primary market region for localized insights
+                     </p>
+                     <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+                       {MARKET_REGIONS.map((region) => (
+                         <motion.button
+                           key={region.value}
+                           variants={cardHoverVariants}
+                           whileHover="hover"
+                           whileTap="tap"
+                           onClick={() =>
+                             setData({ ...data, marketRegion: region.value })
+                           }
+                           className={`p-5 rounded-xl border transition-all text-center ${
+                             data.marketRegion === region.value
+                               ? "border-white/[0.3] bg-white/[0.08] shadow-lg"
+                               : "border-white/[0.06] hover:border-white/[0.15]"
+                           }`}
+                         >
+                           <div className="text-2xl mb-2">{region.flag}</div>
+                           <div className="text-center">
+                             <div
+                               className={`text-xs font-semibold ${
+                                 data.marketRegion === region.value
+                                   ? "text-white"
+                                   : "text-zinc-400"
+                               }`}
+                             >
+                               {region.label}
+                             </div>
+                           </div>
+                         </motion.button>
+                       ))}
+                     </div>
+                   </motion.div>
+                 </div>
+               </motion.div>
+             )}
 
-            {/* Step 3: AI Preferences (Keep existing design - it's good) */}
-            {currentStep === 6 && (
+             {/* Step 3: AI Preferences */}
+             {currentStep === 3 && (
               <motion.div
                 key="step6"
                 variants={containerVariants}
@@ -683,8 +818,8 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
               </motion.div>
             )}
 
-            {/* Step 4: Portfolio Creation (Multi-step) */}
-            {currentStep === 6 && (
+             {/* Step 4: Portfolio Creation (Multi-step) */}
+             {currentStep === 4 && (
               <motion.div
                 key="step6"
                 variants={containerVariants}
@@ -1097,8 +1232,8 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
               </motion.div>
             )}
 
-            {/* Step 5: Feature Showcase */}
-            {currentStep === 6 && (
+             {/* Step 5: Feature Showcase */}
+             {currentStep === 5 && (
               <motion.div
                 key="step6"
                 variants={containerVariants}
@@ -1204,9 +1339,9 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
           style={{ background: "rgba(9,9,11,0.92)" }}
         >
           <div className="max-w-[1600px] mx-auto px-8 py-6 flex items-center justify-between">
-            <div>
+             <div>
               {(currentStep > 1 ||
-                (currentStep === 5 && portfolioStep > 1)) && (
+                (currentStep === 4 && portfolioStep > 1)) && (
                 <Button
                   onClick={handleBack}
                   variant="ghost"
@@ -1221,12 +1356,12 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
             <div className="flex items-center gap-4">
               {/* Step indicator */}
               <div className="text-sm text-zinc-500">
-                Step {currentStep} of 6
-                {currentStep === 5 && ` (${portfolioStep}/3)`}
+                Step {currentStep} of 5
+                {currentStep === 4 && ` (${portfolioStep}/3)`}
               </div>
 
               <div>
-                {currentStep === 5 && portfolioStep === 3 ? (
+                {currentStep === 4 && portfolioStep === 3 ? (
                   <Button
                     onClick={handleSubmit}
                     className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
@@ -1239,10 +1374,10 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                     disabled={
                       (currentStep === 2 && !canProceedStep2) ||
                       (currentStep === 3 && !canProceedStep3) ||
-                      (currentStep === 5 &&
+                      (currentStep === 4 &&
                         portfolioStep === 1 &&
                         !canProceedPortfolioStep1) ||
-                      (currentStep === 5 &&
+                      (currentStep === 4 &&
                         portfolioStep === 2 &&
                         !canProceedPortfolioStep2)
                     }
@@ -1259,7 +1394,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
       )}
 
       {/* Complete Button for Final Step */}
-      {currentStep === 6 && (
+      {currentStep === 5 && (
         <motion.div
           initial={{ y: 100 }}
           animate={{ y: 0 }}
