@@ -37,6 +37,7 @@ import {
   type CurrencyMeta,
 } from "@/lib/currency";
 import { useAvailableCurrencies } from "@/hooks/useCurrency";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 
 interface OnboardingFlowProps {
   userId: string;
@@ -234,6 +235,10 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
 
   // Get available currencies from backend
   const { currencies } = useAvailableCurrencies();
+
+  // Feature flags
+  const aiSummariesEnabled = useFeatureFlag("ai-summaries");
+  const byoaiEnabled = useFeatureFlag("byoai");
 
   // Mutations
   const savePreferences = useMutation(api.users.saveOnboardingPreferences);
@@ -722,6 +727,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                       icon: <Lightning className="h-6 w-6" />,
                       badge: "Advanced",
                       color: "bg-blue-500/10 text-blue-400",
+                      flagRequired: "byoai",
                     },
                     {
                       value: "selfhosted",
@@ -731,8 +737,17 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                       badge: "Coming Soon",
                       color: "bg-zinc-700 text-zinc-400",
                       disabled: true,
+                      flagRequired: "byoai",
                     },
-                  ].map((option, index) => (
+                  ]
+                    .filter((option) => {
+                      // Hide options that require a flag when flag is not enabled
+                      if (option.flagRequired === "byoai" && !byoaiEnabled) {
+                        return false;
+                      }
+                      return true;
+                    })
+                    .map((option, index) => (
                     <motion.div
                       key={option.value}
                       variants={staggerVariants}
