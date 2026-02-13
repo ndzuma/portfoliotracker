@@ -458,13 +458,23 @@ export const getHistoricalData = query({
     // calculate the values for each date and return the data
     // in the format {date, value}
     const result: { date: string; value: number }[] = [];
-    const portfolioStartDate = new Date(
-      Math.min(
-        ...Object.values(symbolEarliestDate).map((date) =>
-          new Date(date).getTime(),
-        ),
-      ),
+
+    // Derive portfolio start from ALL transactions (including cash/no-symbol)
+    // so the daily loop works even for cash-only portfolios.
+    const allTransactionTimestamps = allTransactions.map((t) =>
+      new Date(t.date).getTime(),
     );
+    const symbolTimestamps = Object.values(symbolEarliestDate).map((d) =>
+      new Date(d).getTime(),
+    );
+    const combinedTimestamps = [
+      ...allTransactionTimestamps,
+      ...symbolTimestamps,
+    ];
+    const portfolioStartDate =
+      combinedTimestamps.length > 0
+        ? new Date(Math.min(...combinedTimestamps))
+        : new Date();
 
     // Adjust start date based on requested range
     const effectiveStartDate =

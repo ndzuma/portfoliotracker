@@ -63,6 +63,31 @@ export function V2PerformanceChart({
     );
   }
 
+  // Single data point — recharts can't draw an area/line, so show a
+  // clean value display instead of a broken chart.
+  if (chartData.length === 1) {
+    const point = chartData[0];
+    return (
+      <div
+        className="w-full flex flex-col items-center justify-center gap-1.5"
+        style={{ height: `${height}px` }}
+      >
+        <p className="text-2xl font-bold text-white tracking-tight tabular-nums">
+          {point.portfolio.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </p>
+        <p className="text-[11px] text-zinc-500">
+          {formatTooltipDate(point.rawDate)}
+        </p>
+        <p className="text-[10px] text-zinc-600 mt-1">
+          More chart data will appear over time
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ChartContainer
       config={chartConfig}
