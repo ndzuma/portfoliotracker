@@ -1,5 +1,5 @@
 import { cronJobs } from "convex/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 const crons = cronJobs();
 
@@ -46,6 +46,37 @@ crons.interval(
   "update AI news summaries",
   { minutes: 90 },
   api.ai.generateAiNewsSummary,
+);
+
+// AI Portfolio Summary Generation Cron Jobs
+// These generate portfolio summaries based on user frequency preferences
+
+// Daily at 9 AM UTC - for users with daily frequency
+crons.daily(
+  "generate AI summaries - daily frequency",
+  {
+    hourUTC: 9,
+    minuteUTC: 0,
+  },
+  api.ai.scheduleGeneratePortfolioSummariesDaily,
+);
+
+// Weekly on Monday at 9 AM UTC - for users with weekly frequency
+crons.weekly(
+  "generate AI summaries - weekly frequency",
+  {
+    dayOfWeek: "monday",
+    hourUTC: 9,
+    minuteUTC: 0,
+  },
+  api.ai.scheduleGeneratePortfolioSummariesWeekly,
+);
+
+// Monthly every 720 hours (30 days) - for users with monthly frequency
+crons.interval(
+  "generate AI summaries - monthly frequency",
+  { hours: 720 },
+  api.ai.scheduleGeneratePortfolioSummariesMonthly,
 );
 
 export default crons;

@@ -371,3 +371,105 @@ export const triggerAiPortfolioSummaryUpdate = action({
     }
   },
 });
+
+// Scheduled portfolio AI summary generation based on user preferences
+export const generateScheduledPortfolioSummaries = action({
+  args: {
+    frequency: v.union(
+      v.literal("daily"),
+      v.literal("weekly"),
+      v.literal("monthly")
+    ),
+  },
+  handler: async (ctx, args) => {
+    // Query all users in the database
+    const allUsers = await ctx.runQuery(
+      api.users.getAllUsersForSummaryGeneration
+    );
+
+    if (!allUsers || allUsers.length === 0) {
+      return {
+        success: true,
+        message: `No users found for ${args.frequency} AI summary frequency`,
+        processed: 0,
+      };
+    }
+
+    let processed = 0;
+    let errors = 0;
+
+    // Generate summaries for users with matching frequency
+    for (const user of allUsers) {
+      // Get user preferences to check frequency
+      const prefs = await ctx.runQuery(api.users.getUserPreferences, {
+        userId: user._id,
+      });
+
+      if (!prefs || prefs.aiSummaryFrequency !== args.frequency) {
+        continue;
+      }
+
+      try {
+        // Get all portfolios for this user
+        const portfolios = await ctx.runQuery(api.portfolios.getUserPorfolios, {
+          userId: user._id,
+        });
+
+        // Generate summary for each portfolio
+        for (const portfolio of portfolios) {
+          try {
+            await ctx.runAction(api.ai.generateAiPortfolioSummary, {
+              portfolioId: portfolio._id,
+            });
+            processed++;
+          } catch (error) {
+            console.error(
+              `Failed to generate summary for portfolio ${portfolio._id}:`,
+              error
+            );
+            errors++;
+          }
+        }
+      } catch (error) {
+        console.error(
+          `Failed to process user ${user._id} portfolios:`,
+          error
+        );
+        errors++;
+      }
+    }
+
+    return {
+      success: true,
+      message: `Generated scheduled AI summaries (frequency: ${args.frequency})`,
+      processed,
+      errors,
+      total: processed + errors,
+    };
+  },
+});
+
+// Wrapper actions for cron jobs - these don't take arguments
+export const scheduleGeneratePortfolioSummariesDaily = action({
+  handler: async (ctx) => {
+    return await ctx.runAction(api.ai.generateScheduledPortfolioSummaries, {
+      frequency: "daily",
+    });
+  },
+});
+
+export const scheduleGeneratePortfolioSummariesWeekly = action({
+  handler: async (ctx) => {
+    return await ctx.runAction(api.ai.generateScheduledPortfolioSummaries, {
+      frequency: "weekly",
+    });
+  },
+});
+
+export const scheduleGeneratePortfolioSummariesMonthly = action({
+  handler: async (ctx) => {
+    return await ctx.runAction(api.ai.generateScheduledPortfolioSummaries, {
+      frequency: "monthly",
+    });
+  },
+});

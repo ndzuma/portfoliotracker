@@ -443,3 +443,10 @@ export const markOnboardingComplete = mutation({
     });
   },
 });
+
+// Get all users for scheduled summary generation
+export const getAllUsersForSummaryGeneration = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("users").collect();
+  },
+});
