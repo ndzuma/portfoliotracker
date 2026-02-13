@@ -138,7 +138,7 @@ function CurrencyPicker({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-50 top-full mt-1.5 right-0 w-[280px] rounded-xl border border-white/[0.08] bg-zinc-950 shadow-2xl shadow-black/40 overflow-hidden"
+            className="absolute z-50 top-full mt-1.5 left-0 w-[280px] rounded-xl border border-white/[0.08] bg-zinc-950 shadow-2xl shadow-black/40 overflow-hidden"
           >
             {/* Search */}
             <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06]">
