@@ -232,6 +232,9 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
     investmentThesis: "",
   });
 
+  // Get available currencies from backend
+  const { currencies } = useAvailableCurrencies();
+
   // Mutations
   const savePreferences = useMutation(api.users.saveOnboardingPreferences);
   const saveAiPreferences = useMutation(api.users.saveOnboardingAiPreferences);
@@ -618,13 +621,13 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                      <p className="text-sm text-zinc-400 mb-4">
                        Choose from 150+ supported currencies
                      </p>
-                     <CurrencyPicker
-                       value={data.currency}
-                       onChange={(currency) =>
-                         setData({ ...data, currency })
-                       }
-                       currencies={(useAvailableCurrencies().currencies)}
-                     />
+                      <CurrencyPicker
+                        value={data.currency}
+                        onChange={(currency) =>
+                          setData({ ...data, currency })
+                        }
+                        currencies={currencies}
+                      />
                    </motion.div>
 
                    {/* Market Region Selection */}
