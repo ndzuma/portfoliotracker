@@ -25,6 +25,7 @@ import {
   TrendDown,
   Percent,
   Calendar,
+  MapPin,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 
@@ -36,6 +37,7 @@ interface OnboardingFlowProps {
 interface OnboardingData {
   language: string;
   currency: string;
+  marketRegion: string;
   theme: "light" | "dark";
   aiProvider: string;
   openRouterApiKey?: string;
@@ -57,6 +59,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
   const [data, setData] = useState<OnboardingData>({
     language: "en",
     currency: "USD",
+    marketRegion: "US",
     theme: "dark",
     aiProvider: "default",
     portfolioName: "",
@@ -76,26 +79,26 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
   const markComplete = useMutation(api.users.markOnboardingComplete);
 
   const handleNext = () => {
-    if (currentStep === 4) {
+    if (currentStep === 5) {
       // Portfolio creation multi-step
       if (portfolioStep < 3) {
         setPortfolioStep(portfolioStep + 1);
       } else {
-        setCurrentStep(5);
+        setCurrentStep(6);
         setPortfolioStep(1);
       }
-    } else if (currentStep < 5) {
+    } else if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
-    if (currentStep === 4 && portfolioStep > 1) {
+    if (currentStep === 5 && portfolioStep > 1) {
       setPortfolioStep(portfolioStep - 1);
-    } else if (currentStep === 4 && portfolioStep === 1) {
-      setCurrentStep(3);
-    } else if (currentStep === 5) {
+    } else if (currentStep === 5 && portfolioStep === 1) {
       setCurrentStep(4);
+    } else if (currentStep === 6) {
+      setCurrentStep(5);
       setPortfolioStep(3);
     } else if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -109,6 +112,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         userId: userId as any,
         currency: data.currency,
         language: data.language,
+        marketRegion: data.marketRegion,
         theme: data.theme,
       });
 
@@ -164,7 +168,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
       }
 
       // Move to final step
-      setCurrentStep(5);
+      setCurrentStep(6);
     } catch (error) {
       console.error("Error saving onboarding data:", error);
     }
@@ -179,7 +183,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
     }
   };
 
-  const canProceedStep2 = data.language && data.currency;
+  const canProceedStep2 = data.language && data.currency && data.marketRegion;
   const canProceedStep3 = data.aiProvider;
   const canProceedPortfolioStep1 = data.portfolioName.trim();
   const canProceedPortfolioStep2 = data.riskTolerance && data.timeHorizon;
@@ -377,7 +381,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                     Your Preferences
                   </h2>
                   <p className="text-zinc-400 text-lg">
-                    Choose your language and currency for the perfect experience
+                    Customize your experience with language, currency, and market region
                   </p>
                 </div>
 
@@ -399,9 +403,8 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       {[
-                        { code: "en", name: "English", flag: "🇺🇸" },
-                        { code: "es", name: "Español", flag: "🇪🇸" },
-                        { code: "fr", name: "Français", flag: "🇫🇷" },
+                        { code: "en", name: "English", flag: "🇬🇧" },
+                        { code: "pt", name: "Português", flag: "🇵🇹" },
                       ].map((lang) => (
                         <motion.button
                           key={lang.code}
@@ -469,14 +472,84 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                       ))}
                     </div>
                   </motion.div>
+
+                  {/* Market Region Selection */}
+                  <motion.div
+                    variants={staggerVariants}
+                    initial="initial"
+                    animate="animate"
+                    transition={{ delay: 0.7, duration: 0.6 }}
+                  >
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 rounded-lg bg-amber-500/10">
+                        <MapPin className="h-5 w-5 text-amber-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-white">
+                        Market Region
+                      </h3>
+                    </div>
+                    <p className="text-sm text-zinc-400 mb-6">
+                      Select your primary market region for localized insights and data
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {[
+                        { code: "US", name: "United States", flag: "🇺🇸" },
+                        { code: "EU", name: "Europe", flag: "🇪🇺" },
+                        { code: "UK", name: "United Kingdom", flag: "🇬🇧" },
+                        { code: "CA", name: "Canada", flag: "🇨🇦" },
+                        { code: "AU", name: "Australia", flag: "🇦🇺" },
+                        { code: "JP", name: "Japan", flag: "🇯🇵" },
+                        { code: "SG", name: "Singapore", flag: "🇸🇬" },
+                        { code: "HK", name: "Hong Kong", flag: "🇭🇰" },
+                        { code: "IN", name: "India", flag: "🇮🇳" },
+                      ].map((region) => (
+                        <motion.button
+                          key={region.code}
+                          variants={cardHoverVariants}
+                          whileHover="hover"
+                          whileTap="tap"
+                          onClick={() =>
+                            setData({ ...data, marketRegion: region.code })
+                          }
+                          className={`p-5 rounded-2xl border transition-all ${
+                            data.marketRegion === region.code
+                              ? "border-white/[0.3] bg-white/[0.08] shadow-lg"
+                              : "border-white/[0.06] hover:border-white/[0.15]"
+                          }`}
+                        >
+                          <div className="text-2xl mb-2">{region.flag}</div>
+                          <div className="text-center">
+                            <div
+                              className={`text-xs font-semibold ${
+                                data.marketRegion === region.code
+                                  ? "text-white"
+                                  : "text-zinc-400"
+                              }`}
+                            >
+                              {region.code}
+                            </div>
+                            <div
+                              className={`text-[11px] ${
+                                data.marketRegion === region.code
+                                  ? "text-zinc-300"
+                                  : "text-zinc-500"
+                              }`}
+                            >
+                              {region.name}
+                            </div>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )}
 
             {/* Step 3: AI Preferences (Keep existing design - it's good) */}
-            {currentStep === 3 && (
+            {currentStep === 6 && (
               <motion.div
-                key="step3"
+                key="step6"
                 variants={containerVariants}
                 initial="initial"
                 animate="animate"
@@ -611,9 +684,9 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
             )}
 
             {/* Step 4: Portfolio Creation (Multi-step) */}
-            {currentStep === 4 && (
+            {currentStep === 6 && (
               <motion.div
-                key="step4"
+                key="step6"
                 variants={containerVariants}
                 initial="initial"
                 animate="animate"
@@ -1025,9 +1098,9 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
             )}
 
             {/* Step 5: Feature Showcase */}
-            {currentStep === 5 && (
+            {currentStep === 6 && (
               <motion.div
-                key="step5"
+                key="step6"
                 variants={containerVariants}
                 initial="initial"
                 animate="animate"
@@ -1133,7 +1206,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
           <div className="max-w-[1600px] mx-auto px-8 py-6 flex items-center justify-between">
             <div>
               {(currentStep > 1 ||
-                (currentStep === 4 && portfolioStep > 1)) && (
+                (currentStep === 5 && portfolioStep > 1)) && (
                 <Button
                   onClick={handleBack}
                   variant="ghost"
@@ -1148,12 +1221,12 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
             <div className="flex items-center gap-4">
               {/* Step indicator */}
               <div className="text-sm text-zinc-500">
-                Step {currentStep} of 4
-                {currentStep === 4 && ` (${portfolioStep}/3)`}
+                Step {currentStep} of 6
+                {currentStep === 5 && ` (${portfolioStep}/3)`}
               </div>
 
               <div>
-                {currentStep === 4 && portfolioStep === 3 ? (
+                {currentStep === 5 && portfolioStep === 3 ? (
                   <Button
                     onClick={handleSubmit}
                     className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
@@ -1166,10 +1239,10 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                     disabled={
                       (currentStep === 2 && !canProceedStep2) ||
                       (currentStep === 3 && !canProceedStep3) ||
-                      (currentStep === 4 &&
+                      (currentStep === 5 &&
                         portfolioStep === 1 &&
                         !canProceedPortfolioStep1) ||
-                      (currentStep === 4 &&
+                      (currentStep === 5 &&
                         portfolioStep === 2 &&
                         !canProceedPortfolioStep2)
                     }
@@ -1186,7 +1259,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
       )}
 
       {/* Complete Button for Final Step */}
-      {currentStep === 5 && (
+      {currentStep === 6 && (
         <motion.div
           initial={{ y: 100 }}
           animate={{ y: 0 }}
