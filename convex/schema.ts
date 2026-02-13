@@ -41,7 +41,6 @@ export default defineSchema({
     marketRegion: v.optional(v.string()),
     aiSummaryFrequency: v.optional(
       v.union(
-        v.literal("12h"),
         v.literal("daily"),
         v.literal("weekly"),
         v.literal("monthly"),

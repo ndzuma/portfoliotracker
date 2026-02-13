@@ -21,14 +21,13 @@ import { useTranslations } from "next-intl";
 
 /* ─── AI Summary Frequency Options ─── */
 const FREQUENCY_OPTIONS = [
-  { value: "12h" as const },
   { value: "daily" as const },
   { value: "weekly" as const },
   { value: "monthly" as const },
   { value: "manual" as const },
 ] as const;
 
-type AiSummaryFrequency = "12h" | "daily" | "weekly" | "monthly" | "manual";
+type AiSummaryFrequency = "daily" | "weekly" | "monthly" | "manual";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    AI SECTION — summary frequency + BYOAI provider config
@@ -69,8 +68,6 @@ export function AiSection({
   // Helper functions for frequency translations
   const getFrequencyLabel = (value: AiSummaryFrequency) => {
     switch (value) {
-      case "12h":
-        return t("every12Hours");
       case "daily":
         return t("daily");
       case "weekly":
@@ -86,8 +83,6 @@ export function AiSection({
 
   const getFrequencyDescription = (value: AiSummaryFrequency) => {
     switch (value) {
-      case "12h":
-        return t("twiceDaily");
       case "daily":
         return t("oncePerDay");
       case "weekly":

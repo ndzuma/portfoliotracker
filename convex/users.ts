@@ -388,6 +388,7 @@ export const saveOnboardingPreferences = mutation({
     userId: v.id("users"),
     currency: v.string(),
     language: v.string(),
+    marketRegion: v.optional(v.string()),
     theme: v.optional(v.union(v.literal("light"), v.literal("dark"))),
   },
   handler: async (ctx, args) => {
@@ -396,6 +397,7 @@ export const saveOnboardingPreferences = mutation({
       userId: args.userId,
       currency: args.currency,
       language: args.language,
+      marketRegion: args.marketRegion,
       theme: args.theme || "dark",
     });
   },
@@ -441,5 +443,12 @@ export const markOnboardingComplete = mutation({
     await ctx.db.patch(args.userId, {
       hasOnboarded: true,
     });
+  },
+});
+
+// Get all users for scheduled summary generation
+export const getAllUsersForSummaryGeneration = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("users").collect();
   },
 });
