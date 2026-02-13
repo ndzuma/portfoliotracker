@@ -16,11 +16,30 @@ export const marketDataUrl =
   process.env.MARKET_DATA_URL ||
   "https://market-data-api.up.railway.app";
 
+// Benchmark symbols that should always have historical data available
+// for portfolio analytics (beta, alpha, tracking error, etc.)
+const BENCHMARK_SYMBOLS = ["SPY"];
+
 export const updateHistoricalData = action({
   handler: async (ctx) => {
-    const data = await ctx.runQuery(
-      internal.marketData.getAssetsForHistoricalUpdate,
-    );
+    const data: { symbol: string | undefined; lastDate: string | null }[] =
+      await ctx.runQuery(internal.marketData.getAssetsForHistoricalUpdate);
+
+    // Always include benchmark symbols (e.g. SPY) so analytics
+    // have comparison data even if no user holds them as assets
+    for (const benchmark of BENCHMARK_SYMBOLS) {
+      if (!data.some((item) => item.symbol === benchmark)) {
+        // Find the most recent historical record to resume from
+        const latestRecord = await ctx.runQuery(
+          internal.marketData.getLatestHistoricalRecord,
+          { ticker: benchmark },
+        );
+        data.push({
+          symbol: benchmark,
+          lastDate: latestRecord?.date ?? null,
+        });
+      }
+    }
 
     // Process each symbol individually to use correct start_date
     for (const item of data) {
@@ -143,6 +162,21 @@ export const doesHistoricalDataExist = internalQuery({
   },
 });
 
+// Get the most recent historical data record for a ticker (used for benchmark seeding)
+export const getLatestHistoricalRecord = internalQuery({
+  args: {
+    ticker: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const latest = await ctx.db
+      .query("marketHistoricData")
+      .withIndex("byTicker", (q) => q.eq("ticker", args.ticker))
+      .order("desc")
+      .first();
+    return latest ? { date: latest.date } : null;
+  },
+});
+
 // get assets without historical data
 export const getAssetsWithoutHistoricalData = internalQuery({
   handler: async (ctx) => {
@@ -181,7 +215,8 @@ export const getAssetsForHistoricalUpdate = internalQuery({
       new Set(assets.map((asset) => asset.symbol).filter(Boolean)),
     );
 
-    const result = [];
+    const result: { symbol: string | undefined; lastDate: string | null }[] =
+      [];
     for (const symbol of symbols) {
       const latestData = await ctx.db
         .query("marketHistoricData")

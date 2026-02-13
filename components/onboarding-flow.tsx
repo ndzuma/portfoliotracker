@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -29,6 +29,8 @@ import {
   CaretDown,
   Check,
   Sparkle,
+  Rocket,
+  CircleNotch,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
@@ -223,6 +225,8 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [portfolioStep, setPortfolioStep] = useState(1);
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState(0);
   const [data, setData] = useState<OnboardingData>({
     language: "en",
     currency: "USD",
@@ -275,7 +279,21 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
     }
   };
 
+  const SUBMIT_PHASES = useMemo(
+    () => [
+      "Saving your preferences…",
+      "Configuring AI engine…",
+      "Creating your portfolio…",
+      "Setting investment targets…",
+      "Launching your dashboard…",
+    ],
+    [],
+  );
+
   const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitPhase(0);
+
     try {
       await savePreferences({
         userId: userId as any,
@@ -285,11 +303,15 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         theme: data.theme,
       });
 
+      setSubmitPhase(1);
+
       await saveAiPreferences({
         userId: userId as any,
         aiProvider: data.aiProvider,
         openRouterApiKey: data.openRouterApiKey,
       });
+
+      setSubmitPhase(2);
 
       const portfolioId = await createPortfolio({
         userId: userId as any,
@@ -317,6 +339,8 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         });
       }
 
+      setSubmitPhase(3);
+
       if (
         data.targetValue ||
         data.targetReturn ||
@@ -332,10 +356,14 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         });
       }
 
+      setSubmitPhase(4);
+
       await markComplete({ userId: userId as any });
       window.location.href = "/";
     } catch (error) {
       console.error("Error completing onboarding:", error);
+      setIsSubmitting(false);
+      setSubmitPhase(0);
     }
   };
 
@@ -368,6 +396,118 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
       },
     },
   };
+
+  /* ──────────────────────────────────────────────────────────────────────
+     LAUNCH SEQUENCE — shown during submission
+     ────────────────────────────────────────────────────────────────────── */
+  if (isSubmitting) {
+    return (
+      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center relative overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10 flex flex-col items-center text-center px-6"
+        >
+          {/* Pulsing icon */}
+          <motion.div
+            animate={{
+              boxShadow: [
+                "0 0 0 0px rgba(var(--primary-rgb,99,102,241),0.3)",
+                "0 0 0 20px rgba(var(--primary-rgb,99,102,241),0)",
+              ],
+            }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+            className="h-20 w-20 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center mb-10"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+            >
+              <Rocket className="h-9 w-9 text-primary" weight="duotone" />
+            </motion.div>
+          </motion.div>
+
+          {/* Title */}
+          <motion.h2
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-3"
+          >
+            Setting everything up
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.5 }}
+            className="text-sm text-zinc-500 mb-10 max-w-xs"
+          >
+            Hang tight — we're preparing your financial command center.
+          </motion.p>
+
+          {/* Progress bar */}
+          <div className="w-64 h-1 bg-zinc-800 rounded-full overflow-hidden mb-8">
+            <motion.div
+              className="h-full bg-primary rounded-full"
+              initial={{ width: "0%" }}
+              animate={{
+                width: `${((submitPhase + 1) / SUBMIT_PHASES.length) * 100}%`,
+              }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </div>
+
+          {/* Phase status lines */}
+          <div className="space-y-2.5 w-64">
+            {SUBMIT_PHASES.map((label, i) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{
+                  opacity: i <= submitPhase ? 1 : 0.25,
+                  x: 0,
+                }}
+                transition={{ delay: 0.4 + i * 0.08, duration: 0.4 }}
+                className="flex items-center gap-2.5 text-xs"
+              >
+                {i < submitPhase ? (
+                  <Check
+                    className="h-3.5 w-3.5 text-primary flex-shrink-0"
+                    weight="bold"
+                  />
+                ) : i === submitPhase ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <CircleNotch
+                      className="h-3.5 w-3.5 text-primary flex-shrink-0"
+                      weight="bold"
+                    />
+                  </motion.div>
+                ) : (
+                  <div className="h-3.5 w-3.5 rounded-full border border-zinc-700 flex-shrink-0" />
+                )}
+                <span
+                  className={
+                    i <= submitPhase ? "text-zinc-300" : "text-zinc-600"
+                  }
+                >
+                  {label}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#09090b] flex flex-col">

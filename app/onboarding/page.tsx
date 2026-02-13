@@ -69,19 +69,42 @@ export default function OnboardingPage() {
     );
   }
 
+  // User has completed onboarding OR reactive query just flipped hasOnboarded
+  // to true (race condition during submit). Show a graceful loading state
+  // while the router.push("/") from the useEffect kicks in.
   return (
     <>
       <Authenticated>
-        {/* This should not be reached if user hasn't completed onboarding */}
-        <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-          <div className="text-center space-y-4">
-            <TrendUp className="h-12 w-12 mx-auto text-primary animate-pulse" />
-            <h2 className="text-2xl font-semibold">Something went wrong</h2>
-            <p className="text-muted-foreground">
-              Please refresh the page or contact support.
+        <div className="flex flex-col items-center justify-center min-h-screen bg-[#09090b]">
+          <div className="text-center space-y-5">
+            <TrendUp className="h-10 w-10 mx-auto text-primary animate-pulse" />
+            <h2 className="text-xl font-semibold text-white tracking-tight">
+              Launching your dashboard…
+            </h2>
+            <p className="text-sm text-zinc-500 max-w-xs mx-auto">
+              Everything is ready. Redirecting you now.
             </p>
+
+            {/* Minimal progress indicator */}
+            <div className="w-40 h-0.5 bg-zinc-800 rounded-full overflow-hidden mx-auto mt-6">
+              <div className="h-full bg-primary rounded-full animate-[indeterminate_1.5s_ease-in-out_infinite] origin-left" />
+            </div>
           </div>
         </div>
+
+        <style jsx>{`
+          @keyframes indeterminate {
+            0% {
+              transform: scaleX(0) translateX(0);
+            }
+            50% {
+              transform: scaleX(0.6) translateX(60%);
+            }
+            100% {
+              transform: scaleX(0) translateX(400%);
+            }
+          }
+        `}</style>
       </Authenticated>
       <Unauthenticated>
         <RedirectToSignIn />

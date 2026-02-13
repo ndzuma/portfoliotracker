@@ -306,40 +306,42 @@ export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
         </div>
       </AccordionSection>
 
-      {/* ─── Benchmark Comparison ─── */}
-      <AccordionSection title={t("benchmarkComparison")} icon={Pulse}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatBlock
-            icon={Pulse}
-            label={t("beta")}
-            value={analytics.riskMetrics.beta.toFixed(2)}
-            sub={t("marketSensitivity")}
-          />
-          <StatBlock
-            icon={Crosshair}
-            label={t("correlation")}
-            value={analytics.benchmarkComparisons.correlation.toFixed(3)}
-            sub={t("priceCorrelationToSpy")}
-          />
-          <StatBlock
-            icon={Crosshair}
-            label={t("infoRatio")}
-            value={analytics.benchmarkComparisons.informationRatio.toFixed(3)}
-            sub={t("alphaPerTrackingError")}
-          />
-          <StatBlock
-            icon={TrendUp}
-            label={t("outperformance")}
-            value={`${analytics.benchmarkComparisons.cumulativeOutperformance > 0 ? "+" : ""}${fmt(analytics.benchmarkComparisons.cumulativeOutperformance)}`}
-            sub={t("cumulativeExcessReturn")}
-            accent={
-              analytics.benchmarkComparisons.cumulativeOutperformance > 0
-                ? "green"
-                : "red"
-            }
-          />
-        </div>
-      </AccordionSection>
+      {/* ─── Benchmark Comparison (hidden when SPY data hasn't been seeded yet) ─── */}
+      {analytics.metadata?.hasBenchmarkData && (
+        <AccordionSection title={t("benchmarkComparison")} icon={Pulse}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatBlock
+              icon={Pulse}
+              label={t("beta")}
+              value={analytics.riskMetrics.beta.toFixed(2)}
+              sub={t("marketSensitivity")}
+            />
+            <StatBlock
+              icon={Crosshair}
+              label={t("correlation")}
+              value={analytics.benchmarkComparisons.correlation.toFixed(3)}
+              sub={t("priceCorrelationToSpy")}
+            />
+            <StatBlock
+              icon={Crosshair}
+              label={t("infoRatio")}
+              value={analytics.benchmarkComparisons.informationRatio.toFixed(3)}
+              sub={t("alphaPerTrackingError")}
+            />
+            <StatBlock
+              icon={TrendUp}
+              label={t("outperformance")}
+              value={`${analytics.benchmarkComparisons.cumulativeOutperformance > 0 ? "+" : ""}${fmt(analytics.benchmarkComparisons.cumulativeOutperformance)}`}
+              sub={t("cumulativeExcessReturn")}
+              accent={
+                analytics.benchmarkComparisons.cumulativeOutperformance > 0
+                  ? "green"
+                  : "red"
+              }
+            />
+          </div>
+        </AccordionSection>
+      )}
     </div>
   );
 }
