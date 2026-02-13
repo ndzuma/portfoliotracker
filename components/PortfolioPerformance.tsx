@@ -56,8 +56,19 @@ export function PorfolioPerformanceChart({
     }).format(date);
   }
 
+  function formatTooltipDate(dateString: string) {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(date);
+  }
+
   const chartData = data
     ? data.map((dataPoint) => ({
+        rawDate: dataPoint.date,
         date: formatDate(dataPoint.date),
         portfolio: dataPoint.value,
       }))
@@ -152,7 +163,17 @@ export function PorfolioPerformanceChart({
                 }
               }}
             />
-            <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
+            <ChartTooltip
+              cursor={true}
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(_value, payload) => {
+                    const raw = payload?.[0]?.payload?.rawDate;
+                    return raw ? formatTooltipDate(raw) : String(_value);
+                  }}
+                />
+              }
+            />
             <defs>
               <linearGradient id="fillPortfolio" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#8d745d" stopOpacity={0.8} />

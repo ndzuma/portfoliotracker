@@ -536,173 +536,179 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
             </Card>
           </div>
 
-          <Separator />
+          {analytics.metadata?.hasBenchmarkData && (
+            <>
+              <Separator />
 
-          {/* Benchmark Comparison Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <ChartBar className="h-5 w-5 text-primary" />
-              Benchmark Comparison (vs SPY)
-            </h3>
+              {/* Benchmark Comparison Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <ChartBar className="h-5 w-5 text-primary" />
+                  Benchmark Comparison (vs SPY)
+                </h3>
 
-            {/* Alpha, Beta, Correlation */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Lightning className="h-4 w-4 text-primary" />
-                    Alpha
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatPercentage(analytics.performanceMetrics.alpha)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Excess return vs market
-                  </p>
-                </CardContent>
-              </Card>
+                {/* Alpha, Beta, Correlation */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Lightning className="h-4 w-4 text-primary" />
+                        Alpha
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {formatPercentage(analytics.performanceMetrics.alpha)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Excess return vs market
+                      </p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Pulse className="h-4 w-4 text-primary" />
-                    Beta
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analytics.riskMetrics.beta.toFixed(2)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Market sensitivity
-                  </p>
-                </CardContent>
-              </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Pulse className="h-4 w-4 text-primary" />
+                        Beta
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {analytics.riskMetrics.beta.toFixed(2)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Market sensitivity
+                      </p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <ChartLineUp className="h-4 w-4 text-primary" />
-                    Correlation
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analytics.benchmarkComparisons.correlation.toFixed(3)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Price correlation to SPY
-                  </p>
-                </CardContent>
-              </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <ChartLineUp className="h-4 w-4 text-primary" />
+                        Correlation
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {analytics.benchmarkComparisons.correlation.toFixed(3)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Price correlation to SPY
+                      </p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Crosshair className="h-4 w-4 text-primary" />
-                    Information Ratio
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analytics.benchmarkComparisons.informationRatio.toFixed(3)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Alpha per unit of tracking error
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Tracking & Outperformance */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Tracking Error
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatPercentage(
-                      analytics.benchmarkComparisons.trackingError,
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Standard deviation of excess returns
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Cumulative Outperformance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analytics.benchmarkComparisons.cumulativeOutperformance > 0
-                      ? "+"
-                      : ""}
-                    {formatPercentage(
-                      analytics.benchmarkComparisons.cumulativeOutperformance,
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Total excess return vs SPY
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Market Capture */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Pulse className="h-5 w-5 text-primary" />
-                  Market Capture Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <TrendUp className="h-4 w-4 text-green-500" />
-                      Up Market Capture
-                    </p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatPercentage(
-                        analytics.benchmarkComparisons.marketCapture.upCapture /
-                          100,
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Performance in rising markets
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <TrendDown className="h-4 w-4 text-red-500" />
-                      Down Market Capture
-                    </p>
-                    <p className="text-2xl font-bold text-red-600">
-                      {formatPercentage(
-                        analytics.benchmarkComparisons.marketCapture
-                          .downCapture / 100,
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Performance in falling markets
-                    </p>
-                  </div>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Crosshair className="h-4 w-4 text-primary" />
+                        Information Ratio
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {analytics.benchmarkComparisons.informationRatio.toFixed(
+                          3,
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Alpha per unit of tracking error
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Yearly Comparison Table
+                {/* Tracking & Outperformance */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Tracking Error
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {formatPercentage(
+                          analytics.benchmarkComparisons.trackingError,
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Standard deviation of excess returns
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Cumulative Outperformance
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {analytics.benchmarkComparisons
+                          .cumulativeOutperformance > 0
+                          ? "+"
+                          : ""}
+                        {formatPercentage(
+                          analytics.benchmarkComparisons
+                            .cumulativeOutperformance,
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Total excess return vs SPY
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Market Capture */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Pulse className="h-5 w-5 text-primary" />
+                      Market Capture Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium flex items-center gap-2">
+                          <TrendUp className="h-4 w-4 text-green-500" />
+                          Up Market Capture
+                        </p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {formatPercentage(
+                            analytics.benchmarkComparisons.marketCapture
+                              .upCapture / 100,
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Performance in rising markets
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium flex items-center gap-2">
+                          <TrendDown className="h-4 w-4 text-red-500" />
+                          Down Market Capture
+                        </p>
+                        <p className="text-2xl font-bold text-red-600">
+                          {formatPercentage(
+                            analytics.benchmarkComparisons.marketCapture
+                              .downCapture / 100,
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Performance in falling markets
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Yearly Comparison Table
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -748,7 +754,9 @@ export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
               </CardContent>
             </Card>
             */}
-          </div>
+              </div>
+            </>
+          )}
 
           <Separator />
 

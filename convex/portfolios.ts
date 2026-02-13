@@ -586,16 +586,16 @@ export const getPortfolioAnalytics = query({
       )
       .collect();
 
-    if (benchmarkData.length === 0) {
-      throw new Error("No benchmark data available");
-    }
+    const hasBenchmarkData = benchmarkData.length > 0;
 
-    const formatedBenchmarkData = benchmarkData.map((d) => ({
-      date: d.date,
-      value: d.close,
-    }));
-
-    const benchmarkReturns = calculateReturns(formatedBenchmarkData, "daily");
+    // Compute benchmark returns only if data exists, otherwise use empty array
+    // All downstream analytics functions already handle empty benchmarkReturns gracefully (return 0 / [])
+    const benchmarkReturns = hasBenchmarkData
+      ? calculateReturns(
+          benchmarkData.map((d) => ({ date: d.date, value: d.close })),
+          "daily",
+        )
+      : [];
 
     // Calculate all analytics using the extracted functions
     const riskMetrics = calculateRiskMetrics(
@@ -634,6 +634,7 @@ export const getPortfolioAnalytics = query({
         calculatedAt: new Date().toISOString(),
         dataPoints: historicalData.length,
         dataSource, // Track whether we used weekly snapshots or daily data
+        hasBenchmarkData, // False when SPY data hasn't been seeded yet
         dateRange: {
           start: historicalData[0]?.date || startDate.toISOString(),
           end:

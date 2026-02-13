@@ -30,55 +30,119 @@ const COLORS = [
   "#6366f1",
 ];
 
+interface PortfolioSlice {
+  id: string;
+  name: string;
+  value: number;
+  percentage: number;
+  color: string;
+}
+
+function computePortfolioSlices(
+  portfolios: Portfolio[],
+  totalValue: number,
+): PortfolioSlice[] {
+  const safeTotalValue = Math.max(0, totalValue);
+
+  return portfolios.map((p, i) => {
+    const value = Math.max(0, p.currentValue);
+    return {
+      id: p._id,
+      name: p.name,
+      value,
+      percentage: safeTotalValue > 0 ? (value / safeTotalValue) * 100 : 0,
+      color: COLORS[i % COLORS.length],
+    };
+  });
+}
+
 export function V2AllocationBar({
   portfolios,
   totalValue,
 }: V2AllocationBarProps) {
+  const slices = computePortfolioSlices(portfolios, totalValue);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
   if (portfolios.length === 0) return null;
 
   return (
     <div className="max-w-[1600px] mx-auto pb-12">
-      <h3 className="text-lg font-semibold text-white mb-5">Allocation</h3>
+      <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em] mb-5">
+        Portfolio Allocation
+      </p>
 
-      {/* Bar */}
-      <div className="flex h-3 rounded-full overflow-hidden bg-white/[0.04] mb-6">
-        {portfolios.map((portfolio, i) => {
-          const percentage = (portfolio.currentValue / totalValue) * 100;
-          const color = COLORS[i % COLORS.length];
-          return (
+      {/* Bar with tooltips */}
+      <TooltipProvider delayDuration={0}>
+        <div className="flex h-2.5 rounded-full overflow-hidden bg-white/[0.04] mb-5">
+          {slices.map((slice, i) => (
+            <Tooltip key={slice.id}>
+              <TooltipTrigger asChild>
+                <div
+                  className="relative transition-all duration-200 cursor-default"
+                  style={{
+                    width: `${slice.percentage}%`,
+                    backgroundColor: slice.color,
+                    opacity:
+                      hoveredId === null || hoveredId === slice.id ? 1 : 0.3,
+                    marginRight: i < slices.length - 1 ? "1px" : 0,
+                  }}
+                  onMouseEnter={() => setHoveredId(slice.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                />
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                sideOffset={8}
+                className="bg-zinc-900 border border-white/[0.08] px-3 py-2 rounded-lg shadow-xl"
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: slice.color }}
+                  />
+                  <span className="text-xs font-medium text-white">
+                    {slice.name}
+                  </span>
+                  <span className="text-xs text-zinc-400 font-semibold tabular-nums">
+                    {slice.percentage.toFixed(1)}%
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-500 mt-0.5 pl-4">
+                  $
+                  {slice.value.toLocaleString(undefined, {
+                    maximumFractionDigits: 0,
+                  })}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
+
+      {/* Compact legend */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+        {slices.map((slice) => (
+          <div
+            key={slice.id}
+            className="flex items-center gap-1.5 cursor-default transition-opacity duration-150"
+            style={{
+              opacity: hoveredId === null || hoveredId === slice.id ? 1 : 0.35,
+            }}
+            onMouseEnter={() => setHoveredId(slice.id)}
+            onMouseLeave={() => setHoveredId(null)}
+          >
             <div
-              key={portfolio._id}
-              style={{
-                width: `${percentage}%`,
-                backgroundColor: color,
-              }}
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{ backgroundColor: slice.color }}
             />
-          );
-        })}
-      </div>
-
-      {/* Legend */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {portfolios.map((portfolio, i) => {
-          const percentage = (portfolio.currentValue / totalValue) * 100;
-          const color = COLORS[i % COLORS.length];
-          return (
-            <div key={portfolio._id} className="flex items-center gap-3">
-              <div
-                className="w-3 h-3 rounded-full shrink-0"
-                style={{ backgroundColor: color }}
-              />
-              <div className="min-w-0">
-                <p className="text-sm text-white font-medium truncate">
-                  {portfolio.name}
-                </p>
-                <p className="text-xs text-zinc-600">
-                  {percentage.toFixed(1)}%
-                </p>
-              </div>
-            </div>
-          );
-        })}
+            <span className="text-[11px] text-zinc-500 font-medium truncate max-w-[120px]">
+              {slice.name}
+            </span>
+            <span className="text-[11px] text-zinc-400 font-semibold tabular-nums">
+              {slice.percentage.toFixed(1)}%
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

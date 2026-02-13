@@ -1,6 +1,7 @@
 import { api, internal } from "./_generated/api";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 // Create a new asset
 export const createAsset = mutation({
@@ -62,6 +63,19 @@ export const createAsset = mutation({
       startDate: args.purchaseDate,
     });
 
+    // If this is the user's first asset, generate an AI summary so they
+    // immediately see the feature in action (delay lets snapshots settle)
+    const existingAssets = await ctx.db
+      .query("assets")
+      .withIndex("byPortfolio", (q) => q.eq("portfolioId", args.portfolioId))
+      .collect();
+
+    if (existingAssets.length === 1) {
+      await ctx.scheduler.runAfter(5000, api.ai.generateAiPortfolioSummary, {
+        portfolioId: args.portfolioId as Id<"portfolios">,
+      });
+    }
+
     return assetId;
   },
 });
@@ -106,11 +120,15 @@ export const updateAsset = mutation({
     await ctx.db.patch(args.assetId, updates);
 
     // Trigger portfolio snapshot update when asset is modified
-    await ctx.scheduler.runAfter(500, internal.marketData.triggerSnapshotUpdate, {
-      portfolioId: asset.portfolioId,
-      reason: "asset_modified",
-      startDate: Date.now(), // Recalculate from today
-    });
+    await ctx.scheduler.runAfter(
+      500,
+      internal.marketData.triggerSnapshotUpdate,
+      {
+        portfolioId: asset.portfolioId,
+        reason: "asset_modified",
+        startDate: Date.now(), // Recalculate from today
+      },
+    );
 
     return args.assetId;
   },
@@ -265,11 +283,15 @@ export const updateTransaction = mutation({
     await ctx.db.patch(args.transactionId, updates);
 
     // Trigger portfolio snapshot update when transaction is modified
-    await ctx.scheduler.runAfter(500, internal.marketData.triggerSnapshotUpdate, {
-      portfolioId: asset.portfolioId,
-      reason: "transaction_modified",
-      startDate: args.date || transaction.date, // Use new date or existing date
-    });
+    await ctx.scheduler.runAfter(
+      500,
+      internal.marketData.triggerSnapshotUpdate,
+      {
+        portfolioId: asset.portfolioId,
+        reason: "transaction_modified",
+        startDate: args.date || transaction.date, // Use new date or existing date
+      },
+    );
 
     return args.transactionId;
   },

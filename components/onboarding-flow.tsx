@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -14,7 +14,6 @@ import {
   Briefcase,
   Shield,
   ChartPie,
-  TrendUp,
   Lightning,
   Brain,
   Globe,
@@ -29,6 +28,9 @@ import {
   MagnifyingGlass,
   CaretDown,
   Check,
+  Sparkle,
+  Rocket,
+  CircleNotch,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
@@ -187,7 +189,7 @@ function CurrencyPicker({
                       {c.symbol}
                     </span>
                     {c.code === value && (
-                      <Check className="h-3 w-3 text-emerald-500 shrink-0" />
+                      <Check className="h-3 w-3 text-primary shrink-0" />
                     )}
                   </button>
                 ))
@@ -221,7 +223,10 @@ interface OnboardingData {
 
 export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [portfolioStep, setPortfolioStep] = useState(1); // Sub-step for portfolio creation
+  const [portfolioStep, setPortfolioStep] = useState(1);
+  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState(0);
   const [data, setData] = useState<OnboardingData>({
     language: "en",
     currency: "USD",
@@ -233,14 +238,9 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
     investmentThesis: "",
   });
 
-  // Get available currencies from backend
   const { currencies } = useAvailableCurrencies();
-
-  // Feature flags
-  const aiSummariesEnabled = useFeatureFlag("ai-summaries");
   const byoaiEnabled = useFeatureFlag("byoai");
 
-  // Mutations
   const savePreferences = useMutation(api.users.saveOnboardingPreferences);
   const saveAiPreferences = useMutation(api.users.saveOnboardingAiPreferences);
   const createPortfolio = useMutation(api.portfolios.createPortfolio);
@@ -252,8 +252,8 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
   const markComplete = useMutation(api.users.markOnboardingComplete);
 
   const handleNext = () => {
+    setDirection(1);
     if (currentStep === 4) {
-      // Portfolio creation multi-step
       if (portfolioStep < 3) {
         setPortfolioStep(portfolioStep + 1);
       } else {
@@ -266,6 +266,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
   };
 
   const handleBack = () => {
+    setDirection(-1);
     if (currentStep === 4 && portfolioStep > 1) {
       setPortfolioStep(portfolioStep - 1);
     } else if (currentStep === 4 && portfolioStep === 1) {
@@ -278,9 +279,22 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
     }
   };
 
+  const SUBMIT_PHASES = useMemo(
+    () => [
+      "Saving your preferences…",
+      "Configuring AI engine…",
+      "Creating your portfolio…",
+      "Setting investment targets…",
+      "Launching your dashboard…",
+    ],
+    [],
+  );
+
   const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitPhase(0);
+
     try {
-      // Save preferences
       await savePreferences({
         userId: userId as any,
         currency: data.currency,
@@ -289,14 +303,16 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         theme: data.theme,
       });
 
-      // Save AI preferences
+      setSubmitPhase(1);
+
       await saveAiPreferences({
         userId: userId as any,
         aiProvider: data.aiProvider,
         openRouterApiKey: data.openRouterApiKey,
       });
 
-      // Create portfolio
+      setSubmitPhase(2);
+
       const portfolioId = await createPortfolio({
         userId: userId as any,
         name: data.portfolioName,
@@ -305,7 +321,6 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         timeHorizon: data.timeHorizon,
       });
 
-      // Upload thesis file if provided
       if (data.thesisFile) {
         const uploadUrl = await generateUploadUrl();
         const result = await fetch(uploadUrl, {
@@ -324,7 +339,8 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         });
       }
 
-      // Save goals if any are provided
+      setSubmitPhase(3);
+
       if (
         data.targetValue ||
         data.targetReturn ||
@@ -332,7 +348,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         data.targetContribution
       ) {
         await createGoalsFromOnboarding({
-          portfolioId: portfolioId as any,
+          portfolioId,
           targetValue: data.targetValue,
           targetReturn: data.targetReturn,
           targetYearlyReturn: data.targetYearlyReturn,
@@ -340,19 +356,14 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         });
       }
 
-      // Move to final step
-      setCurrentStep(5);
-    } catch (error) {
-      console.error("Error saving onboarding data:", error);
-    }
-  };
+      setSubmitPhase(4);
 
-  const handleComplete = async () => {
-    try {
       await markComplete({ userId: userId as any });
       window.location.href = "/";
     } catch (error) {
       console.error("Error completing onboarding:", error);
+      setIsSubmitting(false);
+      setSubmitPhase(0);
     }
   };
 
@@ -361,141 +372,170 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
   const canProceedPortfolioStep1 = data.portfolioName.trim();
   const canProceedPortfolioStep2 = data.riskTolerance && data.timeHorizon;
 
-  // Animation variants
+  /* ──────────────────────────────────────────────────────────────────────
+     ANIMATION VARIANTS
+     ────────────────────────────────────────────────────────────────────── */
   const containerVariants = {
-    initial: { opacity: 0, x: 50 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -50 },
-  };
-
-  const staggerVariants = {
-    initial: { opacity: 0, y: 30 },
+    initial: { opacity: 0, y: direction * 20 },
     animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -30 },
+    exit: { opacity: 0, y: direction * -20 },
   };
 
-  const cardHoverVariants = {
-    hover: { scale: 1.02, y: -2 },
-    tap: { scale: 0.98 },
+  const itemVariants = {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
   };
 
-  // Custom interactive components
-  const CurrencyButton = ({ code, symbol, active, onClick }: any) => (
-    <motion.button
-      variants={cardHoverVariants}
-      whileHover="hover"
-      whileTap="tap"
-      onClick={onClick}
-      className={`relative p-6 rounded-2xl border transition-all ${
-        active
-          ? "border-white/[0.3] bg-white/[0.08] shadow-lg shadow-white/[0.05]"
-          : "border-white/[0.06] hover:border-white/[0.15] hover:bg-white/[0.03]"
-      }`}
-    >
-      <div className="text-center">
-        <div
-          className={`text-2xl font-bold mb-2 ${active ? "text-white" : "text-zinc-400"}`}
-        >
-          {symbol}
-        </div>
-        <div
-          className={`text-sm ${active ? "text-zinc-300" : "text-zinc-500"}`}
-        >
-          {code}
-        </div>
-      </div>
-      {active && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="absolute top-3 right-3 w-3 h-3 rounded-full bg-emerald-400"
-        />
-      )}
-    </motion.button>
-  );
+  const staggerContainer = {
+    initial: { opacity: 1 },
+    animate: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        delayChildren: 0,
+      },
+    },
+  };
 
-  const RiskCard = ({
-    level,
-    title,
-    description,
-    color,
-    active,
-    onClick,
-  }: any) => (
-    <motion.button
-      variants={cardHoverVariants}
-      whileHover="hover"
-      whileTap="tap"
-      onClick={onClick}
-      className={`relative p-6 rounded-2xl border transition-all text-left w-full ${
-        active
-          ? "border-white/[0.3] bg-white/[0.08] shadow-lg shadow-white/[0.05]"
-          : "border-white/[0.06] hover:border-white/[0.15] hover:bg-white/[0.03]"
-      }`}
-    >
-      <div className="flex items-start gap-4">
-        <div className={`p-3 rounded-xl ${color} flex-shrink-0`}>
-          <Shield className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <h3
-            className={`font-semibold mb-2 ${active ? "text-white" : "text-zinc-300"}`}
-          >
-            {title}
-          </h3>
-          <p
-            className={`text-sm ${active ? "text-zinc-300" : "text-zinc-500"}`}
-          >
-            {description}
-          </p>
-        </div>
-      </div>
-      {active && (
+  /* ──────────────────────────────────────────────────────────────────────
+     LAUNCH SEQUENCE — shown during submission
+     ────────────────────────────────────────────────────────────────────── */
+  if (isSubmitting) {
+    return (
+      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center relative overflow-hidden">
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="absolute top-3 right-3 w-3 h-3 rounded-full bg-emerald-400"
-        />
-      )}
-    </motion.button>
-  );
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10 flex flex-col items-center text-center px-6"
+        >
+          {/* Pulsing icon */}
+          <motion.div
+            animate={{
+              boxShadow: [
+                "0 0 0 0px rgba(var(--primary-rgb,99,102,241),0.3)",
+                "0 0 0 20px rgba(var(--primary-rgb,99,102,241),0)",
+              ],
+            }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+            className="h-20 w-20 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center mb-10"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+            >
+              <Rocket className="h-9 w-9 text-primary" weight="duotone" />
+            </motion.div>
+          </motion.div>
+
+          {/* Title */}
+          <motion.h2
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-3"
+          >
+            Setting everything up
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.5 }}
+            className="text-sm text-zinc-500 mb-10 max-w-xs"
+          >
+            Hang tight — we're preparing your financial command center.
+          </motion.p>
+
+          {/* Progress bar */}
+          <div className="w-64 h-1 bg-zinc-800 rounded-full overflow-hidden mb-8">
+            <motion.div
+              className="h-full bg-primary rounded-full"
+              initial={{ width: "0%" }}
+              animate={{
+                width: `${((submitPhase + 1) / SUBMIT_PHASES.length) * 100}%`,
+              }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </div>
+
+          {/* Phase status lines */}
+          <div className="space-y-2.5 w-64">
+            {SUBMIT_PHASES.map((label, i) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{
+                  opacity: i <= submitPhase ? 1 : 0.25,
+                  x: 0,
+                }}
+                transition={{ delay: 0.4 + i * 0.08, duration: 0.4 }}
+                className="flex items-center gap-2.5 text-xs"
+              >
+                {i < submitPhase ? (
+                  <Check
+                    className="h-3.5 w-3.5 text-primary flex-shrink-0"
+                    weight="bold"
+                  />
+                ) : i === submitPhase ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <CircleNotch
+                      className="h-3.5 w-3.5 text-primary flex-shrink-0"
+                      weight="bold"
+                    />
+                  </motion.div>
+                ) : (
+                  <div className="h-3.5 w-3.5 rounded-full border border-zinc-700 flex-shrink-0" />
+                )}
+                <span
+                  className={
+                    i <= submitPhase ? "text-zinc-300" : "text-zinc-600"
+                  }
+                >
+                  {label}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: "#09090b" }}
-    >
-      {/* Sticky Header */}
+    <div className="min-h-screen bg-[#09090b] flex flex-col">
+      {/* Header */}
       <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="sticky top-0 z-50 border-b border-white/[0.06] backdrop-blur-xl"
-        style={{ background: "rgba(9,9,11,0.92)" }}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="sticky top-0 z-50 border-b border-white/[0.06] backdrop-blur-md"
+        style={{ background: "rgba(9,9,11,0.8)" }}
       >
-        <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
-          <motion.div
-            className="flex items-center"
-            whileHover={{ scale: 1.05 }}
-          >
-            <span className="text-sm font-semibold text-white tracking-tight">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-white">
               PulsePortfolio
             </span>
-          </motion.div>
-          <motion.a
-            href="mailto:support@pulsefolio.net"
-            className="text-sm text-zinc-500 hover:text-white transition-colors"
-            whileHover={{ scale: 1.05 }}
-          >
-            support@pulsefolio.net
-          </motion.a>
+          </div>
+          <div className="text-xs text-zinc-500">
+            Step {currentStep} of 5
+            {currentStep === 4 && ` (${portfolioStep}/3)`}
+          </div>
         </div>
       </motion.header>
 
-      {/* Main Content with Centered Container */}
-      <div className="flex-1 flex items-center justify-center px-8 py-16">
-        <div className="w-full max-w-4xl">
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-2xl">
           <AnimatePresence mode="wait">
-            {/* Step 1: Welcome */}
+            {/* STEP 1: Welcome */}
             {currentStep === 1 && (
               <motion.div
                 key="step1"
@@ -503,428 +543,334 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-                className="text-center"
+                transition={{ duration: 0.4 }}
+              >
+                <div className="text-center space-y-8">
+                  <motion.div
+                    variants={staggerContainer}
+                    initial="initial"
+                    animate="animate"
+                  >
+                    <motion.h1
+                      variants={itemVariants}
+                      className="text-4xl md:text-5xl font-bold text-white tracking-tight"
+                    >
+                      Welcome, <span className="text-primary">{userName}</span>
+                    </motion.h1>
+
+                    <motion.p
+                      variants={itemVariants}
+                      className="text-base text-zinc-400 max-w-lg mx-auto leading-relaxed"
+                    >
+                      Let's set up your portfolio and personalize your
+                      investment tracking experience.
+                    </motion.p>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 2: Preferences */}
+            {currentStep === 2 && (
+              <motion.div
+                key="step2"
+                variants={containerVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.4 }}
               >
                 <motion.div
-                  variants={staggerVariants}
+                  variants={staggerContainer}
                   initial="initial"
                   animate="animate"
-                  transition={{ delay: 0.3, duration: 0.8 }}
                 >
-                  <div className="mb-8">
-                    <motion.h1
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="text-5xl font-bold text-white mb-6 tracking-tight leading-tight"
-                    >
-                      Welcome to the future,{" "}
-                      <span className="bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-                        {userName}
-                      </span>
-                    </motion.h1>
-                    <motion.p
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.7 }}
-                      className="text-xl text-zinc-400 leading-relaxed max-w-2xl mx-auto"
-                    >
-                      Let's craft your personalized investment tracking
-                      experience with AI-powered insights and professional-grade
-                      analytics
-                    </motion.p>
+                  <motion.div variants={itemVariants} className="mb-8">
+                    <h2 className="text-3xl font-bold text-white">
+                      Your Preferences
+                    </h2>
+                    <p className="text-sm text-zinc-400 mt-2">
+                      Customize your experience
+                    </p>
+                  </motion.div>
+
+                  <div className="space-y-6">
+                    {/* Language */}
+                    <motion.div variants={itemVariants}>
+                      <label className="text-sm font-medium text-zinc-300 flex items-center gap-2 mb-3">
+                        <Globe className="h-4 w-4 text-primary" />
+                        Language
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { code: "en", name: "English", flag: "🇬🇧" },
+                          { code: "pt", name: "Português", flag: "🇵🇹" },
+                        ].map((lang) => (
+                          <motion.button
+                            key={lang.code}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() =>
+                              setData({ ...data, language: lang.code })
+                            }
+                            className={`p-3 rounded-lg border transition-all text-sm font-medium ${
+                              data.language === lang.code
+                                ? "border-primary bg-primary/10 text-white"
+                                : "border-white/[0.06] bg-zinc-900/50 text-zinc-400 hover:border-white/[0.12]"
+                            }`}
+                          >
+                            <span className="mr-2">{lang.flag}</span>
+                            {lang.name}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+
+                    {/* Currency */}
+                    <motion.div variants={itemVariants}>
+                      <label className="text-sm font-medium text-zinc-300 flex items-center gap-2 mb-3">
+                        <CurrencyDollar className="h-4 w-4 text-primary" />
+                        Base Currency
+                      </label>
+                      <div className="text-xs text-zinc-500 mb-2">
+                        150+ currencies available
+                      </div>
+                      <CurrencyPicker
+                        value={data.currency}
+                        onChange={(currency) => setData({ ...data, currency })}
+                        currencies={currencies}
+                      />
+                    </motion.div>
+
+                    {/* Market Region */}
+                    <motion.div variants={itemVariants}>
+                      <label className="text-sm font-medium text-zinc-300 flex items-center gap-2 mb-3">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        Market Region
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {MARKET_REGIONS.map((region) => (
+                          <motion.button
+                            key={region.value}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() =>
+                              setData({
+                                ...data,
+                                marketRegion: region.value,
+                              })
+                            }
+                            className={`p-2 rounded-lg border text-xs font-medium transition-all ${
+                              data.marketRegion === region.value
+                                ? "border-primary bg-primary/10 text-white"
+                                : "border-white/[0.06] bg-zinc-900/50 text-zinc-400 hover:border-white/[0.12]"
+                            }`}
+                          >
+                            <div className="text-lg mb-1">{region.flag}</div>
+                            {region.label}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
                   </div>
                 </motion.div>
               </motion.div>
             )}
 
-             {/* Step 2: Preferences */}
-             {currentStep === 2 && (
-               <motion.div
-                 key="step2"
-                 variants={containerVariants}
-                 initial="initial"
-                 animate="animate"
-                 exit="exit"
-                 transition={{ duration: 0.5, ease: "easeInOut" }}
-               >
-                 <div className="text-center mb-12">
-                   <h2 className="text-4xl font-bold text-white mb-4">
-                     Your Preferences
-                   </h2>
-                   <p className="text-zinc-400 text-lg">
-                     Customize your experience with language, currency, and market region
-                   </p>
-                 </div>
-
-                 <div className="space-y-12">
-                   {/* Language Selection */}
-                   <motion.div
-                     variants={staggerVariants}
-                     initial="initial"
-                     animate="animate"
-                     transition={{ delay: 0.3, duration: 0.6 }}
-                   >
-                     <div className="flex items-center gap-3 mb-6">
-                       <div className="p-2 rounded-lg bg-blue-500/10">
-                         <Globe className="h-5 w-5 text-blue-400" />
-                       </div>
-                       <h3 className="text-xl font-semibold text-white">
-                         Language
-                       </h3>
-                     </div>
-                     <div className="grid grid-cols-3 gap-4">
-                       {[
-                         { code: "en", name: "English", flag: "🇬🇧" },
-                         { code: "pt", name: "Português", flag: "🇵🇹" },
-                       ].map((lang) => (
-                         <motion.button
-                           key={lang.code}
-                           variants={cardHoverVariants}
-                           whileHover="hover"
-                           whileTap="tap"
-                           onClick={() =>
-                             setData({ ...data, language: lang.code })
-                           }
-                           className={`p-6 rounded-2xl border transition-all ${
-                             data.language === lang.code
-                               ? "border-white/[0.3] bg-white/[0.08] shadow-lg"
-                               : "border-white/[0.06] hover:border-white/[0.15]"
-                           }`}
-                         >
-                           <div className="text-3xl mb-3">{lang.flag}</div>
-                           <div
-                             className={`font-medium ${
-                               data.language === lang.code
-                                 ? "text-white"
-                                 : "text-zinc-300"
-                             }`}
-                           >
-                             {lang.name}
-                           </div>
-                         </motion.button>
-                       ))}
-                     </div>
-                   </motion.div>
-
-                   {/* Currency Selection - Searchable Dropdown */}
-                   <motion.div
-                     variants={staggerVariants}
-                     initial="initial"
-                     animate="animate"
-                     transition={{ delay: 0.5, duration: 0.6 }}
-                   >
-                     <div className="flex items-center gap-3 mb-6">
-                       <div className="p-2 rounded-lg bg-emerald-500/10">
-                         <CurrencyDollar className="h-5 w-5 text-emerald-400" />
-                       </div>
-                       <h3 className="text-xl font-semibold text-white">
-                         Base Currency
-                       </h3>
-                     </div>
-                     <p className="text-sm text-zinc-400 mb-4">
-                       Choose from 150+ supported currencies
-                     </p>
-                      <CurrencyPicker
-                        value={data.currency}
-                        onChange={(currency) =>
-                          setData({ ...data, currency })
-                        }
-                        currencies={currencies}
-                      />
-                   </motion.div>
-
-                   {/* Market Region Selection */}
-                   <motion.div
-                     variants={staggerVariants}
-                     initial="initial"
-                     animate="animate"
-                     transition={{ delay: 0.7, duration: 0.6 }}
-                   >
-                     <div className="flex items-center gap-3 mb-6">
-                       <div className="p-2 rounded-lg bg-amber-500/10">
-                         <MapPin className="h-5 w-5 text-amber-400" />
-                       </div>
-                       <h3 className="text-xl font-semibold text-white">
-                         Market Region
-                       </h3>
-                     </div>
-                     <p className="text-sm text-zinc-400 mb-6">
-                       Select your primary market region for localized insights
-                     </p>
-                     <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-                       {MARKET_REGIONS.map((region) => (
-                         <motion.button
-                           key={region.value}
-                           variants={cardHoverVariants}
-                           whileHover="hover"
-                           whileTap="tap"
-                           onClick={() =>
-                             setData({ ...data, marketRegion: region.value })
-                           }
-                           className={`p-5 rounded-xl border transition-all text-center ${
-                             data.marketRegion === region.value
-                               ? "border-white/[0.3] bg-white/[0.08] shadow-lg"
-                               : "border-white/[0.06] hover:border-white/[0.15]"
-                           }`}
-                         >
-                           <div className="text-2xl mb-2">{region.flag}</div>
-                           <div className="text-center">
-                             <div
-                               className={`text-xs font-semibold ${
-                                 data.marketRegion === region.value
-                                   ? "text-white"
-                                   : "text-zinc-400"
-                               }`}
-                             >
-                               {region.label}
-                             </div>
-                           </div>
-                         </motion.button>
-                       ))}
-                     </div>
-                   </motion.div>
-                 </div>
-               </motion.div>
-             )}
-
-             {/* Step 3: AI Preferences */}
-             {currentStep === 3 && (
+            {/* STEP 3: AI Preferences */}
+            {currentStep === 3 && (
               <motion.div
-                key="step6"
+                key="step3"
                 variants={containerVariants}
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                transition={{ duration: 0.5, ease: "easeInOut" }}
+                transition={{ duration: 0.4 }}
               >
-                <div className="text-center mb-12">
-                  <h2 className="text-4xl font-bold text-white mb-4">
-                    AI Intelligence Setup
-                  </h2>
-                  <p className="text-zinc-400 text-lg">
-                    Choose how you'd like AI to power your investment insights
-                  </p>
-                </div>
+                <motion.div
+                  variants={staggerContainer}
+                  initial="initial"
+                  animate="animate"
+                >
+                  <motion.div variants={itemVariants} className="mb-8">
+                    <h2 className="text-3xl font-bold text-white">
+                      AI Intelligence
+                    </h2>
+                    <p className="text-sm text-zinc-400 mt-2">
+                      Choose how AI powers your insights
+                    </p>
+                  </motion.div>
 
-                <div className="space-y-6 max-w-2xl mx-auto">
-                  {[
-                    {
-                      value: "default",
-                      title: "Use Our AI Service",
-                      description:
-                        "Let us handle everything with our optimized AI models",
-                      icon: <Brain className="h-6 w-6" />,
-                      badge: "Recommended",
-                      color: "bg-emerald-500/10 text-emerald-400",
-                    },
-                    {
-                      value: "openrouter",
-                      title: "OpenRouter API",
-                      description:
-                        "Use your own OpenRouter API key for premium models",
-                      icon: <Lightning className="h-6 w-6" />,
-                      badge: "Advanced",
-                      color: "bg-blue-500/10 text-blue-400",
-                      flagRequired: "byoai",
-                    },
-                    {
-                      value: "selfhosted",
-                      title: "Self-Hosted AI",
-                      description: "Connect your own AI instance (coming soon)",
-                      icon: <Shield className="h-6 w-6" />,
-                      badge: "Coming Soon",
-                      color: "bg-zinc-700 text-zinc-400",
-                      disabled: true,
-                      flagRequired: "byoai",
-                    },
-                  ]
-                    .filter((option) => {
-                      // Hide options that require a flag when flag is not enabled
-                      if (option.flagRequired === "byoai" && !byoaiEnabled) {
-                        return false;
-                      }
-                      return true;
-                    })
-                    .map((option, index) => (
-                    <motion.div
-                      key={option.value}
-                      variants={staggerVariants}
-                      initial="initial"
-                      animate="animate"
-                      transition={{ delay: 0.3 + index * 0.1, duration: 0.6 }}
-                    >
-                      <motion.button
-                        variants={cardHoverVariants}
-                        whileHover={!option.disabled ? "hover" : {}}
-                        whileTap={!option.disabled ? "tap" : {}}
-                        onClick={() =>
-                          !option.disabled &&
-                          setData({ ...data, aiProvider: option.value })
+                  <div className="space-y-3">
+                    {[
+                      {
+                        value: "default",
+                        title: "Use Our AI Service",
+                        description: "Optimized models",
+                        icon: <Brain className="h-5 w-5" />,
+                        badge: "Recommended",
+                        flagRequired: undefined,
+                      },
+                      {
+                        value: "openrouter",
+                        title: "OpenRouter API",
+                        description: "Premium models",
+                        icon: <Lightning className="h-5 w-5" />,
+                        badge: "Advanced",
+                        flagRequired: "byoai",
+                      },
+                      {
+                        value: "selfhosted",
+                        title: "Self-Hosted AI",
+                        description: "Coming soon",
+                        icon: <Shield className="h-5 w-5" />,
+                        badge: "Beta",
+                        disabled: true,
+                        flagRequired: "byoai",
+                      },
+                    ]
+                      .filter((option) => {
+                        if (option.flagRequired === "byoai" && !byoaiEnabled) {
+                          return false;
                         }
-                        disabled={option.disabled}
-                        className={`w-full p-6 rounded-2xl border transition-all text-left ${
-                          data.aiProvider === option.value
-                            ? "border-white/[0.3] bg-white/[0.08] shadow-lg shadow-white/[0.05]"
-                            : "border-white/[0.06] hover:border-white/[0.15] hover:bg-white/[0.03]"
-                        } ${option.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div
-                            className={`p-3 rounded-xl ${
-                              data.aiProvider === option.value
-                                ? "bg-white/[0.1] text-white"
-                                : "bg-zinc-800 text-zinc-400"
-                            } transition-colors flex-shrink-0`}
-                          >
-                            {option.icon}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-white font-semibold text-lg">
-                                {option.title}
-                              </h3>
-                              <span
-                                className={`px-3 py-1 rounded-full text-xs font-medium ${option.color}`}
-                              >
-                                {option.badge}
-                              </span>
+                        return true;
+                      })
+                      .map((option) => (
+                        <motion.button
+                          key={option.value}
+                          variants={itemVariants}
+                          whileHover={!option.disabled ? { scale: 1.01 } : {}}
+                          whileTap={!option.disabled ? { scale: 0.99 } : {}}
+                          onClick={() =>
+                            !option.disabled &&
+                            setData({ ...data, aiProvider: option.value })
+                          }
+                          disabled={option.disabled}
+                          className={`w-full p-4 rounded-lg border text-left transition-all ${
+                            data.aiProvider === option.value
+                              ? "border-primary bg-primary/10"
+                              : "border-white/[0.06] bg-zinc-900/50 hover:border-white/[0.12]"
+                          } ${option.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`p-2 rounded-lg ${
+                                data.aiProvider === option.value
+                                  ? "bg-primary/20 text-primary"
+                                  : "bg-zinc-800 text-zinc-400"
+                              }`}
+                            >
+                              {option.icon}
                             </div>
-                            <p className="text-zinc-400">
-                              {option.description}
-                            </p>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <div className="font-medium text-white">
+                                  {option.title}
+                                </div>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
+                                  {option.badge}
+                                </span>
+                              </div>
+                              <div className="text-xs text-zinc-500 mt-0.5">
+                                {option.description}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </motion.button>
-                    </motion.div>
-                  ))}
+                        </motion.button>
+                      ))}
+                  </div>
 
                   {data.aiProvider === "openrouter" && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
-                      transition={{ duration: 0.3 }}
-                      className="mt-6 p-6 bg-zinc-900/50 rounded-2xl border border-white/[0.06]"
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-4 p-4 rounded-lg bg-zinc-900/50 border border-white/[0.06]"
                     >
-                      <Label className="text-sm font-medium text-white mb-3 block">
+                      <label className="block text-xs font-medium text-zinc-400 mb-2">
                         OpenRouter API Key
-                      </Label>
-                      <Input
+                      </label>
+                      <input
                         type="password"
                         value={data.openRouterApiKey || ""}
                         onChange={(e) =>
-                          setData({ ...data, openRouterApiKey: e.target.value })
+                          setData({
+                            ...data,
+                            openRouterApiKey: e.target.value,
+                          })
                         }
-                        placeholder="sk-or-..."
-                        className="bg-zinc-900 border-white/[0.06] text-white h-12"
+                        placeholder="sk-..."
+                        className="w-full px-3 py-2 bg-zinc-800 border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-primary"
                       />
-                      <p className="text-xs text-zinc-500 mt-2">
-                        Get your API key from{" "}
-                        <a
-                          href="https://openrouter.ai"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:underline"
-                        >
-                          openrouter.ai
-                        </a>
-                      </p>
                     </motion.div>
                   )}
-                </div>
+                </motion.div>
               </motion.div>
             )}
 
-             {/* Step 4: Portfolio Creation (Multi-step) */}
-             {currentStep === 4 && (
+            {/* STEP 4: Portfolio Creation */}
+            {currentStep === 4 && (
               <motion.div
-                key="step6"
+                key={`step4-${portfolioStep}`}
                 variants={containerVariants}
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                transition={{ duration: 0.5, ease: "easeInOut" }}
+                transition={{ duration: 0.4 }}
               >
-                <div className="text-center mb-12">
-                  <h2 className="text-4xl font-bold text-white mb-4">
-                    Create Your First Portfolio
-                  </h2>
-                  <p className="text-zinc-400 text-lg">
-                    {portfolioStep === 1 && "Tell us about your portfolio"}
-                    {portfolioStep === 2 &&
-                      "Define your risk profile and timeline"}
-                    {portfolioStep === 3 &&
-                      "Set your investment goals and thesis"}
-                  </p>
-                </div>
+                <motion.div
+                  variants={staggerContainer}
+                  initial="initial"
+                  animate="animate"
+                >
+                  <motion.div variants={itemVariants} className="mb-8">
+                    <h2 className="text-3xl font-bold text-white">
+                      {portfolioStep === 1 && "Create Portfolio"}
+                      {portfolioStep === 2 && "Risk Profile"}
+                      {portfolioStep === 3 && "Investment Targets"}
+                    </h2>
+                    <p className="text-sm text-zinc-400 mt-2">
+                      {portfolioStep === 1 &&
+                        "Give your portfolio a name and description"}
+                      {portfolioStep === 2 &&
+                        "Define your risk tolerance and time horizon"}
+                      {portfolioStep === 3 &&
+                        "Set your investment targets (optional)"}
+                    </p>
+                  </motion.div>
 
-                {/* Portfolio Sub-Step Indicators */}
-                <div className="flex justify-center mb-12">
-                  <div className="flex items-center gap-4">
-                    {[1, 2, 3].map((step) => (
-                      <div key={step} className="flex items-center">
-                        <div
-                          className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-medium transition-all ${
-                            portfolioStep >= step
-                              ? "border-emerald-400 bg-emerald-400/10 text-emerald-400"
-                              : "border-zinc-700 text-zinc-500"
-                          }`}
-                        >
-                          {step}
-                        </div>
-                        {step < 3 && (
-                          <div
-                            className={`w-12 h-0.5 mx-2 ${
-                              portfolioStep > step
-                                ? "bg-emerald-400"
-                                : "bg-zinc-700"
-                            }`}
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="max-w-2xl mx-auto">
-                  {/* Portfolio Step 1: Basic Info */}
                   {portfolioStep === 1 && (
-                    <div className="space-y-8">
-                      <motion.div
-                        variants={staggerVariants}
-                        initial="initial"
-                        animate="animate"
-                        transition={{ delay: 0.3, duration: 0.6 }}
-                        className="space-y-4"
-                      >
-                        <Label className="text-lg font-medium text-white flex items-center gap-3">
-                          <Briefcase className="h-5 w-5" />
+                    <motion.div
+                      variants={staggerContainer}
+                      initial="initial"
+                      animate="animate"
+                      className="space-y-6"
+                    >
+                      <motion.div variants={itemVariants}>
+                        <label className="text-sm font-medium text-zinc-300 flex items-center gap-2 mb-3">
+                          <Briefcase className="h-4 w-4 text-primary" />
                           Portfolio Name
-                        </Label>
-                        <Input
+                        </label>
+                        <input
+                          type="text"
                           value={data.portfolioName}
                           onChange={(e) =>
-                            setData({ ...data, portfolioName: e.target.value })
+                            setData({
+                              ...data,
+                              portfolioName: e.target.value,
+                            })
                           }
-                          placeholder="e.g., Growth Portfolio, Retirement Fund, Tech Investments..."
-                          className="bg-zinc-900/80 border-white/[0.15] text-white h-14 text-lg rounded-xl focus:border-white/[0.3] transition-all"
-                          autoFocus
+                          placeholder="e.g., My Long-term Portfolio"
+                          className="w-full px-4 py-2.5 bg-zinc-900 border border-white/[0.06] rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-primary transition-colors"
                         />
                       </motion.div>
 
-                      <motion.div
-                        variants={staggerVariants}
-                        initial="initial"
-                        animate="animate"
-                        transition={{ delay: 0.5, duration: 0.6 }}
-                        className="space-y-4"
-                      >
-                        <Label className="text-lg font-medium text-white flex items-center gap-3">
-                          <FileText className="h-5 w-5" />
+                      <motion.div variants={itemVariants}>
+                        <label className="text-sm font-medium text-zinc-300 flex items-center gap-2 mb-3">
+                          <FileText className="h-4 w-4 text-primary" />
                           Description
-                        </Label>
-                        <Textarea
+                        </label>
+                        <textarea
                           value={data.portfolioDescription}
                           onChange={(e) =>
                             setData({
@@ -932,415 +878,288 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                               portfolioDescription: e.target.value,
                             })
                           }
-                          placeholder="Describe your investment strategy, focus areas, or approach..."
-                          rows={4}
-                          className="bg-zinc-900/80 border-white/[0.15] text-white resize-none rounded-xl focus:border-white/[0.3] transition-all"
+                          placeholder="What's this portfolio for? Your investment strategy and goals..."
+                          className="w-full px-4 py-2.5 bg-zinc-900 border border-white/[0.06] rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-primary resize-none h-24 transition-colors"
                         />
                       </motion.div>
-                    </div>
+                    </motion.div>
                   )}
 
-                  {/* Portfolio Step 2: Risk & Timeline */}
                   {portfolioStep === 2 && (
-                    <div className="space-y-10">
-                      <motion.div
-                        variants={staggerVariants}
-                        initial="initial"
-                        animate="animate"
-                        transition={{ delay: 0.3, duration: 0.6 }}
-                      >
-                        <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-                          <Shield className="h-5 w-5" />
+                    <motion.div
+                      variants={staggerContainer}
+                      initial="initial"
+                      animate="animate"
+                      className="space-y-6"
+                    >
+                      <motion.div variants={itemVariants}>
+                        <label className="text-sm font-medium text-zinc-300 flex items-center gap-2 mb-3">
+                          <Shield className="h-4 w-4 text-primary" />
                           Risk Tolerance
-                        </h3>
-                        <div className="space-y-4">
+                        </label>
+                        <div className="grid grid-cols-3 gap-3">
                           {[
-                            {
-                              value: "Conservative",
-                              title: "Conservative",
-                              description:
-                                "Stable, low-risk investments with steady returns",
-                              color: "bg-blue-500/20",
-                            },
-                            {
-                              value: "Moderate",
-                              title: "Moderate",
-                              description:
-                                "Balanced approach with moderate risk and growth potential",
-                              color: "bg-yellow-500/20",
-                            },
-                            {
-                              value: "Aggressive",
-                              title: "Aggressive",
-                              description:
-                                "High-risk, high-reward investments for maximum growth",
-                              color: "bg-red-500/20",
-                            },
-                          ].map((risk) => (
-                            <RiskCard
-                              key={risk.value}
-                              level={risk.value}
-                              title={risk.title}
-                              description={risk.description}
-                              color={risk.color}
-                              active={data.riskTolerance === risk.value}
-                              onClick={() =>
-                                setData({ ...data, riskTolerance: risk.value })
-                              }
-                            />
-                          ))}
-                        </div>
-                      </motion.div>
-
-                      <motion.div
-                        variants={staggerVariants}
-                        initial="initial"
-                        animate="animate"
-                        transition={{ delay: 0.5, duration: 0.6 }}
-                      >
-                        <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-                          <Calendar className="h-5 w-5" />
-                          Time Horizon
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {[
-                            {
-                              value: "Short-term (< 3 years)",
-                              title: "Short-term",
-                              subtitle: "< 3 years",
-                            },
-                            {
-                              value: "Medium-term (3-10 years)",
-                              title: "Medium-term",
-                              subtitle: "3-10 years",
-                            },
-                            {
-                              value: "Long-term (10+ years)",
-                              title: "Long-term",
-                              subtitle: "10+ years",
-                            },
-                          ].map((horizon) => (
+                            { value: "Conservative", icon: Shield },
+                            { value: "Moderate", icon: ChartPie },
+                            { value: "Aggressive", icon: TrendDown },
+                          ].map((option) => (
                             <motion.button
-                              key={horizon.value}
-                              variants={cardHoverVariants}
-                              whileHover="hover"
-                              whileTap="tap"
+                              key={option.value}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
                               onClick={() =>
-                                setData({ ...data, timeHorizon: horizon.value })
+                                setData({
+                                  ...data,
+                                  riskTolerance: option.value,
+                                })
                               }
-                              className={`p-6 rounded-2xl border transition-all text-center ${
-                                data.timeHorizon === horizon.value
-                                  ? "border-white/[0.3] bg-white/[0.08] shadow-lg"
-                                  : "border-white/[0.06] hover:border-white/[0.15]"
+                              className={`p-3 rounded-lg border transition-all text-sm font-medium ${
+                                data.riskTolerance === option.value
+                                  ? "border-primary bg-primary/10 text-white"
+                                  : "border-white/[0.06] bg-zinc-900/50 text-zinc-400 hover:border-white/[0.12]"
                               }`}
                             >
-                              <div
-                                className={`font-semibold mb-2 ${
-                                  data.timeHorizon === horizon.value
-                                    ? "text-white"
-                                    : "text-zinc-300"
-                                }`}
-                              >
-                                {horizon.title}
-                              </div>
-                              <div
-                                className={`text-sm ${
-                                  data.timeHorizon === horizon.value
-                                    ? "text-zinc-300"
-                                    : "text-zinc-500"
-                                }`}
-                              >
-                                {horizon.subtitle}
-                              </div>
+                              {option.value}
                             </motion.button>
                           ))}
                         </div>
                       </motion.div>
-                    </div>
+
+                      <motion.div variants={itemVariants}>
+                        <label className="text-sm font-medium text-zinc-300 flex items-center gap-2 mb-3">
+                          <Calendar className="h-4 w-4 text-primary" />
+                          Time Horizon
+                        </label>
+                        <div className="grid grid-cols-1 gap-3">
+                          {[
+                            {
+                              label: "Short-term (< 3 years)",
+                              value: "Short-term (< 3 years)",
+                            },
+                            {
+                              label: "Medium-term (3-10 years)",
+                              value: "Medium-term (3-10 years)",
+                            },
+                            {
+                              label: "Long-term (> 10 years)",
+                              value: "Long-term (> 10 years)",
+                            },
+                          ].map((option) => (
+                            <motion.button
+                              key={option.value}
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.99 }}
+                              onClick={() =>
+                                setData({ ...data, timeHorizon: option.value })
+                              }
+                              className={`p-3 rounded-lg border transition-all text-sm font-medium text-left ${
+                                data.timeHorizon === option.value
+                                  ? "border-primary bg-primary/10 text-white"
+                                  : "border-white/[0.06] bg-zinc-900/50 text-zinc-400 hover:border-white/[0.12]"
+                              }`}
+                            >
+                              {option.label}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    </motion.div>
                   )}
 
-                  {/* Portfolio Step 3: Goals & Thesis */}
                   {portfolioStep === 3 && (
-                    <div className="space-y-10">
-                      {/* Investment Goals */}
-                      <motion.div
-                        variants={staggerVariants}
-                        initial="initial"
-                        animate="animate"
-                        transition={{ delay: 0.3, duration: 0.6 }}
-                      >
-                        <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-                          <Crosshair className="h-5 w-5" />
-                          Investment Goals{" "}
-                          <span className="text-sm font-normal text-zinc-500">
+                    <motion.div
+                      variants={staggerContainer}
+                      initial="initial"
+                      animate="animate"
+                      className="space-y-6"
+                    >
+                      <motion.div variants={itemVariants}>
+                        <label className="text-sm font-medium text-zinc-300 flex items-center gap-2 mb-3">
+                          <Brain className="h-4 w-4 text-primary" />
+                          Portfolio Investment Thesis{" "}
+                          <span className="text-xs text-zinc-500 font-normal">
                             (Optional)
                           </span>
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <Label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                              <CurrencyDollar className="h-4 w-4" />
-                              Target Portfolio Value
-                            </Label>
-                            <Input
+                        </label>
+
+                        {/* Document upload */}
+                        <div className="border-2 border-dashed border-white/[0.12] rounded-lg p-6 text-center hover:border-white/[0.20] transition-colors">
+                          <input
+                            type="file"
+                            onChange={(e) =>
+                              setData({
+                                ...data,
+                                thesisFile: e.target.files?.[0],
+                              })
+                            }
+                            accept=".pdf,.doc,.docx,.txt"
+                            className="hidden"
+                            id="thesis-upload"
+                          />
+                          <label
+                            htmlFor="thesis-upload"
+                            className="cursor-pointer flex flex-col items-center gap-2"
+                          >
+                            <Upload className="h-5 w-5 text-zinc-400" />
+                            <div className="text-sm">
+                              <span className="text-white font-medium">
+                                Click to upload
+                              </span>{" "}
+                              <span className="text-zinc-400">
+                                or drag and drop
+                              </span>
+                            </div>
+                            <div className="text-xs text-zinc-500">
+                              PDF, DOC, or TXT (Max 10MB)
+                            </div>
+                            {data.thesisFile && (
+                              <div className="mt-2 text-xs text-primary font-medium">
+                                ✓ {data.thesisFile.name}
+                              </div>
+                            )}
+                          </label>
+                        </div>
+
+                        {/* "or" divider */}
+                        <div className="flex items-center gap-3 my-4">
+                          <div className="flex-1 h-px bg-white/[0.06]" />
+                          <span className="text-xs text-zinc-500 uppercase tracking-widest">
+                            or
+                          </span>
+                          <div className="flex-1 h-px bg-white/[0.06]" />
+                        </div>
+
+                        {/* Text input */}
+                        <textarea
+                          value={data.investmentThesis}
+                          onChange={(e) =>
+                            setData({
+                              ...data,
+                              investmentThesis: e.target.value,
+                            })
+                          }
+                          placeholder="Write your investment strategy and philosophy..."
+                          className="w-full px-4 py-2.5 bg-zinc-900 border border-white/[0.06] rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-primary resize-none h-24 transition-colors"
+                        />
+                      </motion.div>
+
+                      <motion.div variants={itemVariants}>
+                        <label className="text-sm font-medium text-zinc-300 flex items-center gap-2 mb-3">
+                          <Crosshair className="h-4 w-4 text-primary" />
+                          Investment Targets{" "}
+                          <span className="text-xs text-zinc-500 font-normal">
+                            (All Optional)
+                          </span>
+                        </label>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-xs text-zinc-400 mb-2">
+                              Target Portfolio Value{" "}
+                              <span className="text-zinc-600">(Optional)</span>
+                            </div>
+                            <input
                               type="number"
                               value={data.targetValue || ""}
                               onChange={(e) =>
                                 setData({
                                   ...data,
                                   targetValue: e.target.value
-                                    ? Number(e.target.value)
+                                    ? parseFloat(e.target.value)
                                     : undefined,
                                 })
                               }
                               placeholder="e.g., 100000"
-                              className="bg-zinc-900/80 border-white/[0.15] text-white h-12 rounded-xl"
+                              className="w-full px-4 py-2.5 bg-zinc-900 border border-white/[0.06] rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-primary text-sm transition-colors"
                             />
                           </div>
-                          <div className="space-y-3">
-                            <Label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                              <TrendUp className="h-4 w-4" />
-                              Target Overall Return (%)
-                            </Label>
-                            <Input
+                          <div>
+                            <div className="text-xs text-zinc-400 mb-2">
+                              Target Return (%){" "}
+                              <span className="text-zinc-600">(Optional)</span>
+                            </div>
+                            <input
                               type="number"
+                              step="0.1"
                               value={data.targetReturn || ""}
                               onChange={(e) =>
                                 setData({
                                   ...data,
                                   targetReturn: e.target.value
-                                    ? Number(e.target.value)
+                                    ? parseFloat(e.target.value)
                                     : undefined,
                                 })
                               }
-                              placeholder="e.g., 8"
-                              className="bg-zinc-900/80 border-white/[0.15] text-white h-12 rounded-xl"
+                              placeholder="e.g., 8.5"
+                              className="w-full px-4 py-2.5 bg-zinc-900 border border-white/[0.06] rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-primary text-sm transition-colors"
                             />
                           </div>
-                          <div className="space-y-3">
-                            <Label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                              <Percent className="h-4 w-4" />
-                              Target Yearly Return (%)
-                            </Label>
-                            <Input
+                          <div>
+                            <div className="text-xs text-zinc-400 mb-2">
+                              Yearly Contribution{" "}
+                              <span className="text-zinc-600">(Optional)</span>
+                            </div>
+                            <input
                               type="number"
                               value={data.targetYearlyReturn || ""}
                               onChange={(e) =>
                                 setData({
                                   ...data,
                                   targetYearlyReturn: e.target.value
-                                    ? Number(e.target.value)
+                                    ? parseFloat(e.target.value)
                                     : undefined,
                                 })
                               }
-                              placeholder="e.g., 12"
-                              className="bg-zinc-900/80 border-white/[0.15] text-white h-12 rounded-xl"
-                            />
-                          </div>
-                          <div className="space-y-3">
-                            <Label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                              <TrendDown className="h-4 w-4" />
-                              Monthly Contribution
-                            </Label>
-                            <Input
-                              type="number"
-                              value={data.targetContribution || ""}
-                              onChange={(e) =>
-                                setData({
-                                  ...data,
-                                  targetContribution: e.target.value
-                                    ? Number(e.target.value)
-                                    : undefined,
-                                })
-                              }
-                              placeholder="e.g., 1000"
-                              className="bg-zinc-900/80 border-white/[0.15] text-white h-12 rounded-xl"
+                              placeholder="e.g., 5000"
+                              className="w-full px-4 py-2.5 bg-zinc-900 border border-white/[0.06] rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-primary text-sm transition-colors"
                             />
                           </div>
                         </div>
                       </motion.div>
-
-                      {/* Investment Thesis */}
-                      <motion.div
-                        variants={staggerVariants}
-                        initial="initial"
-                        animate="animate"
-                        transition={{ delay: 0.5, duration: 0.6 }}
-                      >
-                        <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-                          <Brain className="h-5 w-5" />
-                          Investment Thesis{" "}
-                          <span className="text-sm font-normal text-zinc-500">
-                            (Optional)
-                          </span>
-                        </h3>
-
-                        <div className="space-y-6">
-                          {/* File Upload */}
-                          <div className="border-2 border-dashed border-white/[0.15] rounded-2xl p-8 text-center">
-                            <Upload className="h-8 w-8 text-zinc-500 mx-auto mb-4" />
-                            <div className="space-y-2">
-                              <p className="text-white font-medium">
-                                Upload your thesis document
-                              </p>
-                              <p className="text-sm text-zinc-500">
-                                PDF, DOC, or TXT files
-                              </p>
-                            </div>
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx,.txt"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  setData({ ...data, thesisFile: file });
-                                }
-                              }}
-                              className="hidden"
-                              id="thesis-upload"
-                            />
-                            <label
-                              htmlFor="thesis-upload"
-                              className="inline-block mt-4 px-6 py-3 bg-white/[0.08] hover:bg-white/[0.12] rounded-xl border border-white/[0.15] text-white cursor-pointer transition-all"
-                            >
-                              Choose File
-                            </label>
-                            {data.thesisFile && (
-                              <p className="mt-3 text-sm text-emerald-400">
-                                ✓ {data.thesisFile.name} uploaded
-                              </p>
-                            )}
-                          </div>
-
-                          {/* OR */}
-                          <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                              <div className="w-full border-t border-white/[0.15]" />
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                              <span className="bg-[#09090b] px-4 text-zinc-500">
-                                OR
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Text Input */}
-                          <div className="space-y-3">
-                            <Label className="text-sm font-medium text-zinc-300">
-                              Write your investment thesis
-                            </Label>
-                            <Textarea
-                              value={data.investmentThesis}
-                              onChange={(e) =>
-                                setData({
-                                  ...data,
-                                  investmentThesis: e.target.value,
-                                })
-                              }
-                              placeholder="Describe your investment philosophy, market outlook, sector preferences, or strategy rationale..."
-                              rows={6}
-                              className="bg-zinc-900/80 border-white/[0.15] text-white resize-none rounded-xl focus:border-white/[0.3] transition-all"
-                            />
-                          </div>
-                        </div>
-                      </motion.div>
-                    </div>
+                    </motion.div>
                   )}
-                </div>
+                </motion.div>
               </motion.div>
             )}
 
-             {/* Step 5: Feature Showcase */}
-             {currentStep === 5 && (
+            {/* STEP 5: Done */}
+            {currentStep === 5 && (
               <motion.div
-                key="step6"
+                key="step5"
                 variants={containerVariants}
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                transition={{ duration: 0.5, ease: "easeInOut" }}
+                transition={{ duration: 0.4 }}
               >
-                <div className="text-center mb-16">
-                  <motion.h2
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-5xl font-bold text-white mb-6"
+                <div className="text-center space-y-4">
+                  <motion.div
+                    variants={staggerContainer}
+                    initial="initial"
+                    animate="animate"
                   >
-                    🎉 You're All Set!
-                  </motion.h2>
-                  <p className="text-xl text-zinc-400">
-                    Welcome to the future of investment tracking
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-                  {[
-                    {
-                      icon: <Briefcase className="h-8 w-8" />,
-                      title: "Portfolio Management",
-                      description:
-                        "Track all your investments in one place with real-time updates and comprehensive analytics.",
-                      color: "bg-blue-500/10",
-                    },
-                    {
-                      icon: <ChartPie className="h-8 w-8" />,
-                      title: "Asset Allocation",
-                      description:
-                        "Visualize your portfolio distribution and optimize your investment mix.",
-                      color: "bg-purple-500/10",
-                    },
-                    {
-                      icon: <TrendUp className="h-8 w-8" />,
-                      title: "Performance Analytics",
-                      description:
-                        "Detailed performance metrics, benchmarking, and historical analysis.",
-                      color: "bg-emerald-500/10",
-                    },
-                    {
-                      icon: <Brain className="h-8 w-8" />,
-                      title: "AI Insights",
-                      description:
-                        "Get intelligent market summaries and portfolio recommendations.",
-                      color: "bg-orange-500/10",
-                    },
-                    {
-                      icon: <Shield className="h-8 w-8" />,
-                      title: "Secure Data",
-                      description:
-                        "Your financial information is protected with enterprise-grade security.",
-                      color: "bg-red-500/10",
-                    },
-                    {
-                      icon: <Lightning className="h-8 w-8" />,
-                      title: "Real-time Updates",
-                      description:
-                        "Live market data and instant portfolio valuation updates.",
-                      color: "bg-yellow-500/10",
-                    },
-                  ].map((feature, index) => (
                     <motion.div
-                      key={feature.title}
-                      variants={staggerVariants}
-                      initial="initial"
-                      animate="animate"
-                      transition={{ delay: 0.4 + index * 0.1, duration: 0.6 }}
-                      whileHover={{ scale: 1.05, y: -5 }}
-                      className="p-6 rounded-2xl border border-white/[0.06] bg-zinc-950/60 hover:border-white/[0.12] transition-all cursor-pointer"
+                      variants={itemVariants}
+                      className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30"
                     >
-                      <div
-                        className={`p-4 rounded-xl ${feature.color} text-white mb-6 inline-block`}
-                      >
-                        {feature.icon}
-                      </div>
-                      <h3 className="text-white font-semibold text-lg mb-3">
-                        {feature.title}
-                      </h3>
-                      <p className="text-zinc-400 text-sm leading-relaxed">
-                        {feature.description}
-                      </p>
+                      <Check className="h-8 w-8 text-primary" />
                     </motion.div>
-                  ))}
+
+                    <motion.h2
+                      variants={itemVariants}
+                      className="text-3xl font-bold text-white mt-6"
+                    >
+                      You're All Set!
+                    </motion.h2>
+
+                    <motion.p
+                      variants={itemVariants}
+                      className="text-base text-zinc-400 max-w-lg mx-auto"
+                    >
+                      Your portfolio is ready. Let's start tracking your
+                      investments with real-time insights and AI-powered
+                      analysis.
+                    </motion.p>
+                  </motion.div>
                 </div>
               </motion.div>
             )}
@@ -1348,89 +1167,62 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
         </div>
       </div>
 
-      {/* Sticky Footer Navigation */}
-      {currentStep < 5 && (
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          className="sticky bottom-0 z-50 border-t border-white/[0.06] backdrop-blur-xl"
-          style={{ background: "rgba(9,9,11,0.92)" }}
-        >
-          <div className="max-w-[1600px] mx-auto px-8 py-6 flex items-center justify-between">
-             <div>
-              {(currentStep > 1 ||
-                (currentStep === 4 && portfolioStep > 1)) && (
-                <Button
-                  onClick={handleBack}
-                  variant="ghost"
-                  className="text-zinc-400 hover:text-white hover:bg-white/[0.08] px-8 py-3 rounded-xl transition-all"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-4">
-              {/* Step indicator */}
-              <div className="text-sm text-zinc-500">
-                Step {currentStep} of 5
-                {currentStep === 4 && ` (${portfolioStep}/3)`}
-              </div>
-
-              <div>
-                {currentStep === 4 && portfolioStep === 3 ? (
-                  <Button
-                    onClick={handleSubmit}
-                    className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
-                  >
-                    Submit & Continue
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleNext}
-                    disabled={
-                      (currentStep === 2 && !canProceedStep2) ||
-                      (currentStep === 3 && !canProceedStep3) ||
-                      (currentStep === 4 &&
-                        portfolioStep === 1 &&
-                        !canProceedPortfolioStep1) ||
-                      (currentStep === 4 &&
-                        portfolioStep === 2 &&
-                        !canProceedPortfolioStep2)
-                    }
-                    className="bg-white hover:bg-zinc-200 text-black px-8 py-3 rounded-xl font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Next
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
+      {/* Footer - Navigation */}
+      <motion.footer
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="border-t border-white/[0.06] bg-zinc-900/50 backdrop-blur-md"
+      >
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div>
+            {(currentStep > 1 || (currentStep === 4 && portfolioStep > 1)) && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleBack}
+                className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </motion.button>
+            )}
           </div>
-        </motion.div>
-      )}
 
-      {/* Complete Button for Final Step */}
-      {currentStep === 5 && (
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          className="sticky bottom-0 z-50 border-t border-white/[0.06] backdrop-blur-xl"
-          style={{ background: "rgba(9,9,11,0.92)" }}
-        >
-          <div className="max-w-[1600px] mx-auto px-8 py-8 text-center">
-            <Button
-              onClick={handleComplete}
-              size="lg"
-              className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white px-12 py-4 text-lg rounded-xl font-medium transition-all shadow-lg"
-            >
-              Enter Your Dashboard
-              <ArrowRight className="ml-3 h-5 w-5" />
-            </Button>
+          <div>
+            {currentStep === 5 ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSubmit}
+                className="flex items-center gap-2 text-sm px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-colors"
+              >
+                Get Started
+                <ArrowRight className="h-4 w-4" />
+              </motion.button>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleNext}
+                disabled={
+                  (currentStep === 2 && !canProceedStep2) ||
+                  (currentStep === 3 && !canProceedStep3) ||
+                  (currentStep === 4 &&
+                    portfolioStep === 1 &&
+                    !canProceedPortfolioStep1) ||
+                  (currentStep === 4 &&
+                    portfolioStep === 2 &&
+                    !canProceedPortfolioStep2)
+                }
+                className="flex items-center gap-2 text-sm px-4 py-2 bg-white hover:bg-zinc-100 text-black rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+                <ArrowRight className="h-4 w-4" />
+              </motion.button>
+            )}
           </div>
-        </motion.div>
-      )}
+        </div>
+      </motion.footer>
     </div>
   );
 }

@@ -562,51 +562,60 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
               </div>
             )}
 
-            {/* Search — unified search input */}
-            <div className="flex flex-col gap-2">
-              <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
-                {td("searchAsset")}
-              </Label>
-              <SymbolSearchInput
-                value={searchQuery}
-                onChange={(v) => setSearchQuery(v)}
-                onSelect={(r: SymbolSearchSelection) => {
-                  setSearchQuery(`${r.symbol} — ${r.name}`);
-                  setForm({
-                    ...form,
-                    name: r.name,
-                    symbol: r.symbol,
-                    currency: r.currency || form.currency,
-                  });
-                }}
-                assetType={form.type}
-                placeholder={
-                  form.type === "stock"
-                    ? td("stockPlaceholder")
-                    : form.type === "crypto"
-                      ? td("cryptoPlaceholder")
-                      : form.type === "real estate"
-                        ? td("realEstatePlaceholder")
-                        : td("genericPlaceholder")
-                }
-                autoFocus
-              />
-            </div>
+            {/* Search — unified search input (hidden for cash) */}
+            {form.type !== "cash" && (
+              <>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.15em]">
+                    {td("searchAsset")}
+                  </Label>
+                  <SymbolSearchInput
+                    value={searchQuery}
+                    onChange={(v) => setSearchQuery(v)}
+                    onSelect={(r: SymbolSearchSelection) => {
+                      setSearchQuery(`${r.symbol} — ${r.name}`);
+                      setForm({
+                        ...form,
+                        name: r.name,
+                        symbol: r.symbol,
+                        currency: r.currency || form.currency,
+                      });
+                    }}
+                    assetType={form.type}
+                    placeholder={
+                      form.type === "stock"
+                        ? td("stockPlaceholder")
+                        : form.type === "crypto"
+                          ? td("cryptoPlaceholder")
+                          : form.type === "real estate"
+                            ? td("realEstatePlaceholder")
+                            : td("genericPlaceholder")
+                    }
+                    autoFocus
+                  />
+                </div>
 
-            {/* Divider */}
-            <div className="border-t border-white/[0.06]" />
+                {/* Divider */}
+                <div className="border-t border-white/[0.06]" />
+              </>
+            )}
 
             {/* Other — manual entry for assets not in the database */}
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <Label className="text-[10px] text-zinc-600 font-medium uppercase tracking-[0.15em]">
-                  {td("otherAsset")}
+                  {form.type === "cash" ? ta("name") : td("otherAsset")}
                 </Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder={td("otherAssetPlaceholder")}
+                  placeholder={
+                    form.type === "cash"
+                      ? "e.g. Savings, Emergency Fund…"
+                      : td("otherAssetPlaceholder")
+                  }
                   className="bg-zinc-900/50 border-white/[0.06] text-zinc-300 h-9 text-sm"
+                  autoFocus={form.type === "cash"}
                 />
               </div>
 
@@ -620,26 +629,28 @@ export function V2AddAssetDialog({ portfolioId }: V2AddAssetDialogProps) {
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
                   >
-                    {/* Symbol */}
-                    <div className="flex flex-col gap-1.5">
-                      <Label className="text-[10px] text-zinc-600 font-medium uppercase tracking-[0.15em]">
-                        {ta("symbol")}
-                      </Label>
-                      <Input
-                        value={form.symbol}
-                        onChange={(e) =>
-                          setForm({ ...form, symbol: e.target.value })
-                        }
-                        placeholder={
-                          form.type === "stock"
-                            ? td("stockSymbolPlaceholder")
-                            : form.type === "crypto"
-                              ? td("cryptoSymbolPlaceholder")
-                              : "Ticker"
-                        }
-                        className="bg-zinc-900/50 border-white/[0.06] text-zinc-300 h-9 text-sm uppercase"
-                      />
-                    </div>
+                    {/* Symbol — hidden for cash */}
+                    {form.type !== "cash" && (
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-[10px] text-zinc-600 font-medium uppercase tracking-[0.15em]">
+                          {ta("symbol")}
+                        </Label>
+                        <Input
+                          value={form.symbol}
+                          onChange={(e) =>
+                            setForm({ ...form, symbol: e.target.value })
+                          }
+                          placeholder={
+                            form.type === "stock"
+                              ? td("stockSymbolPlaceholder")
+                              : form.type === "crypto"
+                                ? td("cryptoSymbolPlaceholder")
+                                : "Ticker"
+                          }
+                          className="bg-zinc-900/50 border-white/[0.06] text-zinc-300 h-9 text-sm uppercase"
+                        />
+                      </div>
+                    )}
 
                     {/* Currency */}
                     <div className="flex flex-col gap-1.5">
