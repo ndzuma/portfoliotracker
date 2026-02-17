@@ -111,12 +111,12 @@ http.route({
       // Log the raw event structure for debugging
       console.log("[Webhook] Full event payload:", JSON.stringify(event, null, 2));
 
-      // For subscription events (top-level), the userId is in data.subscriber
-      // For subscriptionItem events, the userId is also in data.subscriber
-      const clerkUserId = event.data?.subscriber?.id;
+      // For Clerk Billing webhooks, the user ID is in data.payer.user_id
+      // (not data.subscriber.id which is for user webhooks)
+      const clerkUserId = event.data?.payer?.user_id;
 
       if (!clerkUserId) {
-        console.warn("[Webhook] Missing subscriber ID in event, skipping");
+        console.warn("[Webhook] Missing user ID in event, skipping");
         // Still return 200 to acknowledge receipt
         return new Response("OK", { status: 200 });
       }
@@ -139,9 +139,9 @@ http.route({
         case "subscription.created": {
           console.log(`[Webhook] Subscription created for user ${clerkUserId}`);
           // Determine tier based on first active item
-          const items = event.data?.subscription_items || [];
+          const items = event.data?.items || [];
           const activeItem = items.find(
-            (item: any) => item.status === "active" || item.status === "upcoming"
+            (item: any) => item.status === "active"
           );
           const tier =
             activeItem?.plan?.slug === "pro" ? ("pro" as const) : ("free" as const);
@@ -158,21 +158,27 @@ http.route({
 
         case "subscription.updated": {
           console.log(`[Webhook] Subscription updated for user ${clerkUserId}`);
-          // Find the active subscription item
-          const items = event.data?.subscription_items || [];
+          // Find the active subscription item (or upcoming if transitioning)
+          const items = event.data?.items || [];
           const activeItem = items.find(
-            (item: any) => item.status === "active" || item.status === "upcoming"
+            (item: any) => item.status === "active"
+          );
+          const upcomingItem = items.find(
+            (item: any) => item.status === "upcoming"
           );
 
-          if (activeItem) {
+          // Prefer active item, fall back to upcoming (plan change)
+          const itemToProcess = activeItem || upcomingItem;
+
+          if (itemToProcess) {
             const tier =
-              activeItem.plan?.slug === "pro" ? ("pro" as const) : ("free" as const);
-            const itemId = activeItem.id || subscriptionItemId || "unknown";
+              itemToProcess.plan?.slug === "pro" ? ("pro" as const) : ("free" as const);
+            const itemId = itemToProcess.id || subscriptionItemId || "unknown";
 
             await ctx.runMutation(internal.subscriptions.updateUserSubscription, {
               clerkUserId,
               tier,
-              status: activeItem.status === "active" ? "active" : "upcoming",
+              status: itemToProcess.status === "active" ? "active" : "upcoming",
               subscriptionItemId: itemId,
             });
           }
@@ -181,7 +187,7 @@ http.route({
 
         case "subscription.active": {
           console.log(`[Webhook] Subscription activated for user ${clerkUserId}`);
-          const items = event.data?.subscription_items || [];
+          const items = event.data?.items || [];
           const activeItem = items.find((item: any) => item.status === "active");
           const tier =
             activeItem?.plan?.slug === "pro" ? ("pro" as const) : ("free" as const);
@@ -198,11 +204,11 @@ http.route({
 
         case "subscription.pastDue": {
           console.log(`[Webhook] Subscription past due for user ${clerkUserId}`);
-          const items = event.data?.subscription_items || [];
-          const activeItem = items.find((item: any) => item.status === "past_due");
+          const items = event.data?.items || [];
+          const pastDueItem = items.find((item: any) => item.status === "past_due");
           const tier =
-            activeItem?.plan?.slug === "pro" ? ("pro" as const) : ("free" as const);
-          const itemId = activeItem?.id || subscriptionItemId || "unknown";
+            pastDueItem?.plan?.slug === "pro" ? ("pro" as const) : ("free" as const);
+          const itemId = pastDueItem?.id || subscriptionItemId || "unknown";
 
           await ctx.runMutation(internal.subscriptions.updateUserSubscription, {
             clerkUserId,
@@ -237,6 +243,10 @@ http.route({
             planSlug === "pro" ? ("pro" as const) : ("free" as const);
           const itemId = subscriptionItemId || "unknown";
 
+          console.log(
+            `[Webhook] Marking ${tier} plan as canceled for user ${clerkUserId}`,
+          );
+
           await ctx.runMutation(internal.subscriptions.updateUserSubscription, {
             clerkUserId,
             tier,
@@ -250,6 +260,10 @@ http.route({
           console.log(`[Webhook] Subscription item ended for user ${clerkUserId}`);
           // When subscription item ends, downgrade to free
           const itemId = subscriptionItemId || "unknown";
+
+          console.log(
+            `[Webhook] Subscription item ended, downgrading user ${clerkUserId} to free`,
+          );
 
           await ctx.runMutation(internal.subscriptions.updateUserSubscription, {
             clerkUserId,
@@ -312,6 +326,13 @@ http.route({
             `[Webhook] Free trial ending for user ${clerkUserId}`,
           );
           // Don't change tier, just log
+          break;
+        }
+
+        case "subscriptionItem.abandoned": {
+          console.log(`[Webhook] Subscription item abandoned for user ${clerkUserId}`);
+          // Item was abandoned (e.g., user chose different plan)
+          // Don't update, just acknowledge
           break;
         }
 
