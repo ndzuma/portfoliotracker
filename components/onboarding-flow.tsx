@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -526,7 +527,7 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
           </div>
           <div className="text-xs text-zinc-500">
             Step {currentStep} of 5
-            {currentStep === 4 && ` (${portfolioStep}/3)`}
+            {currentStep === 5 && ` (${portfolioStep}/3)`}
           </div>
         </div>
       </motion.header>
@@ -808,10 +809,10 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
               </motion.div>
             )}
 
-            {/* STEP 4: Portfolio Creation */}
+            {/* STEP 4: Portfolio Creation (formerly Step 5) */}
             {currentStep === 4 && (
               <motion.div
-                key={`step4-${portfolioStep}`}
+                key={`step5-${portfolioStep}`}
                 variants={containerVariants}
                 initial="initial"
                 animate="animate"
@@ -1121,48 +1122,48 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
               </motion.div>
             )}
 
-            {/* STEP 5: Done */}
-            {currentStep === 5 && (
-              <motion.div
-                key="step5"
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.4 }}
-              >
-                <div className="text-center space-y-4">
-                  <motion.div
-                    variants={staggerContainer}
-                    initial="initial"
-                    animate="animate"
-                  >
-                    <motion.div
-                      variants={itemVariants}
-                      className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30"
-                    >
-                      <Check className="h-8 w-8 text-primary" />
-                    </motion.div>
+             {/* STEP 6: Done */}
+             {currentStep === 5 && (
+               <motion.div
+                 key="step5"
+                 variants={containerVariants}
+                 initial="initial"
+                 animate="animate"
+                 exit="exit"
+                 transition={{ duration: 0.4 }}
+               >
+                 <div className="text-center space-y-4">
+                   <motion.div
+                     variants={staggerContainer}
+                     initial="initial"
+                     animate="animate"
+                   >
+                     <motion.div
+                       variants={itemVariants}
+                       className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30"
+                     >
+                       <Check className="h-8 w-8 text-primary" />
+                     </motion.div>
 
-                    <motion.h2
-                      variants={itemVariants}
-                      className="text-3xl font-bold text-white mt-6"
-                    >
-                      You're All Set!
-                    </motion.h2>
+                     <motion.h2
+                       variants={itemVariants}
+                       className="text-3xl font-bold text-white mt-6"
+                     >
+                       You're All Set!
+                     </motion.h2>
 
-                    <motion.p
-                      variants={itemVariants}
-                      className="text-base text-zinc-400 max-w-lg mx-auto"
-                    >
-                      Your portfolio is ready. Let's start tracking your
-                      investments with real-time insights and AI-powered
-                      analysis.
-                    </motion.p>
-                  </motion.div>
-                </div>
-              </motion.div>
-            )}
+                     <motion.p
+                       variants={itemVariants}
+                       className="text-base text-zinc-400 max-w-lg mx-auto"
+                     >
+                       Your portfolio is ready. Let's start tracking your
+                       investments with real-time insights and AI-powered
+                       analysis.
+                     </motion.p>
+                   </motion.div>
+                 </div>
+               </motion.div>
+             )}
           </AnimatePresence>
         </div>
       </div>
@@ -1207,10 +1208,10 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
                 disabled={
                   (currentStep === 2 && !canProceedStep2) ||
                   (currentStep === 3 && !canProceedStep3) ||
-                  (currentStep === 4 &&
+                  (currentStep === 5 &&
                     portfolioStep === 1 &&
                     !canProceedPortfolioStep1) ||
-                  (currentStep === 4 &&
+                  (currentStep === 5 &&
                     portfolioStep === 2 &&
                     !canProceedPortfolioStep2)
                 }

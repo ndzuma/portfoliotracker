@@ -26,6 +26,19 @@ export default defineSchema({
     clerkId: v.optional(v.string()),
     isAdmin: v.optional(v.boolean()),
     hasOnboarded: v.optional(v.boolean()),
+    subscriptionTier: v.optional(v.union(v.literal("free"), v.literal("pro"))),
+    subscriptionStatus: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("canceled"),
+        v.literal("upcoming"),
+        v.literal("ended"),
+        v.literal("past_due"),
+        v.literal("incomplete"),
+      ),
+    ),
+    subscriptionItemId: v.optional(v.string()),
+    subscriptionUpdatedAt: v.optional(v.number()),
   }),
   // user settings and preferences
   userPreferences: defineTable({

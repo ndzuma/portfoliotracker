@@ -15,6 +15,7 @@ import {
   type DataSourceType,
 } from "./analytics";
 import { convert, resolveAssetCurrency, type FxRates } from "./fx";
+import { PLAN_LIMITS } from "./subscriptions";
 
 // ─── FX helpers (shared by all portfolio queries) ────────────────────────────
 async function loadFxContext(ctx: any, userId: any) {
@@ -342,6 +343,28 @@ export const createPortfolio = mutation({
     allowSubscriptions: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    // Get user and their subscription tier
+    const user = await ctx.db.get(args.userId as Id<"users">);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const tier = user.subscriptionTier ?? "free";
+    const limit = PLAN_LIMITS[tier].maxPortfolios;
+
+    // Count existing portfolios
+    const existing = await ctx.db
+      .query("portfolios")
+      .withIndex("byUser", (q) => q.eq("userId", args.userId as Id<"users">))
+      .collect();
+
+    // Check limit
+    if (existing.length >= limit) {
+      throw new Error(
+        `Portfolio limit reached. Free plan allows up to ${PLAN_LIMITS.free.maxPortfolios} portfolios. Upgrade to Pro for unlimited portfolios.`,
+      );
+    }
+
     const portfolioId = await ctx.db.insert("portfolios", {
       userId: args.userId,
       name: args.name,

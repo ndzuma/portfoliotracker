@@ -301,6 +301,13 @@ export function V2Header() {
   });
   const userId = convexUser?._id;
 
+  // Get subscription tier
+  const subscriptionDetails = useQuery(
+    api.subscriptions.getUserTier,
+    userId ? { userId } : "skip",
+  );
+  const userTier = subscriptionDetails ?? "free";
+
   // Get feature flags
   const watchlistEnabled = useQuery(api.flags.getFlag, {
     key: "watchlist",
@@ -323,11 +330,13 @@ export function V2Header() {
     userEmail: user?.emailAddresses?.[0]?.emailAddress,
   });
 
-  // Filter navigation items based on feature flags
+  // Filter navigation items based on feature flags and subscription tier
   const NAV_ITEMS = BASE_NAV_ITEMS.filter((item) => {
-    if (item.flagKey === "watchlist") return watchlistEnabled;
-    if (item.flagKey === "research") return researchEnabled;
-    if (item.flagKey === "earnings") return earningsEnabled;
+    if (item.flagKey === "watchlist")
+      return watchlistEnabled && userTier === "pro";
+    if (item.flagKey === "research")
+      return researchEnabled && userTier === "pro";
+    if (item.flagKey === "earnings") return earningsEnabled && userTier === "pro";
     return true;
   });
 

@@ -24,6 +24,7 @@ export const createUser = mutation({
       email: args.email,
       clerkId: args.clerkId,
       hasOnboarded: false,
+      subscriptionTier: "free",
     });
 
     // No automatic preferences or portfolio creation

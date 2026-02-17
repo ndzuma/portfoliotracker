@@ -88,7 +88,9 @@
     "marketBenchmarks": "Market Benchmarks",
     "noMarketData": "No market data available.",
     "portfolios": "Portfolios",
-    "markets": "Markets"
+    "markets": "Markets",
+    "portfoliosUsed": "portfolios used",
+    "upgradeNow": "Upgrade Now"
   },
   "portfolio": {
     "holdings": "Holdings",

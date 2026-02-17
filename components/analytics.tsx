@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { isFeatureEnabled } from "@/lib/featureFlags";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 import { motion, AnimatePresence } from "motion/react";
 import {
   TrendUp,
@@ -118,7 +118,10 @@ function AccordionSection({
 }
 
 export function V2Analytics({ portfolioId }: V2AnalyticsProps) {
-  if (!isFeatureEnabled("portfolioAnalytics")) return null;
+  const analyticsEnabled = useFeatureFlag("portfolioAnalytics");
+
+  if (analyticsEnabled === undefined) return null;
+  if (!analyticsEnabled) return null;
 
   const t = useTranslations("analytics");
   const tc = useTranslations("common");
