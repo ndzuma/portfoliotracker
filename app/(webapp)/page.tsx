@@ -29,6 +29,10 @@ export default function V2Dashboard() {
     useQuery(api.portfolios.getUserPorfolios, { userId }) || [];
   const benchmarkData = useQuery(api.marketData.getBenchmarkData) || [];
   const aiSummaryData = useQuery(api.ai.getAiNewsSummary) || {};
+  const portfolioCheck = useQuery(
+    api.subscriptions.canCreatePortfolio,
+    userId ? { userId } : "skip"
+  );
 
   const totalValue = userPortfolios.reduce(
     (sum: number, p: any) => sum + p.currentValue,
@@ -100,12 +104,27 @@ export default function V2Dashboard() {
                   {t("portfolioCount", { count: userPortfolios.length })}
                 </p>
               </div>
-              {/* Show traditional button after 4 portfolios */}
-              {userPortfolios.length >= 4 && (
+              {/* Show create button if limit reached, otherwise show upgrade prompt */}
+              {portfolioCheck?.allowed ? (
                 <V2CreatePortfolioDialog
                   userId={userId}
                   triggerLabel={t("addPortfolio")}
                 />
+              ) : (
+                <div className="flex flex-col items-end gap-2">
+                  <p className="text-sm font-medium text-white">
+                    {portfolioCheck?.currentCount}/{portfolioCheck?.limit} {t("portfoliosUsed")}
+                  </p>
+                  <button
+                    onClick={() => {
+                      // Navigate to upgrade or show upgrade dialog
+                      window.location.href = "/pricing";
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    {t("upgradeNow")}
+                  </button>
+                </div>
               )}
             </div>
 
@@ -113,26 +132,26 @@ export default function V2Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-12">
               {userPortfolios.length > 0 ? (
                 <>
-                  {userPortfolios.map((portfolio: any) => (
-                    <V2PortfolioCard
-                      key={portfolio._id}
-                      id={portfolio._id}
-                      name={portfolio.name}
-                      value={portfolio.currentValue}
-                      change={portfolio.change}
-                      changePercent={portfolio.changePercent}
-                      assetsCount={portfolio.assetsCount}
-                      description={portfolio.description}
-                    />
-                  ))}
-                  {/* Show new portfolio card if less than 4 portfolios */}
-                  {userPortfolios.length < 4 && (
-                    <V2CreatePortfolioDialog
-                      userId={userId}
-                      triggerLabel={t("createNewPortfolio")}
-                      triggerClassName="relative rounded-2xl border border-white/[0.06] bg-zinc-950/60 p-5 hover:border-white/[0.12] transition-all hover:bg-zinc-900/50 min-h-[200px] flex flex-col items-center justify-center group cursor-pointer text-zinc-500 group-hover:text-white text-sm font-medium"
-                    />
-                  )}
+                   {userPortfolios.map((portfolio: any) => (
+                     <V2PortfolioCard
+                       key={portfolio._id}
+                       id={portfolio._id}
+                       name={portfolio.name}
+                       value={portfolio.currentValue}
+                       change={portfolio.change}
+                       changePercent={portfolio.changePercent}
+                       assetsCount={portfolio.assetsCount}
+                       description={portfolio.description}
+                     />
+                   ))}
+                   {/* Show new portfolio card if allowed */}
+                   {portfolioCheck?.allowed && (
+                     <V2CreatePortfolioDialog
+                       userId={userId}
+                       triggerLabel={t("createNewPortfolio")}
+                       triggerClassName="relative rounded-2xl border border-white/[0.06] bg-zinc-950/60 p-5 hover:border-white/[0.12] transition-all hover:bg-zinc-900/50 min-h-[200px] flex flex-col items-center justify-center group cursor-pointer text-zinc-500 group-hover:text-white text-sm font-medium"
+                     />
+                   )}
                 </>
               ) : (
                 <div className="col-span-4 flex flex-col items-center justify-center py-20 text-center">
