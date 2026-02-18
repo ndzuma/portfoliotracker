@@ -3,16 +3,13 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookmarkSimple, Plus, MagnifyingGlass } from "@phosphor-icons/react";
 import { UpgradeNeeded } from "@/components/upgrade-needed";
-import { UpgradePromptModal } from "@/components/upgrade-prompt-modal";
 
 export default function WatchlistPage() {
   const { user } = useUser();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: user?.id || "",
@@ -28,19 +25,10 @@ export default function WatchlistPage() {
 
   if (!isPro) {
     return (
-      <>
-        <UpgradeNeeded
-          featureName="Watchlist"
-          featureDescription="Keep track of stocks, ETFs, and other assets you're interested in. Monitor prices and performance in real-time."
-          onUpgradeClick={() => setShowUpgradeModal(true)}
-        />
-        <UpgradePromptModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          featureName="Watchlist"
-          featureDescription="Keep track of stocks, ETFs, and other assets you're interested in. Monitor prices and performance in real-time."
-        />
-      </>
+      <UpgradeNeeded
+        featureName="Watchlist"
+        featureDescription="Keep track of stocks, ETFs, and other assets you're interested in. Monitor prices and performance in real-time."
+      />
     );
   }
 
@@ -89,13 +77,6 @@ export default function WatchlistPage() {
           </Card>
         </div>
       </div>
-
-      <UpgradePromptModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        featureName="Watchlist"
-        featureDescription="Keep track of stocks, ETFs, and other assets you're interested in. Monitor prices and performance in real-time."
-      />
     </div>
   );
 }

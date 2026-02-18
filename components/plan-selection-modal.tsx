@@ -1,9 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
-import { X, Sparkle } from "@phosphor-icons/react";
-import { PricingTable } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
+import { X, Crown, ArrowRight } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
 
 interface PlanSelectionModalProps {
   isOpen: boolean;
@@ -14,6 +13,13 @@ export function PlanSelectionModal({
   isOpen,
   onClose,
 }: PlanSelectionModalProps) {
+  const router = useRouter();
+
+  const handleViewPlans = () => {
+    onClose();
+    router.push("/pricing");
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -22,7 +28,7 @@ export function PlanSelectionModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -30,51 +36,85 @@ export function PlanSelectionModal({
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-zinc-900 border border-white/[0.08] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-zinc-900 border border-white/[0.08] rounded-2xl max-w-md w-full"
           >
-            {/* Header */}
-            <div className="sticky top-0 bg-zinc-900 border-b border-white/[0.08] px-6 py-5 flex items-center justify-between rounded-t-2xl z-10">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Sparkle className="h-5 w-5 text-primary" weight="duotone" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">
-                    Choose Your Plan
-                  </h2>
-                  <p className="text-sm text-zinc-400 mt-0.5">
-                    Select a plan that works best for you
-                  </p>
-                </div>
-              </div>
+            {/* Close button */}
+            <div className="flex justify-end px-5 pt-5">
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-white/[0.05] rounded-lg transition-colors flex-shrink-0"
+                className="p-1.5 hover:bg-white/[0.05] rounded-lg transition-colors"
               >
-                <X className="h-5 w-5 text-zinc-400 hover:text-white" />
+                <X className="h-4 w-4 text-zinc-500 hover:text-white" />
               </button>
             </div>
 
-            {/* Pricing Table */}
-            <div className="px-6 py-6">
-              <PricingTable
-                appearance={{
-                  baseTheme: dark,
+            {/* Content */}
+            <div className="flex flex-col items-center px-8 pt-2 pb-8">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  delay: 0.1,
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 25,
                 }}
-              />
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-white/[0.08] px-6 py-4 sticky bottom-0 bg-zinc-900 rounded-b-2xl">
-              <button
-                onClick={onClose}
-                className="w-full px-4 py-2.5 bg-white/[0.05] hover:bg-white/[0.08] text-zinc-300 hover:text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 mb-5"
               >
-                Continue with Free
-              </button>
-              <p className="text-xs text-zinc-600 text-center mt-3">
-                You can change your plan anytime in your settings
-              </p>
+                <Crown className="h-7 w-7 text-primary" weight="duotone" />
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.4 }}
+                className="text-xl font-bold text-white tracking-tight mb-2 text-center"
+              >
+                You're all set!
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+                className="text-sm text-zinc-400 leading-relaxed mb-8 text-center max-w-xs"
+              >
+                You're on the{" "}
+                <span className="text-white font-medium">Free plan</span>.
+                Unlock unlimited portfolios, AI insights, research tools, and
+                more with Pro.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.4 }}
+                className="w-full space-y-3"
+              >
+                <button
+                  onClick={handleViewPlans}
+                  className="w-full px-4 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 group"
+                >
+                  View Plans
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                <button
+                  onClick={onClose}
+                  className="w-full px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Continue with Free
+                </button>
+              </motion.div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.35, duration: 0.4 }}
+                className="text-[11px] text-zinc-600 mt-5 text-center"
+              >
+                You can upgrade anytime from settings.
+              </motion.p>
             </div>
           </motion.div>
         </motion.div>

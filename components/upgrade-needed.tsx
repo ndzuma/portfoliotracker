@@ -2,6 +2,7 @@
 
 import { Lock, Sparkle } from "@phosphor-icons/react";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 
 interface UpgradeNeededProps {
   featureName: string;
@@ -14,11 +15,22 @@ export function UpgradeNeeded({
   featureDescription,
   onUpgradeClick,
 }: UpgradeNeededProps) {
+  const router = useRouter();
+
+  const handleUpgrade = () => {
+    if (onUpgradeClick) {
+      onUpgradeClick();
+    } else {
+      router.push("/pricing");
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen flex items-center justify-center p-6"
+      className="flex items-center justify-center p-6"
+      style={{ minHeight: "calc(100vh - 3.5rem)" }}
     >
       <div className="max-w-md w-full text-center">
         <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/30 mb-6">
@@ -31,7 +43,7 @@ export function UpgradeNeeded({
 
         <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6 mb-8 text-left space-y-3">
           <div className="flex items-start gap-3">
-            <Sparkle className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+            <Sparkle className="h-4 w-4 text-primary mt-1 shrink-0" />
             <div>
               <p className="text-sm font-medium text-white">Pro Feature</p>
               <p className="text-xs text-zinc-500 mt-0.5">
@@ -56,7 +68,7 @@ export function UpgradeNeeded({
                 key={idx}
                 className="flex items-center gap-2 text-xs text-zinc-400"
               >
-                <span className="h-1 w-1 bg-primary rounded-full flex-shrink-0" />
+                <span className="h-1 w-1 bg-primary rounded-full shrink-0" />
                 {feature}
               </li>
             ))}
@@ -64,7 +76,7 @@ export function UpgradeNeeded({
         </div>
 
         <button
-          onClick={onUpgradeClick}
+          onClick={handleUpgrade}
           className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-colors mb-3"
         >
           Upgrade to Pro

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
@@ -14,11 +13,9 @@ import {
   CurrencyDollar,
 } from "@phosphor-icons/react";
 import { UpgradeNeeded } from "@/components/upgrade-needed";
-import { UpgradePromptModal } from "@/components/upgrade-prompt-modal";
 
 export default function EarningsPage() {
   const { user } = useUser();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: user?.id || "",
@@ -34,19 +31,10 @@ export default function EarningsPage() {
 
   if (!isPro) {
     return (
-      <>
-        <UpgradeNeeded
-          featureName="Earnings Calendar"
-          featureDescription="Track upcoming earnings announcements, view earnings surprises, and get alerts for companies in your portfolio."
-          onUpgradeClick={() => setShowUpgradeModal(true)}
-        />
-        <UpgradePromptModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          featureName="Earnings Calendar"
-          featureDescription="Track upcoming earnings announcements, view earnings surprises, and get alerts for companies in your portfolio."
-        />
-      </>
+      <UpgradeNeeded
+        featureName="Earnings Calendar"
+        featureDescription="Track upcoming earnings announcements, view earnings surprises, and get alerts for companies in your portfolio."
+      />
     );
   }
 
@@ -203,13 +191,6 @@ export default function EarningsPage() {
           </div>
         </div>
       </div>
-
-      <UpgradePromptModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        featureName="Earnings Calendar"
-        featureDescription="Track upcoming earnings announcements, view earnings surprises, and get alerts for companies in your portfolio."
-      />
     </div>
   );
 }

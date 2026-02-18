@@ -1,16 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { Flask, MagnifyingGlass, BookOpen } from "@phosphor-icons/react";
 import { UpgradeNeeded } from "@/components/upgrade-needed";
-import { UpgradePromptModal } from "@/components/upgrade-prompt-modal";
 
 export default function ResearchPage() {
   const { user } = useUser();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: user?.id || "",
@@ -26,19 +23,10 @@ export default function ResearchPage() {
 
   if (!isPro) {
     return (
-      <>
-        <UpgradeNeeded
-          featureName="Research Tools"
-          featureDescription="Unlock advanced research capabilities including asset screening, sector analysis, and custom reports."
-          onUpgradeClick={() => setShowUpgradeModal(true)}
-        />
-        <UpgradePromptModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          featureName="Research Tools"
-          featureDescription="Unlock advanced research capabilities including asset screening, sector analysis, and custom reports."
-        />
-      </>
+      <UpgradeNeeded
+        featureName="Research Tools"
+        featureDescription="Unlock advanced research capabilities including asset screening, sector analysis, and custom reports."
+      />
     );
   }
 
@@ -83,13 +71,6 @@ export default function ResearchPage() {
           </div>
         </div>
       </div>
-
-      <UpgradePromptModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        featureName="Research Tools"
-        featureDescription="Unlock advanced research capabilities including asset screening, sector analysis, and custom reports."
-      />
     </div>
   );
 }

@@ -13,15 +13,15 @@ import { V2PortfolioCard } from "@/components/portfolio-card";
 import { V2AllocationBar } from "@/components/allocation-bar";
 import { V2CreatePortfolioDialog } from "@/components/create-portfolio-dialog";
 import { PlanSelectionModal } from "@/components/plan-selection-modal";
-import { UpgradePromptModal } from "@/components/upgrade-prompt-modal";
 import { parseMarkdown } from "@/lib/markdown-parser";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 
 export default function V2Dashboard() {
   const { user } = useUser();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("portfolios");
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const t = useTranslations("dashboard");
   const ta = useTranslations("ai");
 
@@ -133,7 +133,7 @@ export default function V2Dashboard() {
                     {t("portfoliosUsed")}
                   </p>
                   <button
-                    onClick={() => setShowUpgradeModal(true)}
+                    onClick={() => router.push("/pricing")}
                     className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
                   >
                     {t("upgradeNow")}
@@ -244,14 +244,6 @@ export default function V2Dashboard() {
       <PlanSelectionModal
         isOpen={showPlanModal}
         onClose={() => setShowPlanModal(false)}
-      />
-
-      {/* Upgrade Modal - shown when free user hits portfolio limit */}
-      <UpgradePromptModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        featureName="Unlimited Portfolios"
-        featureDescription="You've reached the free plan limit of 2 portfolios. Upgrade to Pro for unlimited portfolios and more."
       />
     </div>
   );
