@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 import { useState } from "react";
 import {
   TrendUp,
@@ -32,12 +31,6 @@ interface PortfolioAnalyticsProps {
 }
 
 export function PortfolioAnalytics({ portfolioId }: PortfolioAnalyticsProps) {
-  // Check if feature is enabled using the hook
-  const analyticsEnabled = useFeatureFlag("portfolioAnalytics");
-
-  if (analyticsEnabled === undefined) return null;
-  if (!analyticsEnabled) return null;
-
   const [isExpanded, setIsExpanded] = useState(false);
 
   const analytics = useQuery(api.portfolios.getPortfolioAnalytics, {

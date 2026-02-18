@@ -1,16 +1,10 @@
-import { clerkMiddleware, createRouteMatcher, auth } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "./convex/_generated/api";
 import { routing } from "./i18n/routing";
 
 const isAdmin = createRouteMatcher(["/admin(.*)"]);
-const isProRoute = createRouteMatcher([
-  "/research(.*)",
-  "/watchlist(.*)",
-  "/earnings(.*)",
-]);
-
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 /**
@@ -74,16 +68,6 @@ export default clerkMiddleware(async (auth, request) => {
       }
     } catch (error) {
       return new NextResponse(null, { status: 404 });
-    }
-  }
-
-  // ── Pro-only route protection ─────────────────────────────────────
-  if (isProRoute(request)) {
-    const { has, userId } = await auth();
-    if (!userId) return response;
-    const hasPro = has({ plan: "pro" });
-    if (!hasPro) {
-      return NextResponse.redirect(new URL("/?upgrade=true", request.url));
     }
   }
 

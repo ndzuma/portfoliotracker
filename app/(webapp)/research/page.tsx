@@ -1,17 +1,46 @@
 "use client";
 
-import { notFound } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 import { Flask, MagnifyingGlass, BookOpen } from "@phosphor-icons/react";
-import { useFeatureFlag } from "@/hooks/useFeatureFlag";
+import { UpgradeNeeded } from "@/components/upgrade-needed";
+import { UpgradePromptModal } from "@/components/upgrade-prompt-modal";
 
 export default function ResearchPage() {
-  const enabled = useFeatureFlag("research");
+  const { user } = useUser();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Still loading — render nothing
-  if (enabled === undefined) return null;
+  const convexUser = useQuery(api.users.getUserByClerkId, {
+    clerkId: user?.id || "",
+  });
+  const userId = convexUser?._id;
 
-  // Flag disabled — trigger Next.js not-found boundary
-  if (enabled === false) notFound();
+  const userSubscription = useQuery(
+    api.subscriptions.getSubscriptionDetails,
+    userId ? { userId } : "skip",
+  );
+
+  const isPro = userSubscription?.tier === "pro";
+
+  if (!isPro) {
+    return (
+      <>
+        <UpgradeNeeded
+          featureName="Research Tools"
+          featureDescription="Unlock advanced research capabilities including asset screening, sector analysis, and custom reports."
+          onUpgradeClick={() => setShowUpgradeModal(true)}
+        />
+        <UpgradePromptModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          featureName="Research Tools"
+          featureDescription="Unlock advanced research capabilities including asset screening, sector analysis, and custom reports."
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: "#09090b" }}>
@@ -31,11 +60,11 @@ export default function ResearchPage() {
               <Flask className="h-6 w-6 text-zinc-600" />
             </div>
             <h2 className="text-lg font-semibold text-white mb-2">
-              Research Hub — Coming Soon
+              Research Hub
             </h2>
             <p className="text-sm text-zinc-600 max-w-md leading-relaxed mb-6">
               Analyze assets, compare sectors, and surface insights from your
-              portfolio data. This feature is currently in development.
+              portfolio data.
             </p>
             <div className="flex items-center gap-6 text-zinc-700">
               <div className="flex items-center gap-2 text-xs">
@@ -54,6 +83,13 @@ export default function ResearchPage() {
           </div>
         </div>
       </div>
+
+      <UpgradePromptModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        featureName="Research Tools"
+        featureDescription="Unlock advanced research capabilities including asset screening, sector analysis, and custom reports."
+      />
     </div>
   );
 }

@@ -330,13 +330,12 @@ export function V2Header() {
     userEmail: user?.emailAddresses?.[0]?.emailAddress,
   });
 
-  // Filter navigation items based on feature flags and subscription tier
+  // Filter navigation items based on feature flags only (not subscription tier)
+  // Pro-only features will show upgrade modals on their pages instead of hiding nav items
   const NAV_ITEMS = BASE_NAV_ITEMS.filter((item) => {
-    if (item.flagKey === "watchlist")
-      return watchlistEnabled && userTier === "pro";
-    if (item.flagKey === "research")
-      return researchEnabled && userTier === "pro";
-    if (item.flagKey === "earnings") return earningsEnabled && userTier === "pro";
+    if (item.flagKey === "watchlist") return watchlistEnabled;
+    if (item.flagKey === "research") return researchEnabled;
+    if (item.flagKey === "earnings") return earningsEnabled;
     return true;
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
@@ -12,14 +12,30 @@ import { V2AICard } from "@/components/ai-card";
 import { V2PortfolioCard } from "@/components/portfolio-card";
 import { V2AllocationBar } from "@/components/allocation-bar";
 import { V2CreatePortfolioDialog } from "@/components/create-portfolio-dialog";
+import { PlanSelectionModal } from "@/components/plan-selection-modal";
+import { UpgradePromptModal } from "@/components/upgrade-prompt-modal";
 import { parseMarkdown } from "@/lib/markdown-parser";
 import { useTranslations } from "next-intl";
 
 export default function V2Dashboard() {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState("portfolios");
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const t = useTranslations("dashboard");
   const ta = useTranslations("ai");
+
+  // Check for onboarding completion flag and show plan modal
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const onboardingCompleted = localStorage.getItem("onboardingCompleted");
+      if (onboardingCompleted === "true") {
+        setShowPlanModal(true);
+        // Clear the flag so it only shows once
+        localStorage.removeItem("onboardingCompleted");
+      }
+    }
+  }, []);
 
   const convexUser = useQuery(api.users.getUserByClerkId, {
     clerkId: user?.id || "",
@@ -31,7 +47,7 @@ export default function V2Dashboard() {
   const aiSummaryData = useQuery(api.ai.getAiNewsSummary) || {};
   const portfolioCheck = useQuery(
     api.subscriptions.canCreatePortfolio,
-    userId ? { userId } : "skip"
+    userId ? { userId } : "skip",
   );
 
   const totalValue = userPortfolios.reduce(
@@ -113,14 +129,12 @@ export default function V2Dashboard() {
               ) : (
                 <div className="flex flex-col items-end gap-2">
                   <p className="text-sm font-medium text-white">
-                    {portfolioCheck?.currentCount}/{portfolioCheck?.limit} {t("portfoliosUsed")}
+                    {portfolioCheck?.currentCount}/{portfolioCheck?.limit}{" "}
+                    {t("portfoliosUsed")}
                   </p>
                   <button
-                    onClick={() => {
-                      // Navigate to upgrade or show upgrade dialog
-                      window.location.href = "/pricing";
-                    }}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    onClick={() => setShowUpgradeModal(true)}
+                    className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors"
                   >
                     {t("upgradeNow")}
                   </button>
@@ -132,26 +146,26 @@ export default function V2Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-12">
               {userPortfolios.length > 0 ? (
                 <>
-                   {userPortfolios.map((portfolio: any) => (
-                     <V2PortfolioCard
-                       key={portfolio._id}
-                       id={portfolio._id}
-                       name={portfolio.name}
-                       value={portfolio.currentValue}
-                       change={portfolio.change}
-                       changePercent={portfolio.changePercent}
-                       assetsCount={portfolio.assetsCount}
-                       description={portfolio.description}
-                     />
-                   ))}
-                   {/* Show new portfolio card if allowed */}
-                   {portfolioCheck?.allowed && (
-                     <V2CreatePortfolioDialog
-                       userId={userId}
-                       triggerLabel={t("createNewPortfolio")}
-                       triggerClassName="relative rounded-2xl border border-white/[0.06] bg-zinc-950/60 p-5 hover:border-white/[0.12] transition-all hover:bg-zinc-900/50 min-h-[200px] flex flex-col items-center justify-center group cursor-pointer text-zinc-500 group-hover:text-white text-sm font-medium"
-                     />
-                   )}
+                  {userPortfolios.map((portfolio: any) => (
+                    <V2PortfolioCard
+                      key={portfolio._id}
+                      id={portfolio._id}
+                      name={portfolio.name}
+                      value={portfolio.currentValue}
+                      change={portfolio.change}
+                      changePercent={portfolio.changePercent}
+                      assetsCount={portfolio.assetsCount}
+                      description={portfolio.description}
+                    />
+                  ))}
+                  {/* Show new portfolio card if allowed */}
+                  {portfolioCheck?.allowed && (
+                    <V2CreatePortfolioDialog
+                      userId={userId}
+                      triggerLabel={t("createNewPortfolio")}
+                      triggerClassName="relative rounded-2xl border border-white/[0.06] bg-zinc-950/60 p-5 hover:border-white/[0.12] transition-all hover:bg-zinc-900/50 min-h-[200px] flex flex-col items-center justify-center group cursor-pointer text-zinc-500 group-hover:text-white text-sm font-medium"
+                    />
+                  )}
                 </>
               ) : (
                 <div className="col-span-4 flex flex-col items-center justify-center py-20 text-center">
@@ -225,6 +239,20 @@ export default function V2Dashboard() {
           </section>
         )}
       </div>
+
+      {/* Plan Selection Modal - shown after onboarding */}
+      <PlanSelectionModal
+        isOpen={showPlanModal}
+        onClose={() => setShowPlanModal(false)}
+      />
+
+      {/* Upgrade Modal - shown when free user hits portfolio limit */}
+      <UpgradePromptModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        featureName="Unlimited Portfolios"
+        featureDescription="You've reached the free plan limit of 2 portfolios. Upgrade to Pro for unlimited portfolios and more."
+      />
     </div>
   );
 }

@@ -26,27 +26,8 @@ export function AdvancedSection({
 }: AdvancedSectionProps) {
   const t = useTranslations("settings");
   const tc = useTranslations("common");
-  const [cacheCleared, setCacheCleared] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteText, setDeleteText] = useState("");
-
-  const handleClearCache = () => {
-    // Clear any client-side caches (localStorage, sessionStorage search indices, etc.)
-    try {
-      const keysToPreserve = ["portfolio-theme", "clerk-db"];
-      const allKeys = Object.keys(localStorage);
-      allKeys.forEach((key) => {
-        if (!keysToPreserve.some((preserve) => key.startsWith(preserve))) {
-          localStorage.removeItem(key);
-        }
-      });
-      sessionStorage.clear();
-      setCacheCleared(true);
-      setTimeout(() => setCacheCleared(false), 3000);
-    } catch {
-      // silently fail if storage is unavailable
-    }
-  };
 
   return (
     <>
@@ -90,39 +71,6 @@ export function AdvancedSection({
               {t("csvPdfExcelComingSoon")}
             </span>
           </div>
-        </SettingRow>
-      </Section>
-
-      {/* ── Cache & Storage ── */}
-      <Section title={t("cacheStorage")} description={t("localDataManagement")}>
-        <SettingRow
-          label={t("clearLocalCache")}
-          description={t("clearLocalCacheDesc")}
-        >
-          <button
-            onClick={handleClearCache}
-            disabled={cacheCleared}
-            className={`
-              flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-lg border transition-all
-              ${
-                cacheCleared
-                  ? "border-emerald-500/20 text-emerald-500 cursor-default"
-                  : "border-white/[0.06] text-zinc-300 hover:text-white hover:bg-white/[0.04]"
-              }
-            `}
-          >
-            {cacheCleared ? (
-              <>
-                <Check className="h-3 w-3" />
-                {t("cleared")}
-              </>
-            ) : (
-              <>
-                <ArrowsClockwise className="h-3 w-3" />
-                {t("clearCache")}
-              </>
-            )}
-          </button>
         </SettingRow>
       </Section>
 

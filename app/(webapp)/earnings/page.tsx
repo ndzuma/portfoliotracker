@@ -1,6 +1,9 @@
 "use client";
 
-import { notFound } from "next/navigation";
+import { useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,16 +13,42 @@ import {
   TrendUp,
   CurrencyDollar,
 } from "@phosphor-icons/react";
-import { useFeatureFlag } from "@/hooks/useFeatureFlag";
+import { UpgradeNeeded } from "@/components/upgrade-needed";
+import { UpgradePromptModal } from "@/components/upgrade-prompt-modal";
 
 export default function EarningsPage() {
-  const enabled = useFeatureFlag("earnings");
+  const { user } = useUser();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Still loading — render nothing
-  if (enabled === undefined) return null;
+  const convexUser = useQuery(api.users.getUserByClerkId, {
+    clerkId: user?.id || "",
+  });
+  const userId = convexUser?._id;
 
-  // Flag disabled — trigger Next.js not-found boundary
-  if (enabled === false) notFound();
+  const userSubscription = useQuery(
+    api.subscriptions.getSubscriptionDetails,
+    userId ? { userId } : "skip",
+  );
+
+  const isPro = userSubscription?.tier === "pro";
+
+  if (!isPro) {
+    return (
+      <>
+        <UpgradeNeeded
+          featureName="Earnings Calendar"
+          featureDescription="Track upcoming earnings announcements, view earnings surprises, and get alerts for companies in your portfolio."
+          onUpgradeClick={() => setShowUpgradeModal(true)}
+        />
+        <UpgradePromptModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          featureName="Earnings Calendar"
+          featureDescription="Track upcoming earnings announcements, view earnings surprises, and get alerts for companies in your portfolio."
+        />
+      </>
+    );
+  }
 
   // Sample earnings data
   const upcomingEarnings = [
@@ -174,6 +203,13 @@ export default function EarningsPage() {
           </div>
         </div>
       </div>
+
+      <UpgradePromptModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        featureName="Earnings Calendar"
+        featureDescription="Track upcoming earnings announcements, view earnings surprises, and get alerts for companies in your portfolio."
+      />
     </div>
   );
 }

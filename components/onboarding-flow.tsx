@@ -360,6 +360,12 @@ export function OnboardingFlow({ userId, userName }: OnboardingFlowProps) {
       setSubmitPhase(4);
 
       await markComplete({ userId: userId as any });
+      
+      // Set flag to show plan selection modal on dashboard
+      if (typeof window !== "undefined") {
+        localStorage.setItem("onboardingCompleted", "true");
+      }
+      
       window.location.href = "/";
     } catch (error) {
       console.error("Error completing onboarding:", error);
