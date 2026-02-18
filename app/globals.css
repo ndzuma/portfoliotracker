@@ -149,23 +149,3 @@
     transform: translateX(-50%);
   }
 }
-
-/* ── Clerk UI supremacy ──────────────────────────────────────────────
-   Force every Clerk-injected portal, modal, drawer, and overlay above
-   all app UI (header z-50, modals z-50, backdrop-blur stacking contexts).
-   The combination of isolation + z-index + position breaks out of any
-   parent stacking context created by backdrop-filter on the header or
-   modal overlays. */
-[data-clerk-portal],
-[data-clerk-portal] > *,
-.cl-modalBackdrop,
-.cl-modal,
-.cl-internal-overlay,
-.cl-drawer,
-.cl-pricingTable,
-div[id^="clerk-"],
-div[id^="clerk-"] > * {
-  z-index: 99999 !important;
-  isolation: isolate;
-  position: relative;
-}

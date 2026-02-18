@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 import { Toaster } from "sonner";
 import { AuthenticatedWrapper } from "./auth-wrapper";
 import { DeploymentNotifier } from "@/components/deployment-notifier";
@@ -57,6 +58,7 @@ export default async function RootLayout({
           <PostHogProvider>
             <ThemeProvider defaultTheme="system" storageKey="portfolio-theme">
               <ClerkProvider
+                appearance={{ baseTheme: dark }}
                 signInUrl="/sign-in"
                 signUpUrl="/sign-up"
                 signInForceRedirectUrl="/"
